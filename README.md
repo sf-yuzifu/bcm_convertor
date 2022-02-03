@@ -6,7 +6,7 @@
 作者：小鱼yuzifu [(编程猫id：438403)](https://shequ.codemao.cn/user/438403)
 #### 使用说明
 
-1.  只需下载打开即可（可能需要允许任何来源）
+1.  只需[下载](https://cloud.yuzifu.top/s/LeF9)打开即可（可能需要允许任何来源）
 
 
 #### 感谢
