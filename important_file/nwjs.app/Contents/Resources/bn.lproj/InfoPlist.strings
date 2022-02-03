@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "Chromium অ্যাক্সেস পেলেই, ওয়েবসাইটগুলি আপনাকে অ্যাক্সেসের অনুরোধ করতে পারবে।";
+NSBluetoothPeripheralUsageDescription = "Chromium অ্যাক্সেস পেলেই, ওয়েবসাইটগুলি আপনাকে অ্যাক্সেসের অনুরোধ করতে পারবে।";
+NSCameraUsageDescription = "Chromium অ্যাক্সেস পেলেই, ওয়েবসাইটগুলি আপনাকে অ্যাক্সেসের অনুরোধ করতে পারবে।";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "Chromium অ্যাক্সেস পেলেই, ওয়েবসাইটগুলি আপনাকে অ্যাক্সেসের অনুরোধ করতে পারবে।";
+NSMicrophoneUsageDescription = "Chromium অ্যাক্সেস পেলেই, ওয়েবসাইটগুলি আপনাকে অ্যাক্সেসের অনুরোধ করতে পারবে।";

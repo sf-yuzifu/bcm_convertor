@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QWidget</class>
+ <widget class="QWidget" name="QWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>640</width>
+    <height>440</height>
+   </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>640</width>
+    <height>440</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>编程猫格式工厂</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color:rgb(255,252,247);
+border-radius: 30px;</string>
+  </property>
+  <widget class="QPushButton" name="pushButton">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>295</y>
+     <width>120</width>
+     <height>36</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::NoContextMenu</enum>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(250,154,75);
+padding: 8;
+border-radius: 5px;
+
+QPushButton{border-color: rgb(0, 0, 0);\nbackground-color: rgb(250,154,75);\ncolor: rgb(255, 255, 255);\nborder-radius: 10px;\npadding: 8;}
+
+QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(255, 255, 255);\ncolor:  rgb(123, 139, 111);\nborder-radius: 10px;\npadding: 8;}</string>
+   </property>
+   <property name="text">
+    <string>选择文件</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>255</x>
+     <y>130</y>
+     <width>130</width>
+     <height>92</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <bold>true</bold>
+     <strikeout>false</strikeout>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>picture/icn_upload.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>255</y>
+     <width>280</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(133, 122, 99);</string>
+   </property>
+   <property name="text">
+    <string>将 bcm 文件加入这里进行转换</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_2">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>5</y>
+     <width>30</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>picture/icn_close.png</normaloff>picture/icn_close.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>25</width>
+     <height>25</height>
+    </size>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>false</bool>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QWidget" name="horizontalWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>640</width>
+     <height>40</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255,255,255);</string>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout"/>
+  </widget>
+  <widget class="QPushButton" name="pushButton_3">
+   <property name="geometry">
+    <rect>
+     <x>65</x>
+     <y>5</y>
+     <width>30</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>picture/icn_aboutUs.png</normaloff>picture/icn_aboutUs.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>25</width>
+     <height>25</height>
+    </size>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>235</x>
+     <y>0</y>
+     <width>170</width>
+     <height>40</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:rgb(255, 204, 34);
+background-color:rgb(255, 255, 255)</string>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;Kitten格式工厂 for Mac&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>60</y>
+     <width>259</width>
+     <height>232</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>picture/success.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_4">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>320</y>
+     <width>120</width>
+     <height>36</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::NoContextMenu</enum>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(250,154,75);
+padding: 8;
+border-radius: 5px;
+
+QPushButton{border-color: rgb(0, 0, 0);\nbackground-color: rgb(250,154,75);\ncolor: rgb(255, 255, 255);\nborder-radius: 10px;\npadding: 8;}
+
+QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(255, 255, 255);\ncolor:  rgb(123, 139, 111);\nborder-radius: 10px;\npadding: 8;}</string>
+   </property>
+   <property name="text">
+    <string>继续</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>641</width>
+     <height>441</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255, 255, 255)</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_6">
+   <property name="geometry">
+    <rect>
+     <x>201</x>
+     <y>0</y>
+     <width>238</width>
+     <height>78</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255, 255, 255)</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>picture/pic_aboutUs.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_7">
+   <property name="geometry">
+    <rect>
+     <x>42</x>
+     <y>40</y>
+     <width>551</width>
+     <height>391</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255, 255, 255);</string>
+   </property>
+   <property name="text">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-weight:700; color:#857963;&quot;&gt;关于格式工厂你需要知道：&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'PingFangSC-Medium'; font-size:11pt; font-weight:700; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;1.生成的程序无法运行。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：源码编辑器会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;本，就可能导致转换的程序无法运行，请及时更新后重新转换。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;2.转换后的APP文件大小远远大于bcm文件大小。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：为了让bcm独立运行，需要很多其他文件的支持(加上目前代码的不完善)，这部分程序也是占空间&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;的。因此APP文件至少也有800MB左右。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;3.为什么云变量作品无法使用。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;4.关于安卓APK。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：嗯，我们在努力中...（试着用用&lt;/span&gt;&lt;a href=&quot;https://coco.codemao.cn/&quot;&gt;&lt;span style=&quot; font-size:11pt; text-decoration: underline; color:#007af4;&quot;&gt;CoCo编辑器？&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;）&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;5.关于作者。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：小鱼yuzifu（&lt;/span&gt;&lt;a href=&quot;https://shequ.codemao.cn/user/438403&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;编程猫id：438403&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;）！&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_8">
+   <property name="geometry">
+    <rect>
+     <x>264</x>
+     <y>0</y>
+     <width>124</width>
+     <height>44</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255, 250, 243)</string>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:18pt; font-weight:700; color:#857963;&quot;&gt;版本号：v1.1.4&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_5">
+   <property name="geometry">
+    <rect>
+     <x>35</x>
+     <y>5</y>
+     <width>30</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>picture/icn_minimize.png</normaloff>picture/icn_minimize.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>25</width>
+     <height>25</height>
+    </size>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>false</bool>
+   </property>
+   <property name="flat">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <zorder>horizontalWidget</zorder>
+  <zorder>label</zorder>
+  <zorder>pushButton</zorder>
+  <zorder>label_2</zorder>
+  <zorder>pushButton_3</zorder>
+  <zorder>label_3</zorder>
+  <zorder>label_4</zorder>
+  <zorder>pushButton_4</zorder>
+  <zorder>label_5</zorder>
+  <zorder>pushButton_2</zorder>
+  <zorder>label_7</zorder>
+  <zorder>label_6</zorder>
+  <zorder>label_8</zorder>
+  <zorder>pushButton_5</zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

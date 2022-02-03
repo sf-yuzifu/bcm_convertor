@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "Chromium ಒಮ್ಮೆ ಪ್ರವೇಶವನ್ನು ಪಡೆದ ಬಳಿಕ, ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿಮ್ಮನ್ನು ಕೇಳಲು ವೆಬ್‍ಸೈಟ್‍ಗಳಿಗೆ ಸಾಧ್ಯವಾಗುತ್ತದೆ.";
+NSBluetoothPeripheralUsageDescription = "Chromium ಒಮ್ಮೆ ಪ್ರವೇಶವನ್ನು ಪಡೆದ ಬಳಿಕ, ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿಮ್ಮನ್ನು ಕೇಳಲು ವೆಬ್‍ಸೈಟ್‍ಗಳಿಗೆ ಸಾಧ್ಯವಾಗುತ್ತದೆ.";
+NSCameraUsageDescription = "Chromium ಒಮ್ಮೆ ಪ್ರವೇಶವನ್ನು ಪಡೆದ ಬಳಿಕ, ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿಮ್ಮನ್ನು ಕೇಳಲು ವೆಬ್‍ಸೈಟ್‍ಗಳಿಗೆ ಸಾಧ್ಯವಾಗುತ್ತದೆ.";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "Chromium ಒಮ್ಮೆ ಪ್ರವೇಶವನ್ನು ಪಡೆದ ಬಳಿಕ, ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿಮ್ಮನ್ನು ಕೇಳಲು ವೆಬ್‍ಸೈಟ್‍ಗಳಿಗೆ ಸಾಧ್ಯವಾಗುತ್ತದೆ.";
+NSMicrophoneUsageDescription = "Chromium ಒಮ್ಮೆ ಪ್ರವೇಶವನ್ನು ಪಡೆದ ಬಳಿಕ, ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿಮ್ಮನ್ನು ಕೇಳಲು ವೆಬ್‍ಸೈಟ್‍ಗಳಿಗೆ ಸಾಧ್ಯವಾಗುತ್ತದೆ.";

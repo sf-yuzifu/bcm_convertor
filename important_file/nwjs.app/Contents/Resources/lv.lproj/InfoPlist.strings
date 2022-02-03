@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "Tiklīdz pārlūkam Chromium tiks sniegta piekļuve, vietnes varēs lūgt jums piekļuvi.";
+NSBluetoothPeripheralUsageDescription = "Tiklīdz pārlūkam Chromium tiks sniegta piekļuve, vietnes varēs lūgt jums piekļuvi.";
+NSCameraUsageDescription = "Tiklīdz pārlūkam Chromium tiks sniegta piekļuve, vietnes varēs lūgt jums piekļuvi.";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "Tiklīdz pārlūkam Chromium tiks sniegta piekļuve, vietnes varēs lūgt jums piekļuvi.";
+NSMicrophoneUsageDescription = "Tiklīdz pārlūkam Chromium tiks sniegta piekļuve, vietnes varēs lūgt jums piekļuvi.";

@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "Kai „Chromium“ galės pasiekti duomenis, svetainės taip pat galės prašyti suteikti leidimą juos pasiekti.";
+NSBluetoothPeripheralUsageDescription = "Kai „Chromium“ galės pasiekti duomenis, svetainės taip pat galės prašyti suteikti leidimą juos pasiekti.";
+NSCameraUsageDescription = "Kai „Chromium“ galės pasiekti duomenis, svetainės taip pat galės prašyti suteikti leidimą juos pasiekti.";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "Kai „Chromium“ galės pasiekti duomenis, svetainės taip pat galės prašyti suteikti leidimą juos pasiekti.";
+NSMicrophoneUsageDescription = "Kai „Chromium“ galės pasiekti duomenis, svetainės taip pat galės prašyti suteikti leidimą juos pasiekti.";

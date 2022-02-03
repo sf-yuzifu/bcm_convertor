@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "‮nwjs‬ 97.0.4692.71, ‮Copyright‬ 2022 ‮The‬ ‮Chromium‬ ‮Authors‬, ‮NW‬.‮js‬ ‮contributors‬, ‮Node‬.‮js‬. ‮All‬ ‮rights‬ ‮reserved‬.";
+NSBluetoothAlwaysUsageDescription = "‮Once‬ ‮Chromium‬ ‮has‬ ‮access‬, ‮websites‬ ‮will‬ ‮be‬ ‮able‬ ‮to‬ ‮ask‬ ‮you‬ ‮for‬ ‮access‬.";
+NSBluetoothPeripheralUsageDescription = "‮Once‬ ‮Chromium‬ ‮has‬ ‮access‬, ‮websites‬ ‮will‬ ‮be‬ ‮able‬ ‮to‬ ‮ask‬ ‮you‬ ‮for‬ ‮access‬.";
+NSCameraUsageDescription = "‮Once‬ ‮Chromium‬ ‮has‬ ‮access‬, ‮websites‬ ‮will‬ ‮be‬ ‮able‬ ‮to‬ ‮ask‬ ‮you‬ ‮for‬ ‮access‬.";
+NSHumanReadableCopyright = "‮Copyright‬ 2022 ‮The‬ ‮Chromium‬ ‮Authors‬, ‮NW‬.‮js‬ ‮contributors‬, ‮Node‬.‮js‬. ‮All‬ ‮rights‬ ‮reserved‬.";
+NSLocationUsageDescription = "‮Once‬ ‮Chromium‬ ‮has‬ ‮access‬, ‮websites‬ ‮will‬ ‮be‬ ‮able‬ ‮to‬ ‮ask‬ ‮you‬ ‮for‬ ‮access‬.";
+NSMicrophoneUsageDescription = "‮Once‬ ‮Chromium‬ ‮has‬ ‮access‬, ‮websites‬ ‮will‬ ‮be‬ ‮able‬ ‮to‬ ‮ask‬ ‮you‬ ‮for‬ ‮access‬.";

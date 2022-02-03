@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "አንዴ Chromium መዳረሻ ከኖረው በኋላ ድር ጣቢያዎች እርስዎን መዳረሻ መጠየቅ ይችላሉ።";
+NSBluetoothPeripheralUsageDescription = "አንዴ Chromium መዳረሻ ከኖረው በኋላ ድር ጣቢያዎች እርስዎን መዳረሻ መጠየቅ ይችላሉ።";
+NSCameraUsageDescription = "አንዴ Chromium መዳረሻ ከኖረው በኋላ ድር ጣቢያዎች እርስዎን መዳረሻ መጠየቅ ይችላሉ።";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "አንዴ Chromium መዳረሻ ከኖረው በኋላ ድር ጣቢያዎች እርስዎን መዳረሻ መጠየቅ ይችላሉ።";
+NSMicrophoneUsageDescription = "አንዴ Chromium መዳረሻ ከኖረው በኋላ ድር ጣቢያዎች እርስዎን መዳረሻ መጠየቅ ይችላሉ።";

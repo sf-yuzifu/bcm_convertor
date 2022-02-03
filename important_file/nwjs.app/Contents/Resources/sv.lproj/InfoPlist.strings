@@ -1,0 +1,7 @@
+CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSBluetoothAlwaysUsageDescription = "När du har gett Chromium åtkomst kan webbplatser begära att få åtkomst.";
+NSBluetoothPeripheralUsageDescription = "När du har gett Chromium åtkomst kan webbplatser begära att få åtkomst.";
+NSCameraUsageDescription = "När du har gett Chromium åtkomst kan webbplatser begära att få åtkomst.";
+NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
+NSLocationUsageDescription = "När du har gett Chromium åtkomst kan webbplatser begära att få åtkomst.";
+NSMicrophoneUsageDescription = "När du har gett Chromium åtkomst kan webbplatser begära att få åtkomst.";
