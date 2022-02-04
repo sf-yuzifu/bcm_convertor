@@ -1,10 +1,8 @@
 import os,zipfile
 import shutil
-from PyQt5 import uic
-from PyQt5 import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
+from PyQt6 import uic
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import *
 import sys,json
 
 global path
@@ -26,6 +24,7 @@ class Bcm_to_App(QWidget):
         self.label_6.setHidden(True)
         self.label_7.setHidden(True)
         self.label_8.setHidden(True)
+        self.label_9.setHidden(True)
         self.ismoving = False
         global aboutus
         aboutus = False
@@ -40,7 +39,7 @@ class Bcm_to_App(QWidget):
                                                    "QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(248, 136, 36);\ncolor:  rgb(255, 255, 255);\nborder-radius: 5px;\npadding: 8;}")
         self.pushButton_5.setStyleSheet("QPushButton{border-color: rgb(0, 0, 0);\nbackground-color: rgb(255, 255, 255);\ncolor: rgb(255, 255, 255);\nborder-radius: 2px;\npadding: 8;}"
                                                    "QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(255,250,243);\ncolor:  rgb(255, 255, 255);\nborder-radius: 5px;\npadding: 8;}")
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
     def onClick1(self):
         fileName = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), "Kitten3 Files(*.bcm)")[0]
@@ -57,6 +56,7 @@ class Bcm_to_App(QWidget):
             self.label_6.setHidden(True)
             self.label_7.setHidden(True)
             self.label_8.setHidden(True)
+            self.label_9.setHidden(True)
             aboutus = False
         else:
             self.close()
@@ -68,6 +68,7 @@ class Bcm_to_App(QWidget):
         self.label_6.setHidden(False)
         self.label_7.setHidden(False)
         self.label_8.setHidden(False)
+        self.label_9.setHidden(False)
 
     def onClick4(self):        
         self.label_4.setHidden(True)
@@ -75,30 +76,21 @@ class Bcm_to_App(QWidget):
         self.pushButton_4.setHidden(True)
 
     def onClick5(self):
-        self.setWindowFlag(Qt.FramelessWindowHint,False)
         self.showMinimized()
 
-    def mousePressEvent(self, e):
-        if e.button() == Qt.LeftButton:
-            self.ismoving = True
-            self.start_point = e.globalPos()
-            self.window_point = self.frameGeometry().topLeft()
-    
-    def mouseMoveEvent(self, e):
-        if self.ismoving:
-            relpos = e.globalPos() - self.start_point
-            self.move(self.window_point + relpos)
-
-    def mouseReleaseEvent(self,e):
-        self.ismoving = False
-
-    def changeEvent(self, event):
-        if event.type() == QEvent.WindowStateChange:
-            if self.isMinimized():
-                pass
-            else:
-                self.setWindowFlag(Qt.FramelessWindowHint,True)
-                self.showNormal()
+    def mousePressEvent(self, event):
+        if event.button()==Qt.MouseButton.LeftButton:
+            self.m_flag=True
+            self.m_Position=event.globalPosition().toPoint()-self.pos() #获取鼠标相对窗口的位置
+            event.accept()
+            
+    def mouseMoveEvent(self, QMouseEvent):
+        if Qt.MouseButton.LeftButton and self.m_flag:  
+            self.move(QMouseEvent.globalPosition().toPoint()-self.m_Position)#更改窗口位置
+            QMouseEvent.accept()
+            
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.m_flag=False
 
 def app(zfile,folder,baseDir=""):
     fileList=os.listdir(folder)

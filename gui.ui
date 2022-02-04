@@ -324,7 +324,7 @@ QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(255, 255, 25
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>201</x>
+     <x>200</x>
      <y>0</y>
      <width>238</width>
      <height>78</height>
@@ -360,21 +360,23 @@ QPushButton:hover{border-color: rgb(0, 0, 0);\nbackground-color:rgb(255, 255, 25
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-weight:700; color:#857963;&quot;&gt;关于格式工厂你需要知道：&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:14pt; font-weight:700; color:#857963;&quot;&gt;关于格式工厂你需要知道：&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'PingFangSC-Medium'; font-size:11pt; font-weight:700; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'PingFangSC-Medium'; font-size:11pt; font-weight:700; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;1.生成的程序无法运行。&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：源码编辑器会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;本，就可能导致转换的程序无法运行，请及时更新后重新转换。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;答：源码编辑器会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;本，就可能导致转换的程序无法运行，请及时更新后重新转换。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;2.转换后的APP文件大小远远大于bcm文件大小。&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：为了让bcm独立运行，需要很多其他文件的支持(加上目前代码的不完善)，这部分程序也是占空间&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;的。因此APP文件至少也有800MB左右。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;答：为了让bcm独立运行，需要很多其他文件的支持(加上目前代码的不完善)，这部分程序也是占空间&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;的。因此APP文件至少也有800MB左右。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;3.为什么云变量作品无法使用。&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;4.关于安卓APK。&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：嗯，我们在努力中...（试着用用&lt;/span&gt;&lt;a href=&quot;https://coco.codemao.cn/&quot;&gt;&lt;span style=&quot; font-size:11pt; text-decoration: underline; color:#007af4;&quot;&gt;CoCo编辑器？&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;）&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:12pt; font-weight:700; color:#857963;&quot;&gt;5.关于作者。&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;答：小鱼yuzifu（&lt;/span&gt;&lt;a href=&quot;https://shequ.codemao.cn/user/438403&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;编程猫id：438403&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:11pt; color:#857963;&quot;&gt;）！&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:6px; margin-bottom:0px; margin-left:12px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:18px;&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;答：嗯，不会出了...（试着用用&lt;/span&gt;&lt;a href=&quot;https://coco.codemao.cn/&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#857963;&quot;&gt;CoCo编辑器？&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'PingFangSC-Regular'; font-size:12pt; color:#857963;&quot;&gt;）&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_8">
@@ -390,7 +392,7 @@ p, li { white-space: pre-wrap; }
     <string notr="true">background-color:rgb(255, 250, 243)</string>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:18pt; font-weight:700; color:#857963;&quot;&gt;版本号：v1.1.4&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-family:'PingFangSC-Medium'; font-size:18pt; font-weight:700; color:#857963;&quot;&gt;版本号：v1.1.5&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_5">
@@ -434,6 +436,22 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QLabel" name="label_9">
+   <property name="geometry">
+    <rect>
+     <x>293</x>
+     <y>40</y>
+     <width>62</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:rgb(255, 250, 243)</string>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://shequ.codemao.cn/user/438403&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#857963;&quot;&gt;小鱼yuzifu&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
   <zorder>horizontalWidget</zorder>
   <zorder>label</zorder>
   <zorder>pushButton</zorder>
@@ -448,6 +466,7 @@ p, li { white-space: pre-wrap; }
   <zorder>label_6</zorder>
   <zorder>label_8</zorder>
   <zorder>pushButton_5</zorder>
+  <zorder>label_9</zorder>
  </widget>
  <resources/>
  <connections/>
