@@ -1,7 +1,0 @@
-CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSBluetoothAlwaysUsageDescription = "Όταν το Chromium αποκτήσει πρόσβαση, οι ιστότοποι θα μπορούν να σας ζητήσουν πρόσβαση.";
-NSBluetoothPeripheralUsageDescription = "Όταν το Chromium αποκτήσει πρόσβαση, οι ιστότοποι θα μπορούν να σας ζητήσουν πρόσβαση.";
-NSCameraUsageDescription = "Όταν το Chromium αποκτήσει πρόσβαση, οι ιστότοποι θα μπορούν να σας ζητήσουν πρόσβαση.";
-NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSLocationUsageDescription = "Όταν το Chromium αποκτήσει πρόσβαση, οι ιστότοποι θα μπορούν να σας ζητήσουν πρόσβαση.";
-NSMicrophoneUsageDescription = "Όταν το Chromium αποκτήσει πρόσβαση, οι ιστότοποι θα μπορούν να σας ζητήσουν πρόσβαση.";

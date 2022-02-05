@@ -1,7 +1,0 @@
-CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSBluetoothAlwaysUsageDescription = "Miután hozzáférést biztosított a Chromiumnak, a webhelyek is hozzáférést kérhetnek.";
-NSBluetoothPeripheralUsageDescription = "Miután hozzáférést biztosított a Chromiumnak, a webhelyek is hozzáférést kérhetnek.";
-NSCameraUsageDescription = "Miután hozzáférést biztosított a Chromiumnak, a webhelyek is hozzáférést kérhetnek.";
-NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSLocationUsageDescription = "Miután hozzáférést biztosított a Chromiumnak, a webhelyek is hozzáférést kérhetnek.";
-NSMicrophoneUsageDescription = "Miután hozzáférést biztosított a Chromiumnak, a webhelyek is hozzáférést kérhetnek.";

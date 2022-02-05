@@ -1,7 +1,0 @@
-CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSBluetoothAlwaysUsageDescription = "Odată ce Chromium are acces, site-urile web îți vor putea solicita accesul.";
-NSBluetoothPeripheralUsageDescription = "Odată ce Chromium are acces, site-urile web îți vor putea solicita accesul.";
-NSCameraUsageDescription = "Odată ce Chromium are acces, site-urile web îți vor putea solicita accesul.";
-NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSLocationUsageDescription = "Odată ce Chromium are acces, site-urile web îți vor putea solicita accesul.";
-NSMicrophoneUsageDescription = "Odată ce Chromium are acces, site-urile web îți vor putea solicita accesul.";

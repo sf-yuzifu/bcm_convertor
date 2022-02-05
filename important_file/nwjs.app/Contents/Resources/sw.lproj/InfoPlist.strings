@@ -1,7 +1,0 @@
-CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSBluetoothAlwaysUsageDescription = "Chromium itakapopata idhini, tovuti zitaweza kukuomba idhini ya kufikia.";
-NSBluetoothPeripheralUsageDescription = "Chromium itakapopata idhini, tovuti zitaweza kukuomba idhini ya kufikia.";
-NSCameraUsageDescription = "Chromium itakapopata idhini, tovuti zitaweza kukuomba idhini ya kufikia.";
-NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSLocationUsageDescription = "Chromium itakapopata idhini, tovuti zitaweza kukuomba idhini ya kufikia.";
-NSMicrophoneUsageDescription = "Chromium itakapopata idhini, tovuti zitaweza kukuomba idhini ya kufikia.";

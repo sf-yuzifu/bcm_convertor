@@ -1,7 +1,0 @@
-CFBundleGetInfoString = "nwjs 97.0.4692.71, Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSBluetoothAlwaysUsageDescription = "Chromium erişim izni aldıktan sonra, web siteleri de erişim için sizden izin isteyebilecek.";
-NSBluetoothPeripheralUsageDescription = "Chromium erişim izni aldıktan sonra, web siteleri de erişim için sizden izin isteyebilecek.";
-NSCameraUsageDescription = "Chromium erişim izni aldıktan sonra, web siteleri de erişim için sizden izin isteyebilecek.";
-NSHumanReadableCopyright = "Copyright 2022 The Chromium Authors, NW.js contributors, Node.js. All rights reserved.";
-NSLocationUsageDescription = "Chromium erişim izni aldıktan sonra, web siteleri de erişim için sizden izin isteyebilecek.";
-NSMicrophoneUsageDescription = "Chromium erişim izni aldıktan sonra, web siteleri de erişim için sizden izin isteyebilecek.";
