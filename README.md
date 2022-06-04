@@ -2,11 +2,7 @@
     <br>
     kitten3/4格式工厂
     <br>
-    <!---img alt="bcm_convertor" src="https://server.yuzifu.top:25266/down/78G7G3mC3na7"/>
-    <br>
-    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='star'></img></a>
-    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/members'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='fork'></img></a>
-    <br--->
+    
 </h1>
 <br>
 <br>
