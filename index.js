@@ -65,6 +65,7 @@ function createWindow() {
         },
     ];
     if (process.platform === 'darwin') {
+        win.webContents.send('mac')
         menuBar.unshift({
             label: app.getName(),
             submenu: [
