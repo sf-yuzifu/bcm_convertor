@@ -29,8 +29,9 @@
 
     #navbar-button-bar {
         position: absolute;
-        left: 5px;
+        right: 5px;
         display: flex;
+        flex-direction: row-reverse;
     }
 
     .navbar-button {
@@ -188,9 +189,9 @@
             <p class="space">答：kitten3/4会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版</p>
             <p class="space">本，就可能导致转换的程序无法运行，请及时更新后重新转换。</p>
             <br />
-            <p class="bold">2.转换后的APP文件大小远远大于bcm文件大小。</p>
+            <p class="bold">2.转换后的应用程序大小远远大于bcm文件大小。</p>
             <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
-            <p class="space">至少也有300MB左右。</p>
+            <p class="space">至少也有200MB左右。</p>
             <br />
             <p class="bold">3.为什么云变量作品无法使用。</p>
             <p class="space">答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云</p>
@@ -241,6 +242,10 @@
                     const fs = require('fs')
                     name = fileword.responseText
                     if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
+                        datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json')))
+                        datas['name'] = project_name
+                        fs.writeFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json'), JSON.stringify(datas))
+
                         const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
                             name +
                             "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
@@ -276,6 +281,11 @@
 
     require('electron').ipcRenderer.on('about', (event) => {
         document.getElementById('aboutus').style.transform = 'scale(1)'
+    })
+
+    require('electron').ipcRenderer.on('mac', (event) => {
+        document.getElementById('navbar-button-bar').style.left = '5px'
+        document.getElementById('navbar-button-bar').style.flexDirection = 'row'
     })
 
     var convert = document.getElementById("convert")
