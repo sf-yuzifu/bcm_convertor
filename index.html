@@ -232,6 +232,7 @@
         var fileword = new XMLHttpRequest();
         fileword.open("GET", 'https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value, false);
         fileword.send();
+        project_name = JSON.parse(fileword.responseText)['name']
         if (fileword.status == 200) {
             if (JSON.parse(fileword.responseText)['source_urls'][0] != undefined) {
                 if (JSON.parse(fileword.responseText)['version'] != "") {
@@ -239,7 +240,7 @@
                     fileword.send();
                     const fs = require('fs')
                     name = fileword.responseText
-                    if (!fs.existsSync(os.homedir() + "/Desktop/" + JSON.parse(name)['project_name'] + ".app")) {
+                    if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
                         const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
                             name +
                             "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
@@ -249,7 +250,7 @@
                                 return false
                             }
                         })
-                        copyDir(path.join(__dirname, '/important_file/bcm.app'), os.homedir() + "/Desktop/" + JSON.parse(name)['project_name'] + ".app");
+                        copyDir(path.join(__dirname, '/important_file/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
                         return true
                     }
                     else {
