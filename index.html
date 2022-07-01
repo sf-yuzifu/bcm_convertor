@@ -241,7 +241,9 @@
                     fileword.send();
                     const fs = require('fs')
                     name = fileword.responseText
-                    if (systemName == "mac") {
+
+
+                    if (process.platform === 'darwin') {
                         if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
                             datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json')))
                             datas['name'] = project_name
@@ -264,6 +266,28 @@
                             return false
                         }
                     }
+                    else if (process.platform === 'win32') {
+                        if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
+                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/windows/bcm_file/resources/app/package.json')))
+                            datas['name'] = project_name
+                            fs.writeFileSync(path.join(__dirname, '/important_file/windows/bcm_file/resources/app/package.json'), JSON.stringify(datas))
+                            const exec = require('child_process').execSync
+                            exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/", function (error, stdout, stderr) {
+                                if (error) {
+                                    alert(error);
+                                    return false
+                                }
+                            });
+                            return true
+                        }
+                        else {
+                            alert("桌面存在同名文件！")
+                            return false
+                        }
+                    }
+
+
+
                 } else {
                     alert("不是kitten4作品！")
                     return false

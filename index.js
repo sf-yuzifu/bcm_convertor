@@ -64,7 +64,7 @@ function createWindow() {
             ]
         },
     ];
-    if (process.platform === 'windows') {
+    if (process.platform === 'win32') {
         win.webContents.send('windows')
     }
     if (process.platform === 'linux') {
