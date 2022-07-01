@@ -190,8 +190,8 @@
             <p class="space">本，就可能导致转换的程序无法运行，请及时更新后重新转换。</p>
             <br />
             <p class="bold">2.转换后的应用程序大小远远大于bcm文件大小。</p>
-            <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
-            <p class="space">至少也有200MB左右。</p>
+            <p class="space">答：为了让kitten作品独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
+            <p class="space">至少也有60MB左右。</p>
             <br />
             <p class="bold">3.为什么云变量作品无法使用。</p>
             <p class="space">答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云</p>
@@ -226,9 +226,6 @@
     var child_process = require('child_process');
     var os = require('os');
     const path = require('path')
-    function copyDir(src, dist) {
-        child_process.spawn('cp', ['-r', '-pP', src, dist]);
-    }
     function main() {
         var fileword = new XMLHttpRequest();
         fileword.open("GET", 'https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value, false);
@@ -241,7 +238,6 @@
                     fileword.send();
                     const fs = require('fs')
                     name = fileword.responseText
-
 
                     if (process.platform === 'darwin') {
                         if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
@@ -258,7 +254,7 @@
                                     return false
                                 }
                             })
-                            copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
+                            child_process.spawn('cp', ['-r', '-pP', path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app"]);
                             return true
                         }
                         else {
