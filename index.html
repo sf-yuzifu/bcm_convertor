@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>编程猫格式工厂</title>
+</head>
+<style>
+    body {
+        background-color: rgb(255, 252, 247);
+        user-select: none;
+    }
+
+    #navbar {
+        background-color: #fff;
+        width: 100vw;
+        height: 40px;
+        display: flex;
+        position: absolute;
+        top: 0;
+        left: 0;
+        align-items: center;
+        justify-content: center;
+        color: rgb(255, 204, 34);
+        font-size: 16px;
+        font-weight: bold;
+        -webkit-app-region: drag;
+    }
+
+    #navbar-button-bar {
+        position: absolute;
+        left: 5px;
+        display: flex;
+    }
+
+    .navbar-button {
+        display: flex;
+        background-color: #fff;
+        width: 30px;
+        height: 30px;
+        border-width: 0px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+        align-items: center;
+        flex-wrap: nowrap;
+        justify-content: space-evenly;
+        -webkit-app-region: no-drag;
+        -webkit-user-drag: none;
+    }
+
+    .navbar-button:hover {
+        background-color: rgb(255, 250, 243);
+    }
+
+    img {
+        -webkit-user-drag: none;
+    }
+
+    #main,
+    #aboutus {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        flex-direction: column;
+        font-size: 13px;
+        color: rgb(133, 122, 99);
+    }
+
+    #aboutus {
+        display: block;
+        z-index: 3;
+        background-color: #fff;
+        transition: transform 0.5s;
+        transform: scale(0);
+    }
+
+    #convert {
+        width: 120px;
+        height: 36px;
+        background-color: rgb(250, 154, 75);
+        border-radius: 5px;
+        border-color: transparent;
+        color: #fff;
+    }
+
+    #convert:hover {
+        background-color: rgb(248, 136, 36);
+        cursor: pointer;
+    }
+
+    #bcm-id {
+        border: 3px solid rgb(250, 154, 75);
+        border-radius: 5px;
+        width: 180px;
+        height: 25px;
+        text-align: center;
+        margin-block-end: 1em;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+    }
+
+    #close,
+    #minus {
+        z-index: 10;
+    }
+
+    p {
+        margin-block: 5px;
+    }
+
+    #intro {
+        position: absolute;
+        top: 55px;
+        left: 40px;
+        font-size: 12px;
+    }
+
+    .space {
+        margin-left: 12px;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    a {
+        color: currentColor;
+        -webkit-user-drag: none;
+    }
+
+    #version {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        height: 78px;
+        align-items: center;
+    }
+
+    #pic {
+        background: url(./picture/pic_aboutUs.png) no-repeat;
+        width: 252px;
+        height: 78px;
+        z-index: 8;
+        position: absolute;
+    }
+</style>
+
+<body>
+    <div id="navbar">
+        <div id="navbar-button-bar">
+            <button class="navbar-button" id="close"><img width="25px" height="25px" src="./picture/icn_close.png"
+                    onclick="if(document.getElementById('aboutus').style.transform=='scale(0)'||document.getElementById('aboutus').style.transform==''){setWin('close')}else{document.getElementById('aboutus').style.transform='scale(0)'}" /></button>
+            <button class="navbar-button" id="minus"><img width="25px" height="25px" onclick="setWin('min')"
+                    src="./picture/icn_minimize.png" /></button>
+            <button class="navbar-button" id="about"><img width="25px" height="25px"
+                    onclick="document.getElementById('aboutus').style.transform='scale(1)'"
+                    src="./picture/icn_aboutUs.png" /></button>
+        </div>
+        <p>编程猫格式工厂</p>
+    </div>
+    <div id="main">
+        <img width="130px" id="main-pic" style="margin-block-start: 3em;" src="./picture/icn_upload.png" />
+        <p id="main-title" style="margin-block-start: 3em;   margin-block-end: 1em;">将kitten4作品id输入这里进行转换</p>
+        <input type="number" value="6654365"
+            oninput="if(value!=''){value=Math.trunc(value);if(value.length>9){value=value.slice(0,9)}if(value<0){value=0}}"
+            id="bcm-id"></input>
+        <button id="convert">确认</button>
+    </div>
+    <div id="aboutus">
+        <div id="version">
+            <div id="pic"></div>
+            <p style="font-size: 18px;margin-block-start: 10px;z-index: 9;" class="bold">版本号：v1.0.0</p>
+            <a style="font-size: 12px;z-index: 9;" href="https://shequ.codemao.cn/user/438403">小鱼yuzifu</a>
+        </div>
+        <div id="intro">
+            <p style="font-size: 14px;font-weight:bold">关于格式工厂你需要知道：</p>
+            <div style="margin-block: 25px;"></div>
+            <p class="bold">1.生成的程序无法运行。</p>
+            <p class="space">答：kitten3/4会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版</p>
+            <p class="space">本，就可能导致转换的程序无法运行，请及时更新后重新转换。</p>
+            <br />
+            <p class="bold">2.转换后的APP文件大小远远大于bcm文件大小。</p>
+            <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
+            <p class="space">至少也有300MB左右。</p>
+            <br />
+            <p class="bold">3.为什么云变量作品无法使用。</p>
+            <p class="space">答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云</p>
+            <p class="space">变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。</p>
+            <br />
+            <p class="bold">4.关于安卓APK。</p>
+            <p class="space">答：嗯，不会出了...（试着用用<a href="https://coco.codemao.cn/">CoCo编辑器？</a>）</p>
+        </div>
+    </div>
+</body>
+
+
+<script>
+    const { ipcRenderer } = require("electron");
+
+    function setWin(type) {
+        ipcRenderer.send(type);
+    }
+
+    const { shell } = require('electron');
+
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.getAttribute('href');
+            e.preventDefault();
+            shell.openExternal(url);
+        });
+    });
+</script>
+<script>
+    var child_process = require('child_process');
+    var os = require('os');
+    const path = require('path')
+    function copyDir(src, dist) {
+        child_process.spawn('cp', ['-r', '-pP', src, dist]);
+    }
+    function main() {
+        var fileword = new XMLHttpRequest();
+        fileword.open("GET", 'https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value, false);
+        fileword.send();
+        if (fileword.status == 200) {
+            if (JSON.parse(fileword.responseText)['source_urls'][0] != undefined) {
+                if (JSON.parse(fileword.responseText)['version'] != "") {
+                    fileword.open("GET", JSON.parse(fileword.responseText)['source_urls'][0], false);
+                    fileword.send();
+                    const fs = require('fs')
+                    name = fileword.responseText
+                    if (!fs.existsSync(os.homedir() + "/Desktop/" + JSON.parse(name)['project_name'] + ".app")) {
+                        const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                            name +
+                            "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                        fs.writeFile(path.join(__dirname, '/important_file/bcm.app/Contents/Resources/app/main/preload.js'), content, err => {
+                            if (err) {
+                                alert(err)
+                                return false
+                            }
+                        })
+                        copyDir(path.join(__dirname, '/important_file/bcm.app'), os.homedir() + "/Desktop/" + JSON.parse(name)['project_name'] + ".app");
+                        return true
+                    }
+                    else {
+                        alert("桌面存在同名文件！")
+                        return false
+                    }
+                } else {
+                    alert("不是kitten4作品！")
+                    return false
+                }
+            }
+            else {
+                alert("找不到作品！")
+                return false
+            }
+        }
+        else {
+            alert("找不到作品！")
+            return false
+        }
+
+    }
+
+    require('electron').ipcRenderer.on('about', (event) => {
+        document.getElementById('aboutus').style.transform = 'scale(1)'
+    })
+
+    var convert = document.getElementById("convert")
+    convert.onclick = function () {
+        if (convert.innerHTML == "确认") {
+            if (main()) {
+                convert.innerHTML = "完成"
+                document.getElementById("main-pic").src = "./picture/success.png"
+                document.getElementById("main-title").style.display = "none"
+                document.getElementById("bcm-id").style.display = "none"
+                document.getElementById("main-pic").width = 259
+                document.getElementById("main-pic").style.marginBlock = "0 2em";
+            }
+        }
+        else {
+            document.getElementById("main-pic").src = "./picture/icn_upload.png"
+            document.getElementById("main-pic").width = 130
+            document.getElementById("main-title").style.display = "block"
+            document.getElementById("bcm-id").style.display = "block"
+            document.getElementById("main-pic").style.marginBlock = "3em 0";
+            convert.innerHTML = "确认"
+        }
+    }
+
+</script>
+
+</html>
