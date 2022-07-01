@@ -241,26 +241,28 @@
                     fileword.send();
                     const fs = require('fs')
                     name = fileword.responseText
-                    if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
-                        datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json')))
-                        datas['name'] = project_name
-                        fs.writeFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json'), JSON.stringify(datas))
+                    if (systemName == "mac") {
+                        if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
+                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json')))
+                            datas['name'] = project_name
+                            fs.writeFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json'), JSON.stringify(datas))
 
-                        const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
-                            name +
-                            "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                        fs.writeFile(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/main/preload.js'), content, err => {
-                            if (err) {
-                                alert(err)
-                                return false
-                            }
-                        })
-                        copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
-                        return true
-                    }
-                    else {
-                        alert("桌面存在同名文件！")
-                        return false
+                            const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                                name +
+                                "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                            fs.writeFile(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/main/preload.js'), content, err => {
+                                if (err) {
+                                    alert(err)
+                                    return false
+                                }
+                            })
+                            copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
+                            return true
+                        }
+                        else {
+                            alert("桌面存在同名文件！")
+                            return false
+                        }
                     }
                 } else {
                     alert("不是kitten4作品！")
@@ -284,8 +286,17 @@
     })
 
     require('electron').ipcRenderer.on('mac', (event) => {
+        window.systemName = "mac"
         document.getElementById('navbar-button-bar').style.left = '5px'
         document.getElementById('navbar-button-bar').style.flexDirection = 'row'
+    })
+
+    require('electron').ipcRenderer.on('windows', (event) => {
+        window.systemName = "win"
+    })
+
+    require('electron').ipcRenderer.on('linux', (event) => {
+        window.systemName = "linux"
     })
 
     var convert = document.getElementById("convert")
