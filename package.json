@@ -30,7 +30,7 @@
       "packagerConfig": {
         "appVersion": "1.0.0",
         "name": "编程猫格式工厂",
-        "icon": "icon-windowed.icns",
+        "icon": "./icon/icon-windowed",
         "appCopyright": "小鱼yuzifu"
       },
       "makers": [
