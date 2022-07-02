@@ -1,0 +1,14 @@
+{
+  "name": "编程猫",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "codemao sf-yuzifu",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^19.0.7"
+  }
+}

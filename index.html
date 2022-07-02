@@ -227,7 +227,7 @@
     var os = require('os');
     const path = require('path')
     function copyDir(src, dist) {
-        child_process.spawn('cp', ['-r', '-pP', src, dist]);
+        child_process.spawnSync('cp', ['-r', '-pP', src, dist]);
     }
     function main() {
         var fileword = new XMLHttpRequest();
@@ -244,15 +244,17 @@
 
                     if (process.platform === 'darwin') {
                         if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
-                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json')))
+                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten4/package.json')))
                             datas['name'] = project_name
-                            fs.writeFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/package.json'), JSON.stringify(datas))
+                            fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas))
 
                             const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
                                 name +
                                 "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                            fs.writeFileSync(path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app/main/preload.js'), content)
+                            fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content)
+                            copyDir(path.join(__dirname, '/important_file/kitten3/'), path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'));
                             copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
+                            child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
                             return true
                         }
                         else {
@@ -262,15 +264,17 @@
                     }
                     else if (process.platform === 'win32') {
                         if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
-                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/windows/bcm_file/resources/app/package.json')))
+                            datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten4/package.json')))
                             datas['name'] = project_name
-                            fs.writeFileSync(path.join(__dirname, '/important_file/windows/bcm_file/resources/app/package.json'), JSON.stringify(datas))
+                            fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas))
                             const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
                                 name +
                                 "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                            fs.writeFileSync(path.join(__dirname, '/important_file/windows/bcm_file/resources/app/main/preload.js'), content)
+                            fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content)
                             const exec = require('child_process').execSync
-                            exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/", function (error, stdout, stderr) {
+                            
+                            child_process.spawnSync('xcopy', [path.join(__dirname, '/important_file/kitten4/')+'/*',path.join(__dirname, '/important_file/windows/bcm_file/resources')+'/app/','/y','/e','/i','/q']);
+                            exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q "+path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), function (error, stdout, stderr) {
                                 if (error) {
                                     alert(error);
                                     return false
