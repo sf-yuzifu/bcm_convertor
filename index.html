@@ -330,7 +330,7 @@
                         else if (process.platform === 'win32') {
                             if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
                                 const exec = require('child_process').execSync
-                                child_process.spawnSync('xcopy', [path.join(__dirname, '/important_file/kitten4/') + '/*', path.join(__dirname, '/important_file/windows/bcm_file/resources') + '/app/', '/y', '/e', '/i', '/q']);
+                                fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true })
                                 exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), function (error, stdout, stderr) {
                                     if (error) {
                                         return false
@@ -390,7 +390,25 @@
                         }
                     }
                     else if (process.platform === 'win32') {
-
+                        if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
+                            const exec = require('child_process').execSync
+                            fs.cpSync(path.join(__dirname, '/important_file/kitten3'), path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true })
+                            exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), function (error, stdout, stderr) {
+                                if (error) {
+                                    return false
+                                }
+                            });
+                            document.getElementById("change").style.display = "none"
+                            convert.innerHTML = "完成"
+                            document.getElementById("main-pic").src = "./picture/success.png"
+                            document.getElementById("main-title").style.display = "none"
+                            document.getElementById("bcm-id").style.display = "none"
+                            document.getElementById("main-pic").width = 259
+                            document.getElementById("main-pic").style.marginBlock = "0 2em";
+                        }
+                        else {
+                            alert("桌面存在同名文件！")
+                        }
                     }
                 };
                 file_reader.readAsText(file, "UTF-8");
@@ -439,9 +457,13 @@
             document.getElementById("main-title").style.display = "block"
             if (atype == 'k4') {
                 document.getElementById("bcm-id").style.display = "block"
+                convert.innerHTML = "确认"
+            }
+            else{
+                convert.innerHTML = "选择文件"
             }
             document.getElementById("main-pic").style.marginBlock = "3em 0";
-            convert.innerHTML = "确认"
+            
         }
     }
 
