@@ -250,9 +250,9 @@
         <div id="intro">
             <p style="font-size: 14px;font-weight:bold">关于格式工厂你需要知道：</p>
             <div style="margin-block: 25px;"></div>
-            <p class="bold">1.生成的程序无法运行。</p>
-            <p class="space">答：kitten3/4会时常更新，包括会新增积木等等。因此，格式工厂版本如果低于源码编辑器的版</p>
-            <p class="space">本，就可能导致转换的程序无法运行，请及时更新后重新转换。</p>
+            <p class="bold">1.生成的程序无法运行/找不到文件存放位置。</p>
+            <p class="space">答：如果无法打开，则为软件bug。可联系作者。文件存放位置Windows/Mac OS在桌面上，</p>
+            <p class="space">而Linux在用户home目录下。</p>
             <br />
             <p class="bold">2.转换后的应用程序大小远远大于bcm文件大小。</p>
             <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
@@ -348,7 +348,9 @@
                                 const exec = require('child_process').execSync
                                 fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
                                 exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
-                                exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                                if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                                    exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                                }
                                 exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
                                 return true
                             }
@@ -429,7 +431,9 @@
                             const exec = require('child_process').execSync
                             fs.cpSync(path.join(__dirname, '/important_file/kitten3'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
                             exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
-                            exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                                exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                            }
                             exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
                             document.getElementById("change").style.display = "none"
                             convert.innerHTML = "完成"
