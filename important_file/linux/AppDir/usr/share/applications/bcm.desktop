@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=
+Exec=bcm
+Icon=bcm
+Name=新的作品
+Terminal=false
+Type=Application
+X-Deepin-Vendor=user-custom

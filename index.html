@@ -327,7 +327,7 @@
                                 alert("桌面存在同名文件！")
                             }
                         }
-                        else if (process.platform === 'win32') {
+                        else if (process.platfrm === 'win32') {
                             if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
                                 const exec = require('child_process').execSync
                                 fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true })
@@ -336,6 +336,20 @@
                                         return false
                                     }
                                 });
+
+                                return true
+                            }
+                            else {
+                                alert("桌面存在同名文件！")
+                            }
+                        }
+                        else if (process.platform === 'linux') {
+                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                                const exec = require('child_process').execSync
+                                fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
+                                exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
+                                exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                                exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
                                 return true
                             }
                             else {
@@ -410,6 +424,25 @@
                             alert("桌面存在同名文件！")
                         }
                     }
+                    else if (process.platform === 'linux') {
+                        if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                            const exec = require('child_process').execSync
+                            fs.cpSync(path.join(__dirname, '/important_file/kitten3'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
+                            exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
+                            exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                            exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
+                            document.getElementById("change").style.display = "none"
+                            convert.innerHTML = "完成"
+                            document.getElementById("main-pic").src = "./picture/success.png"
+                            document.getElementById("main-title").style.display = "none"
+                            document.getElementById("bcm-id").style.display = "none"
+                            document.getElementById("main-pic").width = 259
+                            document.getElementById("main-pic").style.marginBlock = "0 2em";
+                        }
+                        else {
+                            alert("桌面存在同名文件！")
+                        }
+                    }
                 };
                 file_reader.readAsText(file, "UTF-8");
             };
@@ -459,11 +492,11 @@
                 document.getElementById("bcm-id").style.display = "block"
                 convert.innerHTML = "确认"
             }
-            else{
+            else {
                 convert.innerHTML = "选择文件"
             }
             document.getElementById("main-pic").style.marginBlock = "3em 0";
-            
+
         }
     }
 
