@@ -35,8 +35,7 @@
 
 #### 1. 直接下载文件安装
 
-> 更新时间：2022-7-3（Windows/Mac OS）</br>
-> 更新时间：2022-6-5（Linux）
+> 更新时间：2022-7-3（Windows/Mac OS/Linux）
 
 * Windows/Mac OS/Linux：[https://cloud.yuzifu.top/s/oNck](https://cloud.yuzifu.top/s/oNck)
 
