@@ -6,8 +6,8 @@
     <br>
     <a href='https://gitee.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='star'></img></a>
     <a href='https://gitee.com/sf-yuzifu/bcm_convertor/members'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='fork'></img></a>
-    <a href='https://github.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://github.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='star'></img></a>
-    <a href='https://github.com/sf-yuzifu/bcm_convertor/members'><img src='https://github.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='fork'></img></a>
+    <a href='https://github.com/214545666/bcm_convertor/stargazers'><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/214545666/bcm_convertor?style=social"></a>
+    <a href='https://github.com/214545666/bcm_convertor/members'><img alt="GitHub forks" src="https://img.shields.io/github/forks/214545666/bcm_convertor?style=social"></a>
     <br>
 </h1>
 <br>
