@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>编程猫格式工厂</title>
 </head>
+<script src="nprogress.js"></script>
 <style>
     body {
         background-color: rgb(255, 252, 247);
@@ -101,8 +102,14 @@
         border-radius: 5px;
         width: 180px;
         height: 25px;
+        opacity: 1;
         text-align: center;
         margin-block-end: 1em;
+        transition: all 0.3s;
+    }
+
+    #bcm-id:hover {
+        border: 3px solid rgb(248, 136, 36);
     }
 
     input::-webkit-outer-spin-button,
@@ -199,6 +206,35 @@
         transition: left 0.3s;
         transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
+
+    .swal-overlay {
+        background-color: transparent;
+    }
+
+    .swal-footer {
+        text-align: center;
+    }
+
+    .swal-modal {
+        min-width: 374px;
+        width: 374px;
+        box-shadow: 0px 2px 8px 0px rgba(95, 53, 24, 0.2);
+        border-radius: 4px 4px 0px 4px;
+    }
+
+    #loading {
+        width: 0vw;
+        height: 10px;
+        background-color: rgb(248, 136, 36);
+        position: absolute;
+        top: 40px;
+        display: flex;
+        transition: width 0.3s, opacity 0.3s;
+        align-items: center;
+        opacity: 0;
+        justify-content: flex-start;
+        left: 0;
+    }
 </style>
 
 <body>
@@ -215,32 +251,22 @@
         <p>编程猫格式工厂</p>
     </div>
     <div id="change">
-        <span onclick="
-            window.atype='k3';
-            document.getElementById('seld').style.left='2px';
-            this.style.color='#fff';
-            document.getElementById('bcm-id').style.display = 'none';
-            document.getElementById('main-title').innerHTML = '选择kitten3作品文件进行转换';
-            convert.innerHTML = '选择文件'
-            document.getElementById('k4').style.color='rgb(133, 122, 99)';" class="into" id="k3">k3</span>
-        <span style="color: #fff" onclick="
-            window.atype='k4';document.getElementById('seld').style.left='37px';
-            this.style.color='#fff';
-            document.getElementById('bcm-id').style.display = 'block';
-            convert.innerHTML = '确认'
-            document.getElementById('main-title').innerHTML = '将kitten4作品id输入这里进行转换';
-            document.getElementById('k3').style.color='rgb(133, 122, 99)';
-            document.getElementById('k3').style.color='rgb(133, 122, 99)';" class="into" id="k4">k4</span>
+        <span onclick="change_into('kitten3','2px',0,'0','0','选择文件','选择kitten3作品文件进行转换')" class="into"
+            id="kitten3">k3</span>
+        <span style="color: #fff" onclick="change_into('kitten4','37px',1,'25px','1em','确认','将kitten4作品id输入这里进行转换')"
+            class="into" id="kitten4">k4</span>
         <div id="seld"></div>
     </div>
     <div id="main">
         <img width="130px" id="main-pic" style="margin-block-start: 3em;" src="./picture/icn_upload.png" />
         <p id="main-title" style="margin-block-start: 3em;   margin-block-end: 1em;">将kitten4作品id输入这里进行转换</p>
+
         <input type="number" value="6654365"
             oninput="if(value!=''){value=Math.trunc(value);if(value.length>9){value=value.slice(0,9)}if(value<0){value=0}}"
             id="bcm-id"></input>
         <button id="convert">确认</button>
     </div>
+    <div id="loading"></div>
     <div id="aboutus">
         <div id="version">
             <div id="pic"></div>
@@ -268,9 +294,39 @@
     </div>
 </body>
 
+<script>
+
+    document.onmouseup = function (e) {
+        if (e.button == 2) {
+            navigator.clipboard
+                .readText()
+                .then((v) => {
+                    document.getElementById("bcm-id").value = v;
+                })
+                .catch((v) => {
+                    console.log("获取剪贴板失败: ", v);
+                });
+
+        }
+    }
+
+    function change_into(kitten, left, opacity, height, marginBlockEnd, innerHTML1, innerHTML2) {
+        if (convert_into == 0) {
+            document.getElementById('seld').style.left = left;
+            document.getElementById('bcm-id').style.opacity = opacity;
+            document.getElementById('bcm-id').style.height = height;
+            document.getElementById('bcm-id').style.marginBlockEnd = marginBlockEnd;
+            convert.innerHTML = innerHTML1
+            document.getElementById('main-title').innerHTML = innerHTML2;
+            document.getElementById(atype).style.color = 'rgb(133, 122, 99)';
+            document.getElementById(kitten).style.color = '#fff';
+            window.atype = kitten;
+        }
+    }
+</script>
 
 <script>
-    window.atype = 'k4';
+    window.atype = 'kitten4';
     const { ipcRenderer } = require("electron");
 
     function setWin(type) {
@@ -289,86 +345,55 @@
     });
 </script>
 <script>
+    window.convert_into = 0;
     var child_process = require('child_process');
     var os = require('os');
     const path = require('path')
-    function copyDir(src, dist) {
-        child_process.spawnSync('cp', ['-r', '-pP', src, dist]);
-    }
     function main() {
+        window.convert_into = 1;
         const fs = require('fs')
-        if (atype == 'k4') {
-            var fileword = new XMLHttpRequest();
-            fileword.open("GET", 'https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value, false);
-            fileword.send();
-            project_name = JSON.parse(fileword.responseText)['name']
-            if (fileword.status == 200) {
-                if (JSON.parse(fileword.responseText)['source_urls'][0] != undefined) {
-                    if (JSON.parse(fileword.responseText)['version'] != "") {
-                        fileword.open("GET", JSON.parse(fileword.responseText)['source_urls'][0], false);
-                        fileword.send();
-                        name = fileword.responseText
-                        datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten4/package.json')))
-                        datas['name'] = project_name
-                        fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas))
-                        const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
-                            name +
-                            "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                        fs.writeFileSync(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content)
-
-                        if (process.platform === 'darwin') {
-                            if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
-                                copyDir(path.join(__dirname, '/important_file/kitten4/'), path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'));
-                                copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
-                                child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
-                                return true
-                            }
-                            else {
-                                alert("桌面存在同名文件！")
-                            }
+        const swal = require('sweetalert')
+        if (atype == 'kitten4') {
+            NProgress.start()
+            fetch('https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value)
+                .then(response => response.text())
+                .then(data => {
+                    project_name = JSON.parse(data)['name'];
+                    if (JSON.parse(data)['source_urls'][0] != undefined) {
+                        if (JSON.parse(data)['version'] != "") {
+                            fetch(JSON.parse(data)['source_urls'][0])
+                                .then(response => response.text())
+                                .then(data => {
+                                    name = data
+                                    fs.readFile(path.join(__dirname, '/important_file/kitten4/package.json'), (err, fr) => {
+                                        NProgress.inc()
+                                        datas = JSON.parse(fr);
+                                        datas['name'] = project_name;
+                                        fs.writeFile(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas), (e) => {
+                                            NProgress.inc()
+                                            const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                                                name +
+                                                "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                                            fs.writeFile(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content, () => {
+                                                NProgress.inc()
+                                                main_into()
+                                            })
+                                        })
+                                    })
+                                })
                         }
-                        else if (process.platfrm === 'win32') {
-                            if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
-                                const exec = require('child_process').execSync
-                                fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true })
-                                exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), function (error, stdout, stderr) {
-                                    if (error) {
-                                        return false
-                                    }
-                                });
-
-                                return true
-                            }
-                            else {
-                                alert("桌面存在同名文件！")
-                            }
+                        else {
+                            swal({ title: "不是kitten4作品！", text: "请输入kitten4的作品id", timer: 2000, buttons: false });
+                            NProgress.done()
                         }
-                        else if (process.platform === 'linux') {
-                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
-                                const exec = require('child_process').execSync
-                                fs.cpSync(path.join(__dirname, '/important_file/kitten4'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
-                                exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
-                                if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
-                                    exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
-                                }
-                                exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
-                                return true
-                            }
-                            else {
-                                alert("桌面存在同名文件！")
-                            }
-                        }
-                    } else {
-                        alert("不是kitten4作品！")
                     }
-                }
-                else {
-                    alert("找不到作品！")
-                }
-            }
-            else {
-                alert("找不到作品！")
-            }
+                    else {
+                        swal({ title: "找不到作品！", text: "请确保作品有发布过一次", timer: 2000, buttons: false });
+                        NProgress.done()
+                    }
+                })
+                .catch(e => { swal({ title: "找不到作品", text: "请检查作品id是否正确或者网络是否连接", timer: 2000, buttons: false }); NProgress.done() })
+
         }
         else {
             var input = document.createElement("input");
@@ -379,112 +404,107 @@
             input.setAttribute("accept", ".bcm");
             document.body.appendChild(input);
             input.onchange = function (event) {
+                NProgress.start()
+                NProgress.inc()
                 let file = event.target.files[0];
                 let file_reader = new FileReader();
                 file_reader.onload = () => {
+                    NProgress.inc()
                     var fc = file_reader.result;
                     datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten3/package.json')))
                     project_name = JSON.parse(fc)['project_name']
                     datas['name'] = project_name
-                    fs.writeFileSync(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas))
-                    fs.writeFileSync(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc)
-                    if (process.platform === 'darwin') {
-                        if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
-                            copyDir(path.join(__dirname, '/important_file/kitten3/'), path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'));
-                            copyDir(path.join(__dirname, '/important_file/mac/bcm.app'), os.homedir() + "/Desktop/" + project_name + ".app");
-                            child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
-                            document.getElementById("change").style.display = "none"
-                            convert.innerHTML = "完成"
-                            document.getElementById("main-pic").src = "./picture/success.png"
-                            document.getElementById("main-title").style.display = "none"
-                            document.getElementById("bcm-id").style.display = "none"
-                            document.getElementById("main-pic").width = 259
-                            document.getElementById("main-pic").style.marginBlock = "0 2em";
-                        }
-                        else {
-                            alert("桌面存在同名文件！")
-                        }
-                    }
-                    else if (process.platform === 'win32') {
-                        if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
-                            const exec = require('child_process').execSync
-                            fs.cpSync(path.join(__dirname, '/important_file/kitten3'), path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true })
-                            exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), function (error, stdout, stderr) {
-                                if (error) {
-                                    return false
-                                }
-                            });
-                            document.getElementById("change").style.display = "none"
-                            convert.innerHTML = "完成"
-                            document.getElementById("main-pic").src = "./picture/success.png"
-                            document.getElementById("main-title").style.display = "none"
-                            document.getElementById("bcm-id").style.display = "none"
-                            document.getElementById("main-pic").width = 259
-                            document.getElementById("main-pic").style.marginBlock = "0 2em";
-                        }
-                        else {
-                            alert("桌面存在同名文件！")
-                        }
-                    }
-                    else if (process.platform === 'linux') {
-                        if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
-                            const exec = require('child_process').execSync
-                            fs.cpSync(path.join(__dirname, '/important_file/kitten3'), path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true })
-                            exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"');
-                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
-                                exec('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
-                            }
-                            exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'));
-                            document.getElementById("change").style.display = "none"
-                            convert.innerHTML = "完成"
-                            document.getElementById("main-pic").src = "./picture/success.png"
-                            document.getElementById("main-title").style.display = "none"
-                            document.getElementById("bcm-id").style.display = "none"
-                            document.getElementById("main-pic").width = 259
-                            document.getElementById("main-pic").style.marginBlock = "0 2em";
-                        }
-                        else {
-                            alert("桌面存在同名文件！")
-                        }
-                    }
+                    fs.writeFile(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas), () => {
+                        NProgress.inc()
+                        fs.writeFile(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc, () => {
+                            NProgress.inc()
+                            main_into()
+                        })
+                    })
                 };
                 file_reader.readAsText(file, "UTF-8");
             };
             input.click();
-
-
         }
+
+        function main_into() {
+            if (process.platform === 'darwin') {
+                if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
+                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'), { recursive: true }, () => {
+                        child_process.exec('cp -r -pP '+path.join(__dirname, '/important_file/mac/bcm.app')+' '+os.homedir() + "/Desktop/" + project_name + ".app", () => {
+                            child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
+                            sittu()
+                        });
+                    })
+                }
+                else {
+                    swal({ title: "桌面存在同名文件！", text: "请在桌面删除同名文件", timer: 2000, buttons: false });
+                    NProgress.done()
+                }
+            }
+            else if (process.platform === 'win32') {
+                if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
+                    const exec = require('child_process').exec
+                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true }, () => {
+                        exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), () => {
+                            sittu()
+                        })
+                    })
+                }
+                else {
+                    swal({ title: "桌面存在同名文件！", text: "请在桌面删除同名文件", timer: 2000, buttons: false });
+                    NProgress.done()
+                }
+            }
+            else if (process.platform === 'linux') {
+                if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                    const exec = require('child_process')
+                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true }, () => {
+                        exec.exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"', () => {
+                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                                exec.execSync('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
+                            }
+                            exec.exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), () => {
+                                sittu()
+                            });
+                        });
+                    })
+                }
+                else {
+                    swal({ title: "Home目录下存在同名文件！", text: "请在"+os.homedir()+"/删除同名文件", timer: 2000, buttons: false });
+                    NProgress.done()
+                }
+            }
+        }
+    }
+
+    function sittu() {
+        window.convert_into = 2
+        NProgress.done()
+        document.getElementById("change").style.display = "none"
+        document.getElementById("main-title").style.display = "none"
+        document.getElementById("bcm-id").style.display = "none"
+        convert.innerHTML = "完成"
+        document.getElementById("main-pic").src = "./picture/success.png"
+        document.getElementById("main-pic").width = 259
+        document.getElementById("main-pic").style.marginBlock = "0 2em";
     }
 
     require('electron').ipcRenderer.on('about', (event) => {
         document.getElementById('aboutus').style.transform = 'scale(1)'
     })
 
-    require('electron').ipcRenderer.on('mac', (event) => {
-        window.systemName = "mac"
+    if (process.platform === 'darwin') {
         document.getElementById('navbar-button-bar').style.left = '5px'
         document.getElementById('navbar-button-bar').style.flexDirection = 'row'
-    })
+    }
 
-    require('electron').ipcRenderer.on('windows', (event) => {
-        window.systemName = "win"
-    })
-
-    require('electron').ipcRenderer.on('linux', (event) => {
-        window.systemName = "linux"
-    })
 
     var convert = document.getElementById("convert")
     convert.onclick = function () {
-        if ((atype == 'k4' & convert.innerHTML == "确认") || (atype == 'k3' & convert.innerHTML == "选择文件")) {
-            if (main()) {
-                document.getElementById("change").style.display = "none"
-                convert.innerHTML = "完成"
-                document.getElementById("main-pic").src = "./picture/success.png"
-                document.getElementById("main-title").style.display = "none"
-                document.getElementById("bcm-id").style.display = "none"
-                document.getElementById("main-pic").width = 259
-                document.getElementById("main-pic").style.marginBlock = "0 2em";
+        if ((atype == 'kitten4' & convert.innerHTML == "确认") || (atype == 'kitten3' & convert.innerHTML == "选择文件")) {
+            if (convert_into == 0) {
+                main()
             }
         }
         else {
@@ -492,15 +512,17 @@
             document.getElementById("main-pic").width = 130
             document.getElementById("change").style.display = "flex"
             document.getElementById("main-title").style.display = "block"
-            if (atype == 'k4') {
-                document.getElementById("bcm-id").style.display = "block"
+            document.getElementById("bcm-id").style.display = "block"
+            if (atype == 'kitten4') {
+                document.getElementById("bcm-id").style.opacity = 1
                 convert.innerHTML = "确认"
             }
             else {
                 convert.innerHTML = "选择文件"
+                document.getElementById("bcm-id").style.opacity = 0
             }
             document.getElementById("main-pic").style.marginBlock = "3em 0";
-
+            window.convert_into = 0
         }
     }
 

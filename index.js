@@ -64,14 +64,8 @@ function createWindow() {
             ]
         },
     ];
-    if (process.platform === 'win32') {
-        win.webContents.send('windows')
-    }
-    if (process.platform === 'linux') {
-        win.webContents.send('linux')
-    }
+
     if (process.platform === 'darwin') {
-        win.webContents.send('mac')
         menuBar.unshift({
             label: app.getName(),
             submenu: [

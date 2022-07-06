@@ -6,8 +6,8 @@
     <br>
     <a href='https://gitee.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='star'></img></a>
     <a href='https://gitee.com/sf-yuzifu/bcm_convertor/members'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='fork'></img></a>
-    <a href='https://github.com/214545666/bcm_convertor/stargazers'><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/214545666/bcm_convertor?style=social"></a>
-    <a href='https://github.com/214545666/bcm_convertor/network/members'><img alt="GitHub forks" src="https://img.shields.io/github/forks/214545666/bcm_convertor?style=social"></a>
+<a href='https://github.com/214545666/bcm_convertor/stargazers'><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/214545666/bcm_convertor?style=social"></a>
+    <a href='https://github.com/214545666/bcm_convertor/members'><img alt="GitHub forks" src="https://img.shields.io/github/forks/214545666/bcm_convertor?style=social"></a>
     <br>
 </h1>
 <br>
@@ -27,17 +27,17 @@
 * 无次数限制  
 * 等待时间短
 * 并入kitten3/4转换
+* 动画如同吃了dofu般丝滑～
 
 #### 缺点
 
 * 应用图标需要手动更换
-* 时不时卡顿
 
 ### 安装方式
 
 #### 1. 直接下载文件安装
 
-> 更新时间：2022-7-3（Windows/Mac OS/Linux）
+> 更新时间：2022-7-6（Windows/Mac OS/Linux）
 
 * Windows/Mac OS/Linux：[https://cloud.yuzifu.top/s/oNck](https://cloud.yuzifu.top/s/oNck)
 
@@ -55,7 +55,7 @@ npm start
 打包也只需要下面的一行代码
 
 ```bash
-npm run make
+npm run build
 ```
 
 ### 感谢名单
