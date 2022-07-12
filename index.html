@@ -162,17 +162,40 @@
         position: absolute;
     }
 
-    #change {
+    #funcs {
         position: absolute;
+        width: 125px;
         top: 50px;
-        background-color: rgb(255, 231, 189);
         display: flex;
+        left: 8px;
+        align-items: center;
+        justify-content: space-between;
+        align-content: center;
+        z-index: 1;
+    }
+
+    #change {
+        background-color: rgb(255, 231, 189);
+        border-radius: 5px;
         padding: 5px 2px;
+        display: flex;
+    }
+
+    #line {
+        width: 25px;
+        height: 25px;
+    }
+
+    #wifi {
+        width: 40px;
+        display: flex;
+        height: 40px;
         align-items: center;
         justify-content: center;
-        align-content: center;
         border-radius: 5px;
-        z-index: 1;
+        align-content: center;
+        background-color: rgb(255, 231, 189);
+        transition: background-color 0.3s;
     }
 
     .into {
@@ -250,12 +273,17 @@
         </div>
         <p>编程猫格式工厂</p>
     </div>
-    <div id="change">
-        <span onclick="change_into('kitten3','2px',0,'0','0','选择文件','选择kitten3作品文件进行转换')" class="into"
-            id="kitten3">k3</span>
-        <span style="color: #fff" onclick="change_into('kitten4','37px',1,'25px','1em','确认','将kitten4作品id输入这里进行转换')"
-            class="into" id="kitten4">k4</span>
-        <div id="seld"></div>
+    <div id="funcs">
+        <div id="change">
+            <span onclick="change_into('kitten3','2px',0,'0','0','选择文件','选择kitten3作品文件进行转换')" class="into"
+                id="kitten3">k3</span>
+            <span style="color: #fff" onclick="change_into('kitten4','37px',1,'25px','1em','确认','将kitten4作品id输入这里进行转换')"
+                class="into" id="kitten4">k4</span>
+            <div id="seld"></div>
+        </div>
+        <div id="wifi">
+            <img id="line" class="offline" src="./picture/close-wifi.svg">
+        </div>
     </div>
     <div id="main">
         <img width="130px" id="main-pic" style="margin-block-start: 3em;" src="./picture/icn_upload.png" />
@@ -270,7 +298,7 @@
     <div id="aboutus">
         <div id="version">
             <div id="pic"></div>
-            <p style="font-size: 18px;margin-block-start: 10px;z-index: 9;" class="bold">版本号：v1.0.0</p>
+            <p style="font-size: 18px;margin-block-start: 10px;z-index: 9;" class="bold">版本号：v1.1.0</p>
             <a style="font-size: 12px;z-index: 9;" href="https://shequ.codemao.cn/user/438403">小鱼yuzifu</a>
         </div>
         <div id="intro">
@@ -284,9 +312,9 @@
             <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
             <p class="space">至少也有200MB左右。</p>
             <br />
-            <p class="bold">3.为什么云变量作品无法使用。</p>
+            <p class="bold">3.为什么离线模式下云变量作品无法使用。</p>
             <p class="space">答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云</p>
-            <p class="space">变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。</p>
+            <p class="space">变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。（但可以使用在线转换）</p>
             <br />
             <p class="bold">4.关于安卓APK。</p>
             <p class="space">答：嗯，不会出了...（试着用用<a href="https://coco.codemao.cn/">CoCo编辑器？</a>）</p>
@@ -313,11 +341,21 @@
     function change_into(kitten, left, opacity, height, marginBlockEnd, innerHTML1, innerHTML2) {
         if (convert_into == 0) {
             document.getElementById('seld').style.left = left;
-            document.getElementById('bcm-id').style.opacity = opacity;
-            document.getElementById('bcm-id').style.height = height;
-            document.getElementById('bcm-id').style.marginBlockEnd = marginBlockEnd;
-            convert.innerHTML = innerHTML1
-            document.getElementById('main-title').innerHTML = innerHTML2;
+            if (window.aline != 'online') {
+                document.getElementById('bcm-id').style.opacity = opacity;
+                document.getElementById('bcm-id').style.height = height;
+                document.getElementById('bcm-id').style.marginBlockEnd = marginBlockEnd;
+                convert.innerHTML = innerHTML1
+                document.getElementById('main-title').innerHTML = innerHTML2;
+            }
+            else {
+                document.getElementById('bcm-id').style.opacity = 1;
+                document.getElementById('bcm-id').style.height = '25px';
+                document.getElementById('bcm-id').style.marginBlockEnd = '1em';
+                convert.innerHTML = '确认'
+                document.getElementById('main-title').innerHTML = '将' + kitten + '作品id输入这里进行转换';
+            }
+
             document.getElementById(atype).style.color = 'rgb(133, 122, 99)';
             document.getElementById(kitten).style.color = '#fff';
             window.atype = kitten;
@@ -327,6 +365,7 @@
 
 <script>
     window.atype = 'kitten4';
+    window.aline = 'offline';
     const { ipcRenderer } = require("electron");
 
     function setWin(type) {
@@ -353,85 +392,119 @@
         window.convert_into = 1;
         const fs = require('fs')
         const swal = require('sweetalert')
-        if (atype == 'kitten4') {
+        if (aline == 'offline') {
+            if (atype == 'kitten4') {
+                NProgress.start()
+                fetch('https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value)
+                    .then(response => response.text())
+                    .then(data => {
+                        project_name = JSON.parse(data)['name'];
+                        if (JSON.parse(data)['source_urls'][0] != undefined) {
+                            if (JSON.parse(data)['version'] != "") {
+                                fetch(JSON.parse(data)['source_urls'][0])
+                                    .then(response => response.text())
+                                    .then(data => {
+                                        name = data
+                                        fs.readFile(path.join(__dirname, '/important_file/kitten4/package.json'), (err, fr) => {
+                                            NProgress.inc()
+                                            datas = JSON.parse(fr);
+                                            datas['name'] = project_name;
+                                            fs.writeFile(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas), (e) => {
+                                                NProgress.inc()
+                                                const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                                                    name +
+                                                    "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                                                fs.writeFile(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content, () => {
+                                                    NProgress.inc()
+                                                    main_into('kitten4')
+                                                })
+                                            })
+                                        })
+                                    })
+                            }
+                            else {
+                                swal({ title: "不是kitten4作品！", text: "请输入kitten4的作品id", timer: 2000, buttons: false });
+                                NProgress.done()
+                            }
+                        }
+                        else {
+                            swal({ title: "找不到作品！", text: "请确保作品有发布过一次", timer: 2000, buttons: false });
+                            NProgress.done()
+                        }
+                    })
+                    .catch(e => { swal({ title: "找不到作品", text: "请检查作品id是否正确或者网络是否连接", timer: 2000, buttons: false }); NProgress.done() })
+
+            }
+            else {
+                var input = document.createElement("input");
+                input.setAttribute("id", "file");
+                input.setAttribute("type", "file");
+                input.setAttribute("name", "file");
+                input.setAttribute("style", "visibility:hidden");
+                input.setAttribute("accept", ".bcm");
+                document.body.appendChild(input);
+                input.onchange = function (event) {
+                    NProgress.start()
+                    NProgress.inc()
+                    let file = event.target.files[0];
+                    let file_reader = new FileReader();
+                    file_reader.onload = () => {
+                        NProgress.inc()
+                        var fc = file_reader.result;
+                        datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten3/package.json')))
+                        project_name = JSON.parse(fc)['project_name']
+                        datas['name'] = project_name
+                        fs.writeFile(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas), () => {
+                            NProgress.inc()
+                            fs.writeFile(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc, () => {
+                                NProgress.inc()
+                                main_into('kitten3')
+                            })
+                        })
+                    };
+                    file_reader.readAsText(file, "UTF-8");
+                };
+                input.click();
+            }
+        }
+        else {
             NProgress.start()
             fetch('https://api-creation.codemao.cn/kitten/r2/work/player/load/' + document.getElementById("bcm-id").value)
                 .then(response => response.text())
                 .then(data => {
                     project_name = JSON.parse(data)['name'];
-                    if (JSON.parse(data)['source_urls'][0] != undefined) {
-                        if (JSON.parse(data)['version'] != "") {
-                            fetch(JSON.parse(data)['source_urls'][0])
-                                .then(response => response.text())
-                                .then(data => {
-                                    name = data
-                                    fs.readFile(path.join(__dirname, '/important_file/kitten4/package.json'), (err, fr) => {
-                                        NProgress.inc()
-                                        datas = JSON.parse(fr);
-                                        datas['name'] = project_name;
-                                        fs.writeFile(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas), (e) => {
-                                            NProgress.inc()
-                                            const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
-                                                name +
-                                                "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                                            fs.writeFile(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content, () => {
-                                                NProgress.inc()
-                                                main_into()
-                                            })
-                                        })
-                                    })
-                                })
-                        }
-                        else {
-                            swal({ title: "不是kitten4作品！", text: "请输入kitten4的作品id", timer: 2000, buttons: false });
-                            NProgress.done()
-                        }
-                    }
-                    else {
-                        swal({ title: "找不到作品！", text: "请确保作品有发布过一次", timer: 2000, buttons: false });
-                        NProgress.done()
-                    }
-                })
-                .catch(e => { swal({ title: "找不到作品", text: "请检查作品id是否正确或者网络是否连接", timer: 2000, buttons: false }); NProgress.done() })
-
-        }
-        else {
-            var input = document.createElement("input");
-            input.setAttribute("id", "file");
-            input.setAttribute("type", "file");
-            input.setAttribute("name", "file");
-            input.setAttribute("style", "visibility:hidden");
-            input.setAttribute("accept", ".bcm");
-            document.body.appendChild(input);
-            input.onchange = function (event) {
-                NProgress.start()
-                NProgress.inc()
-                let file = event.target.files[0];
-                let file_reader = new FileReader();
-                file_reader.onload = () => {
-                    NProgress.inc()
-                    var fc = file_reader.result;
-                    datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten3/package.json')))
-                    project_name = JSON.parse(fc)['project_name']
-                    datas['name'] = project_name
-                    fs.writeFile(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas), () => {
+                    fs.readFile(path.join(__dirname, '/important_file/online/package.json'), (err, fr) => {
                         NProgress.inc()
-                        fs.writeFile(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc, () => {
+                        datas = JSON.parse(fr);
+                        datas['name'] = project_name;
+                        fs.writeFile(path.join(__dirname, '/important_file/online/package.json'), JSON.stringify(datas), (e) => {
                             NProgress.inc()
-                            main_into()
+                            if (atype == 'kitten4') {
+                                const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/new/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
+                                    NProgress.inc()
+                                    main_into('online')
+                                })
+                            }
+                            else {
+                                const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/old/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
+                                    NProgress.inc()
+                                    main_into('online')
+                                })
+                            }
+
                         })
                     })
-                };
-                file_reader.readAsText(file, "UTF-8");
-            };
-            input.click();
+                })
+
         }
 
-        function main_into() {
+        function main_into(atypes) {
             if (process.platform === 'darwin') {
                 if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
-                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'), { recursive: true }, () => {
-                        child_process.exec('cp -r -pP '+path.join(__dirname, '/important_file/mac/bcm.app')+' '+os.homedir() + "/Desktop/" + project_name + ".app", () => {
+                    fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'), { recursive: true }, () => {
+                        child_process.exec('cp -r -pP ' + path.join(__dirname, '/important_file/mac/bcm.app') + ' ' + os.homedir() + "/Desktop/" + project_name + ".app", () => {
                             child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
                             sittu()
                         });
@@ -445,7 +518,7 @@
             else if (process.platform === 'win32') {
                 if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
                     const exec = require('child_process').exec
-                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true }, () => {
+                    fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true }, () => {
                         exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), () => {
                             sittu()
                         })
@@ -459,7 +532,7 @@
             else if (process.platform === 'linux') {
                 if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
                     const exec = require('child_process')
-                    fs.cp(path.join(__dirname, '/important_file/') + atype, path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true }, () => {
+                    fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true }, () => {
                         exec.exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"', () => {
                             if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
                                 exec.execSync('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
@@ -471,7 +544,7 @@
                     })
                 }
                 else {
-                    swal({ title: "Home目录下存在同名文件！", text: "请在"+os.homedir()+"/删除同名文件", timer: 2000, buttons: false });
+                    swal({ title: "Home目录下存在同名文件！", text: "请在" + os.homedir() + "/删除同名文件", timer: 2000, buttons: false });
                     NProgress.done()
                 }
             }
@@ -481,7 +554,7 @@
     function sittu() {
         window.convert_into = 2
         NProgress.done()
-        document.getElementById("change").style.display = "none"
+        document.getElementById("funcs").style.display = "none"
         document.getElementById("main-title").style.display = "none"
         document.getElementById("bcm-id").style.display = "none"
         convert.innerHTML = "完成"
@@ -502,7 +575,7 @@
 
     var convert = document.getElementById("convert")
     convert.onclick = function () {
-        if ((atype == 'kitten4' & convert.innerHTML == "确认") || (atype == 'kitten3' & convert.innerHTML == "选择文件")) {
+        if ((atype == 'kitten4' & convert.innerHTML == "确认") || (atype == 'kitten3' & convert.innerHTML != "完成")) {
             if (convert_into == 0) {
                 main()
             }
@@ -510,10 +583,14 @@
         else {
             document.getElementById("main-pic").src = "./picture/icn_upload.png"
             document.getElementById("main-pic").width = 130
-            document.getElementById("change").style.display = "flex"
+            document.getElementById("funcs").style.display = "flex"
             document.getElementById("main-title").style.display = "block"
             document.getElementById("bcm-id").style.display = "block"
             if (atype == 'kitten4') {
+                document.getElementById("bcm-id").style.opacity = 1
+                convert.innerHTML = "确认"
+            }
+            else if (aline == 'online') {
                 document.getElementById("bcm-id").style.opacity = 1
                 convert.innerHTML = "确认"
             }
@@ -526,6 +603,35 @@
         }
     }
 
+
+    document.getElementById("wifi").onclick = function () {
+        if (convert_into == 0) {
+            line = document.getElementById("line")
+            if (line.className == 'online') {
+                line.src = './picture/close-wifi.svg'
+                line.className = 'offline'
+                this.style.backgroundColor = 'rgb(255, 231, 189)'
+                window.aline = 'offline';
+                if (atype == "kitten3") {
+                    change_into('kitten3', '2px', 0, '0', '0', '选择文件', '选择kitten3作品文件进行转换')
+                }
+                else {
+                    change_into('kitten4', '37px', 1, '25px', '1em', '确认', '将kitten4作品id输入这里进行转换')
+                }
+            }
+            else {
+                line.src = './picture/wifi.svg'
+                line.className = 'online'
+                this.style.backgroundColor = 'rgb(250, 154, 75)'
+                window.aline = 'online';
+                convert.innerHTML = '确认'
+                document.getElementById('main-title').innerHTML = '将' + atype + '作品id输入这里进行转换';
+                document.getElementById('bcm-id').style.opacity = 1;
+                document.getElementById('bcm-id').style.height = '25px';
+                document.getElementById('bcm-id').style.marginBlockEnd = '1em';
+            }
+        }
+    }
 </script>
 
 </html>
