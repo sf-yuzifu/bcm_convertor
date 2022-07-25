@@ -298,7 +298,7 @@
     <div id="aboutus">
         <div id="version">
             <div id="pic"></div>
-            <p style="font-size: 18px;margin-block-start: 10px;z-index: 9;" class="bold">版本号：v1.1.0</p>
+            <p style="font-size: 18px;margin-block-start: 10px;z-index: 9;" class="bold">版本号：v1.2.0</p>
             <a style="font-size: 12px;z-index: 9;" href="https://shequ.codemao.cn/user/438403">小鱼yuzifu</a>
         </div>
         <div id="intro">
@@ -306,7 +306,7 @@
             <div style="margin-block: 25px;"></div>
             <p class="bold">1.生成的程序无法运行/找不到文件存放位置。</p>
             <p class="space">答：如果无法打开，则为软件bug。可联系作者。文件存放位置Windows/Mac OS在桌面上，</p>
-            <p class="space">而Linux在用户home目录下。</p>
+            <p class="space">而Linux在用户home目录下。<a id="place">点我查看文件位置！</a></p>
             <br />
             <p class="bold">2.转换后的应用程序大小远远大于bcm文件大小。</p>
             <p class="space">答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件</p>
@@ -372,6 +372,14 @@
         ipcRenderer.send(type);
     }
 
+    var desktops = process.env.HOME || require('os').homedir();
+    if (process.platform === 'linux') {
+        document.getElementById("place").href = "file://" + desktops
+    }
+    else {
+        document.getElementById("place").href = "file://" + desktops + "/desktop"
+    }
+
     const { shell } = require('electron');
 
     const links = document.querySelectorAll('a[href]');
@@ -409,16 +417,34 @@
                                             NProgress.inc()
                                             datas = JSON.parse(fr);
                                             datas['name'] = project_name;
-                                            fs.writeFile(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas), (e) => {
-                                                NProgress.inc()
-                                                const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
-                                                    name +
-                                                    "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
-                                                fs.writeFile(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content, () => {
-                                                    NProgress.inc()
-                                                    main_into('kitten4')
+                                            if (process.platform === 'linux') {
+                                                fs.cp(path.join(__dirname, '/important_file/linux'), desktops + '/.tmp', { recursive: true }, () => {
+                                                    fs.cp(path.join(__dirname, '/important_file/kitten4'), desktops + '/.tmp/AppDir/usr/bin/resources/app', { recursive: true }, () => {
+                                                        fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/package.json', JSON.stringify(datas), (e) => {
+                                                            NProgress.inc()
+                                                            const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                                                                name +
+                                                                "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                                                            fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/main/preload.js', content, () => {
+                                                                NProgress.inc()
+                                                                main_into('kitten4')
+                                                            })
+                                                        })
+                                                    })
                                                 })
-                                            })
+                                            }
+                                            else {
+                                                fs.writeFile(path.join(__dirname, '/important_file/kitten4/package.json'), JSON.stringify(datas), (e) => {
+                                                    NProgress.inc()
+                                                    const content = "(()=>{'use strict';var A={298:A=>{A.exports=require('electron')},344:A=>{A.exports=JSON.parse('" +
+                                                        name +
+                                                        "') } }, c = {}; function j(n) { var R = c[n]; if (void 0 !== R) return R.exports; var i = c[n] = { exports: {} }; return A[n](i, i.exports, j), i.exports } (() => { const { contextBridge: A } = j(298); let c; try { c = j(344) } catch { console.log('加载作品失败, 将加载默认作品'), c = '' } A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) }) })() })();"
+                                                    fs.writeFile(path.join(__dirname, '/important_file/kitten4/main/preload.js'), content, () => {
+                                                        NProgress.inc()
+                                                        main_into('kitten4')
+                                                    })
+                                                })
+                                            }
                                         })
                                     })
                             }
@@ -454,13 +480,28 @@
                         datas = JSON.parse(fs.readFileSync(path.join(__dirname, '/important_file/kitten3/package.json')))
                         project_name = JSON.parse(fc)['project_name']
                         datas['name'] = project_name
-                        fs.writeFile(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas), () => {
-                            NProgress.inc()
-                            fs.writeFile(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc, () => {
-                                NProgress.inc()
-                                main_into('kitten3')
+                        if (process.platform === 'linux') {
+                            fs.cp(path.join(__dirname, '/important_file/linux'), desktops + '/.tmp', { recursive: true }, () => {
+                                fs.cp(path.join(__dirname, '/important_file/kitten3'), desktops + '/.tmp/AppDir/usr/bin/resources/app', { recursive: true }, () => {
+                                    fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/package.json', JSON.stringify(datas), () => {
+                                        NProgress.inc()
+                                        fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/resource.bcm', fc, () => {
+                                            NProgress.inc()
+                                            main_into('kitten3')
+                                        })
+                                    })
+                                })
                             })
-                        })
+                        }
+                        else {
+                            fs.writeFile(path.join(__dirname, '/important_file/kitten3/package.json'), JSON.stringify(datas), () => {
+                                NProgress.inc()
+                                fs.writeFile(path.join(__dirname, '/important_file/kitten3/resource.bcm'), fc, () => {
+                                    NProgress.inc()
+                                    main_into('kitten3')
+                                })
+                            })
+                        }
                     };
                     file_reader.readAsText(file, "UTF-8");
                 };
@@ -477,34 +518,57 @@
                         NProgress.inc()
                         datas = JSON.parse(fr);
                         datas['name'] = project_name;
-                        fs.writeFile(path.join(__dirname, '/important_file/online/package.json'), JSON.stringify(datas), (e) => {
-                            NProgress.inc()
-                            if (atype == 'kitten4') {
-                                const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/new/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
-                                fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
-                                    NProgress.inc()
-                                    main_into('online')
+                        if (process.platform === 'linux') {
+                            fs.cp(path.join(__dirname, '/important_file/linux'), desktops + '/.tmp', { recursive: true }, () => {
+                                fs.cp(path.join(__dirname, '/important_file/kitten3'), desktops + '/.tmp/AppDir/usr/bin/resources/app', { recursive: true }, () => {
+                                    fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/package.json', JSON.stringify(datas), (e) => {
+                                        NProgress.inc()
+                                        if (atype == 'kitten4') {
+                                            const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/new/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                            fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/index.js', fc, () => {
+                                                NProgress.inc()
+                                                main_into('online')
+                                            })
+                                        }
+                                        else {
+                                            const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/old/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                            fs.writeFile(desktops + '/.tmp/AppDir/usr/bin/resources/app/index.js', fc, () => {
+                                                NProgress.inc()
+                                                main_into('online')
+                                            })
+                                        }
+                                    })
                                 })
-                            }
-                            else {
-                                const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/old/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
-                                fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
-                                    NProgress.inc()
-                                    main_into('online')
-                                })
-                            }
-
-                        })
+                            })
+                        }
+                        else {
+                            fs.writeFile(path.join(__dirname, '/important_file/online/package.json'), JSON.stringify(datas), (e) => {
+                                NProgress.inc()
+                                if (atype == 'kitten4') {
+                                    const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/new/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                    fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
+                                        NProgress.inc()
+                                        main_into('online')
+                                    })
+                                }
+                                else {
+                                    const fc = "const { app, BrowserWindow, ipcMain } = require('electron'); const createWindow = () => { const win = new BrowserWindow({ transparent: false, webPreferences: { nodeIntegration: true, contextIsolation: false }, }); win.loadURL('https://player.codemao.cn/old/" + document.getElementById("bcm-id").value + "'); win.maximize(); }; app.whenReady().then(() => { createWindow() }); app.on('window-all-closed', () => { app.quit() });"
+                                    fs.writeFile(path.join(__dirname, '/important_file/online/index.js'), fc, () => {
+                                        NProgress.inc()
+                                        main_into('online')
+                                    })
+                                }
+                            })
+                        }
                     })
                 })
-
         }
 
         function main_into(atypes) {
             if (process.platform === 'darwin') {
-                if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".app")) {
+                if (!fs.existsSync(desktops + "/Desktop/" + project_name + ".app")) {
                     fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app'), { recursive: true }, () => {
-                        child_process.exec('cp -r -pP ' + path.join(__dirname, '/important_file/mac/bcm.app') + ' ' + os.homedir() + "/Desktop/" + project_name + ".app", () => {
+                        child_process.exec('cp -r -pP ' + path.join(__dirname, '/important_file/mac/bcm.app') + ' ' + desktops + '/Desktop/"' + project_name + '".app', () => {
                             child_process.spawnSync('rm', ['-rf', path.join(__dirname, '/important_file/mac/bcm.app/Contents/Resources/app')]);
                             sittu()
                         });
@@ -516,10 +580,10 @@
                 }
             }
             else if (process.platform === 'win32') {
-                if (!fs.existsSync(os.homedir() + "/Desktop/" + project_name + ".exe")) {
+                if (!fs.existsSync(desktops + "/Desktop/" + project_name + ".exe")) {
                     const exec = require('child_process').exec
                     fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/windows/bcm_file/resources/app'), { recursive: true }, () => {
-                        exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + os.homedir() + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), () => {
+                        exec('cd ' + __dirname + '/important_file/windows/ & ' + path.join(__dirname, '/important_file/windows/WinRAR.exe') + ' a -r "' + project_name + '.exe" ./bcm_file/* c -zinfo -iiconplayer_icon -ibck & move "' + project_name + '.exe" ' + desktops + "/Desktop/ & rd /s/q " + path.join(__dirname, '/important_file/windows/bcm_file/resources/app/'), () => {
                             sittu()
                         })
                     })
@@ -530,21 +594,21 @@
                 }
             }
             else if (process.platform === 'linux') {
-                if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
+                if (!fs.existsSync(desktops + '/' + project_name + ".Appimage")) {
                     const exec = require('child_process')
-                    fs.cp(path.join(__dirname, '/important_file/') + atypes, path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), { recursive: true }, () => {
-                        exec.exec('ARCH=x86_64 ' + path.join(__dirname, '/important_file/linux/appimagetool-x86_64.AppImage') + ' ' + path.join(__dirname, '/important_file/linux/AppDir') + ' "' + project_name + '.Appimage"', () => {
-                            if (!fs.existsSync(os.homedir() + '/' + project_name + ".Appimage")) {
-                                exec.execSync('mv "' + project_name + '.Appimage" "' + os.homedir() + '/' + project_name + '.Appimage"');
-                            }
-                            exec.exec('rm -rf ' + path.join(__dirname, '/important_file/linux/AppDir/usr/bin/resources/app'), () => {
-                                sittu()
-                            });
+                    exec.execSync('ln -s -f usr/bin/bcm AppRun&ln -s -f usr/share/applications/bcm.desktop bcm.desktop&ln -s -f usr/share/icons/hicolor/256x256/apps/bcm.png bcm.png')
+                    exec.execSync('mv -f AppRun ~/.tmp/AppDir&mv -f bcm.desktop ~/.tmp/AppDir&mv -f bcm.png ~/.tmp/AppDir')
+                    exec.exec('ARCH=x86_64 ' + desktops + '/.tmp/appimagetool-x86_64.AppImage' + ' ' + desktops + '/.tmp/AppDir' + ' "' + project_name + '.Appimage"', () => {
+                        if (!fs.existsSync(desktops + '/' + project_name + ".Appimage")) {
+                            exec.execSync('mv "' + project_name + '.Appimage" "' + desktops + '/' + project_name + '.Appimage"');
+                        }
+                        exec.exec('rm -rf ' + desktops + '/.tmp', () => {
+                            sittu()
                         });
-                    })
+                    });
                 }
                 else {
-                    swal({ title: "Home目录下存在同名文件！", text: "请在" + os.homedir() + "/删除同名文件", timer: 2000, buttons: false });
+                    swal({ title: "Home目录下存在同名文件！", text: "请在" + desktops + "/删除同名文件", timer: 2000, buttons: false });
                     NProgress.done()
                 }
             }
@@ -561,6 +625,7 @@
         document.getElementById("main-pic").src = "./picture/success.png"
         document.getElementById("main-pic").width = 259
         document.getElementById("main-pic").style.marginBlock = "0 2em";
+        document.getElementById("place").click()
     }
 
     require('electron').ipcRenderer.on('about', (event) => {

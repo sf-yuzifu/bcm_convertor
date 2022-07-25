@@ -1,12 +1,10 @@
 {
   "name": "bcm_convertor",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "将自己在kitten3/4上的作品快速制作成独立应用程序",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
     "build": "electron-builder"
   },
   "repository": {
@@ -33,17 +31,24 @@
     },
     "asar": false,
     "mac": {
-      "icon": "icon/icon-windowed.icns",
+      "icon": "icon/icon-windowed",
       "target": {
         "target": "dir",
         "arch": "universal"
       }
     },
-    "win":{
-      "icon": "icon/icon-windowed.ico",
+    "win": {
+      "icon": "icon/icon-windowed",
       "target": {
-        "target": "dir",
+        "target": "portable",
         "arch": "ia32"
+      }
+    },
+    "linux": {
+      "icon": "icon/icon-windowed",
+      "target": {
+        "target": "AppImage",
+        "arch": "x64"
       }
     }
   }

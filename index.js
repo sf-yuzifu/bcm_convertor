@@ -9,11 +9,10 @@ function createWindow() {
         height: 440,
         frame: false, //隐藏导航栏
         resizable: false,
-        icon: path.join(__dirname, 'icon-windowed.icns'),
         webPreferences: {
+            devTools: false,
             nodeIntegration: true,
-            contextIsolation: false,
-            //preload: path.join(__dirname, 'preload.js')
+            contextIsolation: false
         }
     })
 
