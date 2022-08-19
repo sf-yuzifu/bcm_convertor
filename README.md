@@ -4,9 +4,9 @@
     <br>
     <img alt="bcm_convertor" src="https://server.yuzifu.top:25266/down/78G7G3mC3na7"/>
     <br>
-    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='star'></img></a>
-    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/members'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='fork'></img></a>
-<a href='https://github.com/214545666/bcm_convertor/stargazers'><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/214545666/bcm_convertor?style=social"></a>
+    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/stargazers'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/star.svg?theme=white' alt='Gitee stars'></img></a>
+    <a href='https://gitee.com/sf-yuzifu/bcm_convertor/members'><img src='https://gitee.com/sf-yuzifu/bcm_convertor/badge/fork.svg?theme=white' alt='Gitee forks'></img></a>
+<a href='https://github.com/214545666/bcm_convertor/stargazers'><img alt="GitHub stars" src="https://img.shields.io/github/stars/214545666/bcm_convertor?style=social"></a>
     <a href='https://github.com/214545666/bcm_convertor/members'><img alt="GitHub forks" src="https://img.shields.io/github/forks/214545666/bcm_convertor?style=social"></a>
     <br>
 </h1>
@@ -29,10 +29,11 @@
 * 并入kitten3转换
 * 动画如同吃了dofu般丝滑～
 * 偷偷支持在线作品转换（支持云变量呦～）
+* 现在支持自定义图标
 
 #### 缺点
 
-* 应用图标需要手动更换
+* Windows下可能会出现各种问题，建议这时使用源代码进行编译运行
 
 ### 安装方式
 
@@ -44,9 +45,10 @@
 
 #### 2. 直接下载文件安装（更新速度较快）
 
-> 更新时间：2022-7-24（Windows/Mac OS/Linux）
+> 更新时间：2022-8-19（Windows/Mac OS/Linux）
 
-* Windows/Mac OS/Linux：[https://cloud.yuzifu.top/s/oNck](https://cloud.yuzifu.top/s/oNck)
+* Github：[https://github.com/214545666/bcm_convertor/releases/latest](https://github.com/214545666/bcm_convertor/releases/latest)
+* 小鱼云盘：[https://cloud.yuzifu.top/s/oNck](https://cloud.yuzifu.top/s/oNck)
 
 #### 3. 运行源代码（最快，可以实时获取更新）
 
@@ -58,7 +60,7 @@
 git clone https://gitee.com/sf-yuzifu/bcm_convertor.git
 cd bcm_convertor
 npm install
-npm start
+npm run start
 ```
 
 打包也只需要下面的一行代码

@@ -22,7 +22,7 @@ function createWindow() {
 
     //菜单栏
     const menuBar = [
-        {label: '帮助'},
+        { label: '帮助' },
         {
             label: '编辑', submenu: [
                 {
@@ -30,7 +30,7 @@ function createWindow() {
                     accelerator: 'CmdOrCtrl+Z',
                     role: 'undo'
                 },
-               
+
                 {
                     label: '恢复',
                     accelerator: 'Shift+CmdOrCtrl+Z',
@@ -50,12 +50,12 @@ function createWindow() {
                     accelerator: 'CmdOrCtrl+X',
                     role: 'cut'
                 },
-               
+
                 {
                     label: '复制',
                     accelerator: 'CmdOrCtrl+C',
                     role: 'copy'
-                },{
+                }, {
                     label: '粘贴',
                     accelerator: 'CmdOrCtrl+V',
                     role: 'paste'
@@ -92,6 +92,24 @@ function createWindow() {
     //显示f12
     //win.webContents.openDevTools()
     win.loadFile('index.html')
+
+    ipcMain.on('pngor', (sys, atypes) => {
+        const { dialog } = require('electron')
+        dialog.showOpenDialog({ title: "选择图标", filters: [{ name: '图标', extensions: ['png'] }], properties: ['openFile'] }).then(result => {
+            win.webContents.send('icon', result.canceled, result.filePaths[0], atypes)
+        }).catch(err => {
+            console.log(err)
+        })
+    });
+
+    ipcMain.on('chooseBcm', () => {
+        const { dialog } = require('electron')
+        dialog.showOpenDialog({ title: "选择bcm文件", filters: [{ name: 'kitten文件', extensions: ['bcm'] }], properties: ['openFile'] }).then(result => {
+            win.webContents.send('gotbcmfile', result.canceled, result.filePaths[0])
+        }).catch(err => {
+            console.log(err)
+        })
+    });
 }
 
 app.whenReady().then(() => {
