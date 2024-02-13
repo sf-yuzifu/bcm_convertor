@@ -1,0 +1,90 @@
+{
+  "build": {
+    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "yarn build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "withGlobalTauri": false
+  },
+  "package": {
+    "productName": "编程猫格式工厂",
+    "version": "2.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": true,
+        "open": true
+      },
+      "path": {
+        "all": true
+      },
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "startDragging": true
+      },
+      "dialog": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "all": true,
+        "scope": [
+          "$HOME/convert_tmp/*",
+          "$HOME/convert_tmp/main/*",
+          "$HOME/convert_tmp/kitten4/main/*",
+          "$HOME/convert_tmp/online/*",
+          "$HOME/convert_tmp/kitten3/*",
+          "$HOME/convert_tmp/linux/AppDir/*",
+          "$HOME/convert_tmp/linux/AppDir/usr/bin/*",
+          "$HOME/convert_tmp/linux/AppDir/usr/bin/resources/*",
+          "$HOME/convert_tmp",
+          "$HOME/convert_tmp2"
+        ]
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["http://**", "https://**"]
+      },
+      "os": {
+        "all": true
+      }
+    },
+    "macOSPrivateApi": true,
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.bcm-convertor.yzf",
+      "icon": ["icons/linux.svg", "icons/mac.icns", "icons/win.ico","icons/bcm_convertor.png"],
+      "copyright": "小鱼yuzifu",
+      "publisher": "小鱼yuzifu",
+      "shortDescription": "编程猫格式工厂",
+      "longDescription": "将自己在kitten3/4上的作品快速制作成独立应用程序",
+      "category": "DeveloperTool",
+      "resources": ["./convert"]
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": false,
+        "title": "编程猫格式工厂",
+        "width": 640,
+        "height": 440,
+        "decorations": false,
+        "label": "bcm_convertor"
+      }
+    ]
+  }
+}

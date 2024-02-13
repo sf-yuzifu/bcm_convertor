@@ -1,0 +1,9 @@
+{
+  "name": "跳一跳2D版",
+  "version": "0.0.1",
+  "description": "",
+  "main": "main/index.js",
+  "author": "codemao sf-yuzifu",
+  "license": "UNLICENSED",
+  "private": true
+}

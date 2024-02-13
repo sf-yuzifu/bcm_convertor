@@ -1,56 +1,28 @@
 {
   "name": "bcm_convertor",
-  "version": "1.3.0",
   "description": "将自己在kitten3/4上的作品快速制作成独立应用程序",
-  "main": "index.js",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://gitee.com/sf-yuzifu/bcm_convertor.git"
-  },
-  "author": "小鱼yuzifu",
-  "license": "GPL-3.0",
-  "devDependencies": {
-    "electron": "^19.0.6",
-    "electron-builder": "^23.1.0",
-    "png-to-ico": "^2.1.4"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
-    "sweetalert": "^2.1.2"
+    "@tauri-apps/api": "^1.5.0",
+    "nprogress": "^0.2.0",
+    "sweetalert": "^2.1.2",
+    "vue": "^3.3.4"
   },
-  "config": {},
-  "build": {
-    "productName": "编程猫格式工厂",
-    "appId": "com.bcm_convertor.yzf",
-    "copyright": "小鱼yuzifu",
-    "directories": {
-      "output": "build"
-    },
-    "asar": false,
-    "mac": {
-      "icon": "icon/icon-windowed",
-      "target": {
-        "target": "dir",
-        "arch": "universal"
-      }
-    },
-    "win": {
-      "icon": "icon/icon-windowed",
-      "target": {
-        "target": "portable",
-        "arch": "ia32"
-      }
-    },
-    "linux": {
-      "icon": "icon/icon-windowed",
-      "target": {
-        "target": "AppImage",
-        "arch": "x64"
-      }
-    }
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "^3.0.3",
+    "vite": "^4.4.4",
+    "vite-plugin-top-level-await": "^1.4.1"
   }
 }

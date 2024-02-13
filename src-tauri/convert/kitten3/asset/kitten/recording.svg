@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="160px" height="160px" viewBox="0 0 160 160" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
+    <title>recording</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="15.6106874%" y1="4.6077956%" x2="40.8933397%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="录音功能设计文档" transform="translate(-634.000000, -1285.000000)" fill-rule="nonzero">
+            <g id="1.各阶段样式" transform="translate(120.000000, 280.000000)">
+                <g id="各阶段状态" transform="translate(0.000000, 84.000000)">
+                    <g id="预览" transform="translate(423.000000, 609.000000)">
+                        <g id="舞台" transform="translate(0.000000, 1.000000)">
+                            <g id="record_3" transform="translate(0.000000, 311.000000)">
+                                <g id="recording" transform="translate(91.000000, 0.000000)">
+                                    <path d="M84,153.893734 C82.6756093,153.964278 81.3419763,154 80,154 C39.1309285,154 6,120.869071 6,80 C6,39.1309285 39.1309285,6 80,6 C81.6568542,6 83,4.65685425 83,3 C83,1.34314575 81.6568542,0 80,0 C35.81722,0 0,35.81722 0,80 C0,124.18278 35.81722,160 80,160 C81.3412991,160 82.6748884,159.966991 84,159.90174 L84,153.893734 Z" id="Combined-Shape" fill="#FFFFFF">
+                                        <animateTransform attributeName="transform" type="rotate" from="0 80 80" to="360 80 80" repeatCount="indefinite" dur="4s"></animateTransform>
+                                    </path>
+                                    <path d="M84,153.893734 C123.009123,151.815883 154,119.527095 154,80 C154,42.6946253 126.237688,11.3480096 89.5748162,6.61341657 C87.931607,6.40121479 86.7715463,4.89710702 86.9837481,3.25389784 C87.1959499,1.61068866 88.7000577,0.45062796 90.3432668,0.662829739 C129.988673,5.78258303 160,39.6685779 160,80 C160,122.841481 126.324446,157.817615 84,159.90174 L84,153.893734 Z" id="Combined-Shape" fill="url(#linearGradient-1)">
+                                        <animateTransform attributeName="transform" type="rotate" from="0 80 80" to="360 80 80" repeatCount="indefinite" dur="4s"></animateTransform>
+                                    </path>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
