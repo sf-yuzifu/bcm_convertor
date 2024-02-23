@@ -46,7 +46,15 @@
 * Github：[https://github.com/sf-yuzifu/bcm_convertor/releases/latest](https://github.com/sf-yuzifu/bcm_convertor/releases/latest)
 * Gitee：[https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest](https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest)
 
-#### 3. 运行源代码（最快，可以实时获取更新）
+#### 3. 通过 Winget 下载
+
+> 更新时间：2024-2-23（Windows）【感谢[CoolPlay Lin](https://gitee.com/coolplaylin)的推送】
+
+```bash
+winget install --id sf-yuzifu.bcm_convertor -e
+```
+
+#### 4. 运行源代码（最快，可以实时获取更新）
 
 > 更新时间：查看最近提交时间
 
