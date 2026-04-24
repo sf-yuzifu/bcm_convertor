@@ -7,7 +7,9 @@
   ],
   "permissions": [
     "core:default",
+    "fs:allow-read-text-file",
     "fs:allow-read-file",
+    "fs:allow-write-text-file",
     "fs:allow-write-file",
     "fs:allow-read-dir",
     "fs:allow-copy-file",
@@ -30,7 +32,10 @@
         "$HOME/convert_tmp",
         "$HOME/convert_tmp/**",
         "$HOME/convert_tmp2",
-        "$HOME/convert_tmp2/**"
+        "$HOME/convert_tmp2/**",
+        "$DESKTOP",
+        "$DESKTOP/*",
+        "$DESKTOP/**"
       ]
     },
     "core:window:allow-maximize",
