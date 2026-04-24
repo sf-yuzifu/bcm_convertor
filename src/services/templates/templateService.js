@@ -1,13 +1,15 @@
-import { kitten3, kitten4, online } from '../../functions/convert.js'
+import { prepareKitten3Template } from './adapters/kitten3TemplateAdapter.js'
+import { prepareKitten4Template } from './adapters/kitten4TemplateAdapter.js'
+import { prepareOnlineTemplate } from './adapters/onlineTemplateAdapter.js'
 
 export const prepareTemplateWorkspace = async ({ version, status, projectInfo }) => {
   if (status === 'online') {
-    return online(projectInfo)
+    return prepareOnlineTemplate(projectInfo)
   }
 
   if (version === 'kitten3') {
-    return kitten3(projectInfo)
+    return prepareKitten3Template(projectInfo)
   }
 
-  return kitten4(projectInfo)
+  return prepareKitten4Template(projectInfo)
 }

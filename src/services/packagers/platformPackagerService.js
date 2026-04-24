@@ -1,17 +1,22 @@
 import { type } from '@tauri-apps/plugin-os'
 
-import { linux, macos, windows } from '../../functions/convert.js'
+import { packageForLinux } from './adapters/linuxPackager.js'
+import { packageForMacOS } from './adapters/macosPackager.js'
+import { packageForWindows } from './adapters/windowsPackager.js'
+
+const MACOS = 'macos'
+const LINUX = 'linux'
 
 export const packageProject = async (projectInfo) => {
   const osType = await type()
 
-  if (osType === 'Darwin') {
-    return macos(projectInfo)
+  if (osType === MACOS) {
+    return packageForMacOS(projectInfo)
   }
 
-  if (osType === 'Linux') {
-    return linux(projectInfo)
+  if (osType === LINUX) {
+    return packageForLinux(projectInfo)
   }
 
-  return windows(projectInfo)
+  return packageForWindows(projectInfo)
 }
