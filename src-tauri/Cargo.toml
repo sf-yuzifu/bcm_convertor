@@ -5,6 +5,7 @@ description = "将自己在kitten3/4上的作品快速制作成独立应用程�
 authors = ["小鱼yuzifu"]
 license = "GPL-3.0"
 repository = "https://gitee.com/sf-yuzifu/bcm_convertor.git"
+default-run = "bcm_convertor"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -19,7 +20,7 @@ serde_json = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 tauri-plugin-os = "2"
-tauri-plugin-http = "2"
+tauri-plugin-http = { version = "2", features = ["unsafe-headers"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"

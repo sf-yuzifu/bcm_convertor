@@ -16,8 +16,7 @@ import { remove } from '@tauri-apps/plugin-fs'
 import NProgress from 'nprogress'
 import { invoke } from '@tauri-apps/api/core'
 
-const homeDirPath = await homeDir()
-const osType = await type()
+const isTauri = () => Boolean(window?.__TAURI__ || window?.__TAURI_INTERNALS__)
 
 const emit = defineEmits(['pro'])
 const props = defineProps(['ver', 'status', 'process'])
@@ -37,6 +36,12 @@ const checkNum = (event) => {
   workid.value = value
 }
 const convert = async () => {
+  if (!isTauri()) {
+    return
+  }
+
+  const homeDirPath = await homeDir()
+  const osType = await type()
   try {
     if (osType === 'Windows_NT') {
       await remove(await join(homeDirPath, 'convert_tmp2'), { recursive: true })

@@ -1,15 +1,51 @@
 import { open } from '@tauri-apps/plugin-dialog'
 import { readTextFile, BaseDirectory, writeTextFile, mkdir, copyFile } from '@tauri-apps/plugin-fs'
-import { fetch } from '@tauri-apps/plugin-http'
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { invoke } from '@tauri-apps/api/core'
 import { homeDir, resourceDir, join, desktopDir } from '@tauri-apps/api/path'
 import { type } from '@tauri-apps/plugin-os'
 import swal from 'sweetalert'
 
-const osType = await type()
-const homeDirPath = await homeDir()
-const resourceDirPath = (await resourceDir()).replace('\\\\?\\', '')
-const desktopDirPath = await desktopDir()
+const isTauri = () => Boolean(window?.__TAURI__ || window?.__TAURI_INTERNALS__)
+
+let envPromise
+const getEnv = async () => {
+  if (!envPromise) {
+    envPromise = (async () => {
+      if (!isTauri()) {
+        throw new Error('not in tauri')
+      }
+
+      const osType = await type()
+      const homeDirPath = await homeDir()
+      const resourceDirPath = (await resourceDir()).replace('\\\\?\\\\', '')
+      const desktopDirPath = await desktopDir()
+
+      return { osType, homeDirPath, resourceDirPath, desktopDirPath }
+    })()
+  }
+
+  return envPromise
+}
+
+const fetchJson = async (url) => {
+  try {
+    const response = await window.fetch(url)
+    const data = await response.json()
+    return { status: response.status, data }
+  } catch (_) {
+    const res = await tauriFetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+        Referer: 'https://player.codemao.cn/',
+        Origin: 'https://player.codemao.cn'
+      }
+    })
+
+    return res
+  }
+}
 
 export const getK3file = async () => {
   let file = await open({
@@ -29,9 +65,17 @@ export const getK3file = async () => {
 }
 
 export const getOnlineInfo = async (workid) => {
+  if (isTauri()) {
+    try {
+      return await invoke('fetch_online_info', { workid: Number(workid) })
+    } catch (_) {
+      return null
+    }
+  }
+
   let response
   try {
-    response = await fetch(`https://api-creation.codemao.cn/kitten/r2/work/player/load/${workid}`)
+    response = await fetchJson(`https://api-creation.codemao.cn/kitten/r2/work/player/load/${workid}`)
   } catch (error) {
     swal({
       title: '离线',
@@ -60,11 +104,12 @@ export const getOnlineInfo = async (workid) => {
     })
     return null
   }
-  let jsonContents = await fetch(contents['source_urls'][0])
+  let jsonContents = await fetchJson(contents['source_urls'][0])
   return { name: contents['name'], data: jsonContents.data, id: workid }
 }
 
 export const online = async (info) => {
+  const { osType, homeDirPath, resourceDirPath } = await getEnv()
   let home
   if (osType === 'Windows_NT') {
     home = (await join(homeDirPath, 'convert_tmp')) + '\\'
@@ -87,6 +132,7 @@ export const online = async (info) => {
   await writeTextFile(await join(home, 'index.js'), contents, { dir: BaseDirectory.Home })
 }
 export const kitten3 = async (info) => {
+  const { osType, homeDirPath, resourceDirPath } = await getEnv()
   let home
   if (osType === 'Windows_NT') {
     home = (await join(homeDirPath, 'convert_tmp')) + '\\'
@@ -103,6 +149,7 @@ export const kitten3 = async (info) => {
   await writeTextFile(await join(home, 'resource.bcm'), JSON.stringify(info.data), { dir: BaseDirectory.Home })
 }
 export const kitten4 = async (info) => {
+  const { osType, homeDirPath, resourceDirPath } = await getEnv()
   let home
   if (osType === 'Windows_NT') {
     home = (await join(homeDirPath, 'convert_tmp')) + '\\'
@@ -123,6 +170,7 @@ export const kitten4 = async (info) => {
 }
 
 export const macos = async (info) => {
+  const { homeDirPath, resourceDirPath, desktopDirPath } = await getEnv()
   const home = await join(homeDirPath, 'convert_tmp')
   await invoke('copy_dict', {
     from: home,
@@ -143,6 +191,7 @@ export const macos = async (info) => {
 }
 
 export const linux = async (info) => {
+  const { homeDirPath, resourceDirPath, desktopDirPath } = await getEnv()
   const home = await join(homeDirPath, 'convert_tmp')
   await invoke('copy_dict', {
     from: home,
@@ -173,6 +222,7 @@ export const linux = async (info) => {
 }
 
 export const windows = async (info) => {
+  const { homeDirPath, resourceDirPath, desktopDirPath } = await getEnv()
   const home = await join(homeDirPath, 'convert_tmp')
   await invoke('copy_dict', {
     from: await join(resourceDirPath, 'convert', 'windows'),
