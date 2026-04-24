@@ -271,12 +271,6 @@ a {
   border-radius: 4px 4px 0 4px;
 }
 
-#nprogress .bar.loading {
-  height: 10px;
-  background-color: rgb(248, 136, 36);
-  top: 40px;
-}
-
 #kitten4 {
   color: #fff;
 }

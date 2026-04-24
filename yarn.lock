@@ -1004,11 +1004,6 @@ natural-compare@^1.4.0:
   resolved "https://mirrors.cloud.tencent.com/npm/natural-compare/-/natural-compare-1.4.0.tgz"
   integrity sha1-Sr6/7tdUHywnrPspvbvRXI1bpPc=
 
-nprogress@^0.2.0:
-  version "0.2.0"
-  resolved "https://mirrors.cloud.tencent.com/npm/nprogress/-/nprogress-0.2.0.tgz"
-  integrity sha1-y480xTIT2JVyP8urkH6UIq28r7E=
-
 nth-check@^2.1.1:
   version "2.1.1"
   resolved "https://mirrors.cloud.tencent.com/npm/nth-check/-/nth-check-2.1.1.tgz"

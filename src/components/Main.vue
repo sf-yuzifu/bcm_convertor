@@ -1,31 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import {
-  getK3file,
-  getOnlineInfo,
-  kitten3,
-  kitten4,
-  linux,
-  macos,
-  online,
-  windows
-} from '../functions/convert.js'
-import { type } from '@tauri-apps/plugin-os'
-import { join, homeDir, desktopDir } from '@tauri-apps/api/path'
-import { remove } from '@tauri-apps/plugin-fs'
-import NProgress from 'nprogress'
-import { invoke } from '@tauri-apps/api/core'
-
-const isTauri = () => Boolean(window?.__TAURI__ || window?.__TAURI_INTERNALS__)
+import { showAlert } from '../functions/env.js'
+import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const emit = defineEmits(['pro'])
 const props = defineProps(['ver', 'status', 'process'])
 
 const workid = ref(6654365)
-
-NProgress.configure({
-  template: `<div class="bar loading" role="bar"></div>`
-})
 
 const checkNum = (event) => {
   let value = event.target.value
@@ -35,58 +16,36 @@ const checkNum = (event) => {
   event.target.value = value
   workid.value = value
 }
+
 const convert = async () => {
-  if (!isTauri()) {
+  if (props.process === 1) {
     return
   }
 
-  const homeDirPath = await homeDir()
-  const osType = await type()
-  try {
-    if (osType === 'Windows_NT') {
-      await remove(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
-    }
-  } catch (error) {}
-  console.log(props.ver, props.status, workid.value)
   emit('pro', 1)
-  NProgress.start()
-  let project_info
-  if (props.status === 'offline' && props.ver === 'kitten3') {
-    project_info = await getK3file()
-  } else {
-    project_info = await getOnlineInfo(workid.value)
-  }
-  console.log(project_info)
-  if (project_info === null) {
-    emit('pro', 0)
-    NProgress.done()
-    return
-  }
-  if (props.status === 'online') {
-    await online(project_info)
-  } else if (props.ver === 'kitten3') {
-    await kitten3(project_info)
-  } else {
-    await kitten4(project_info)
-  }
-  if (osType === 'Darwin') {
-    await macos(project_info)
-  } else if (osType === 'Linux') {
-    await linux(project_info)
-  } else {
-    await windows(project_info)
-  }
+
   try {
-    await remove(await join(homeDirPath, 'convert_tmp'), { recursive: true })
-    if (osType === 'Windows_NT') {
-      await remove(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
+    const result = await runConvertWorkflow({
+      version: props.ver,
+      status: props.status,
+      workId: workid.value
+    })
+
+    if (result.status === 'success') {
+      emit('pro', 2)
+      return
+    }
+
+    emit('pro', 0)
+
+    if (result.status === 'unavailable') {
+      await showAlert('当前环境不支持', '请在桌面应用中使用转换功能')
     }
   } catch (error) {
     console.error(error)
+    emit('pro', 0)
+    await showAlert('转换失败', error?.message || '请稍后重试')
   }
-  emit('pro', 2)
-  NProgress.done()
-  await invoke('open_file', { path: await desktopDir() })
 }
 </script>
 
