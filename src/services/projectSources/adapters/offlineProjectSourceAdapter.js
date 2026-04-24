@@ -15,6 +15,6 @@ export const loadOfflineKitten3Project = async () => {
     return null
   }
 
-  const contents = JSON.parse(await readTextFile(file, { dir: BaseDirectory.AppConfig }))
-  return { name: contents['project_name'], data: contents }
+  const projectData = JSON.parse(await readTextFile(file, { dir: BaseDirectory.AppConfig }))
+  return { name: projectData['project_name'], data: projectData }
 }

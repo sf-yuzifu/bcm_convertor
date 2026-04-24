@@ -3,9 +3,12 @@ import { desktopDir, homeDir, join } from '@tauri-apps/api/path'
 import { exists, remove } from '@tauri-apps/plugin-fs'
 import { type } from '@tauri-apps/plugin-os'
 
+import {
+  PRIMARY_WORKSPACE_NAME,
+  SECONDARY_WORKSPACE_NAME
+} from './pathService.js'
+
 const WINDOWS_OS = 'windows'
-const PRIMARY_WORKSPACE = 'convert_tmp'
-const SECONDARY_WORKSPACE = 'convert_tmp2'
 
 const removeDirectoryIfExists = async (path) => {
   const existsBeforeRemove = await exists(path)
@@ -30,14 +33,14 @@ export const cleanupBeforeConvert = async () => {
   const homeDirPath = await homeDir()
   console.log('[workspace] cleanupBeforeConvert', { osType })
 
-  const primaryWorkspacePath = await join(homeDirPath, PRIMARY_WORKSPACE)
+  const primaryWorkspacePath = await join(homeDirPath, PRIMARY_WORKSPACE_NAME)
   await removeDirectoryIfExists(primaryWorkspacePath)
 
   if (osType !== WINDOWS_OS) {
     return
   }
 
-  const secondaryWorkspacePath = await join(homeDirPath, SECONDARY_WORKSPACE)
+  const secondaryWorkspacePath = await join(homeDirPath, SECONDARY_WORKSPACE_NAME)
   await removeDirectoryIfExists(secondaryWorkspacePath)
 }
 
@@ -46,11 +49,11 @@ export const cleanupAfterConvert = async () => {
   const homeDirPath = await homeDir()
   console.log('[workspace] cleanupAfterConvert', { osType })
 
-  const primaryWorkspacePath = await join(homeDirPath, PRIMARY_WORKSPACE)
+  const primaryWorkspacePath = await join(homeDirPath, PRIMARY_WORKSPACE_NAME)
   await removeDirectoryIfExists(primaryWorkspacePath)
 
   if (osType === WINDOWS_OS) {
-    const secondaryWorkspacePath = await join(homeDirPath, SECONDARY_WORKSPACE)
+    const secondaryWorkspacePath = await join(homeDirPath, SECONDARY_WORKSPACE_NAME)
     await removeDirectoryIfExists(secondaryWorkspacePath)
   }
 }

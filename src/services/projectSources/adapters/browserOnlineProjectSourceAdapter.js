@@ -20,13 +20,13 @@ export const loadOnlineProjectInBrowser = async (workId) => {
     return null
   }
 
-  const contents = response.data
-  const sourceUrl = contents['source_urls']?.[0]
+  const workInfo = response.data
+  const sourceUrl = workInfo['source_urls']?.[0]
   if (!sourceUrl) {
     await showAlert('找不到作品', '请确保作品有发布过一次')
     return null
   }
 
-  const jsonContents = await fetchJson(sourceUrl)
-  return { name: contents['name'], data: jsonContents.data, id: workId }
+  const projectDataResponse = await fetchJson(sourceUrl)
+  return { name: workInfo['name'], data: projectDataResponse.data, id: workId }
 }
