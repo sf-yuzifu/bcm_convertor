@@ -18,15 +18,18 @@
     "@tauri-apps/plugin-os": "^2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "sweetalert": "^2.1.2",
-    "vue": "^3.3.4"
+    "vue": "^3.5.33"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "eslint": "^8.49.0",
-    "eslint-plugin-vue": "^9.17.0",
-    "prettier": "^3.0.3",
-    "vite": "^4.4.4",
-    "vite-plugin-top-level-await": "^1.4.1"
+    "@vitejs/plugin-vue": "^6.0.6",
+    "esbuild": "^0.25.11",
+    "eslint": "^10.2.1",
+    "eslint-plugin-vue": "^10.9.0",
+    "prettier": "^3.8.3",
+    "rollup": "^4.52.5",
+    "vite": "^8.0.10",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vue-eslint-parser": "^10.2.0"
   }
 }
