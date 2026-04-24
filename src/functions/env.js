@@ -4,7 +4,7 @@ import { homeDir, resourceDir, join, desktopDir } from '@tauri-apps/api/path'
 import { type } from '@tauri-apps/plugin-os'
 import swal from 'sweetalert'
 
-const WINDOWS_OS = 'Windows_NT'
+const WINDOWS_OS = 'windows'
 const TAURI_UNAVAILABLE_ERROR = 'not in tauri'
 
 export const isTauri = () => Boolean(window?.__TAURI__ || window?.__TAURI_INTERNALS__)
