@@ -1,9 +1,10 @@
-import { getK3file, getOnlineInfo } from '../../functions/online.js'
+import { loadOfflineKitten3Project } from './adapters/offlineProjectSourceAdapter.js'
+import { loadOnlineProject } from './onlineProjectSourceGateway.js'
 
 export const loadProjectInfo = async ({ version, status, workId }) => {
   if (status === 'offline' && version === 'kitten3') {
-    return getK3file()
+    return loadOfflineKitten3Project()
   }
 
-  return getOnlineInfo(workId)
+  return loadOnlineProject(workId)
 }
