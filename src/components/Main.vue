@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { showAlert } from '../services/system/dialogService.js'
+import { showErrorAlert } from '../services/system/errorHandlingService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const emit = defineEmits(['pro'])
@@ -44,7 +45,7 @@ const convert = async () => {
   } catch (error) {
     console.error(error)
     emit('pro', 0)
-    await showAlert('转换失败', error?.message || '请稍后重试')
+    await showErrorAlert(error)
   }
 }
 </script>

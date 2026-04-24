@@ -1,3 +1,7 @@
-import { invoke } from '@tauri-apps/api/core'
+import { invokeBackendCommand } from '../system/backendCommandService.js'
 
-export const copyDirectory = async (from, to) => invoke('copy_dict', { from, to })
+export const copyDirectory = async (from, to) =>
+  invokeBackendCommand('copy_dict', { from, to }, {
+    title: '文件复制失败',
+    text: '准备打包文件时发生异常，请检查模板文件和目录权限'
+  })

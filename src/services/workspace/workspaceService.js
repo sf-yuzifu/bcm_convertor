@@ -1,8 +1,8 @@
-import { invoke } from '@tauri-apps/api/core'
 import { desktopDir, homeDir, join } from '@tauri-apps/api/path'
 import { exists, remove } from '@tauri-apps/plugin-fs'
 import { type } from '@tauri-apps/plugin-os'
 
+import { invokeBackendCommand } from '../system/backendCommandService.js'
 import {
   PRIMARY_WORKSPACE_NAME,
   SECONDARY_WORKSPACE_NAME
@@ -59,5 +59,8 @@ export const cleanupAfterConvert = async () => {
 }
 
 export const revealOutputDirectory = async () => {
-  await invoke('open_file', { path: await desktopDir() })
+  await invokeBackendCommand('open_file', { path: await desktopDir() }, {
+    title: '打开输出目录失败',
+    text: '已完成打包，但无法自动打开输出目录，请手动前往桌面查看'
+  })
 }

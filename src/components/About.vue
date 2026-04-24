@@ -1,6 +1,20 @@
 <script setup>
 import { desktopDir } from '@tauri-apps/api/path'
-import { invoke } from '@tauri-apps/api/core'
+
+import { showErrorAlert } from '../services/system/errorHandlingService.js'
+import { invokeBackendCommand } from '../services/system/backendCommandService.js'
+
+const openOutputDirectory = async () => {
+  try {
+    await invokeBackendCommand('open_file', { path: await desktopDir() }, {
+      title: '打开输出目录失败',
+      text: '无法自动打开输出目录，请手动前往桌面查看'
+    })
+  } catch (error) {
+    console.error(error)
+    await showErrorAlert(error)
+  }
+}
 </script>
 
 <template>
@@ -21,11 +35,7 @@ import { invoke } from '@tauri-apps/api/core'
       <p class="space">
         而Linux在用户home目录下。<span
           id="place"
-          @click="
-            async () => {
-              await invoke('open_file', { path: await desktopDir() })
-            }
-          "
+          @click="openOutputDirectory"
           >点我查看文件位置！</span
         >
       </p>
