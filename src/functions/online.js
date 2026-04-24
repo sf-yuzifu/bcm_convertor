@@ -2,7 +2,8 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { readTextFile, BaseDirectory } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core'
 
-import { isTauri, showAlert } from './env.js'
+import { showAlert } from '../services/system/dialogService.js'
+import { isTauri } from '../services/system/runtimeService.js'
 
 const fetchJson = async (url) => {
   const response = await window.fetch(url)

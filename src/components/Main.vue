@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { showAlert } from '../functions/env.js'
+import { showAlert } from '../services/system/dialogService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const emit = defineEmits(['pro'])

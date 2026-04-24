@@ -3,11 +3,11 @@ import { invoke } from '@tauri-apps/api/core'
 import { join } from '@tauri-apps/api/path'
 
 import {
-  copyDirectory,
-  copyResourceDirectory,
   getBuildPaths,
-  getCopyPath
-} from '../../../functions/env.js'
+  getCopyPath,
+  copyResourceDirectory
+} from '../../workspace/pathService.js'
+import { copyDirectory } from '../../files/fileTransferService.js'
 
 export const packageForWindows = async (projectInfo) => {
   const { home, homeDirPath, desktopDirPath, secondaryHomeCopyPath, osType } = await getBuildPaths()

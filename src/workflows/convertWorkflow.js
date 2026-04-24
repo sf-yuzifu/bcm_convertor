@@ -1,4 +1,4 @@
-import { isTauri } from '../functions/env.js'
+import { isTauri } from '../services/system/runtimeService.js'
 import { packageProject } from '../services/packagers/platformPackagerService.js'
 import { loadProjectInfo } from '../services/projectSources/projectSourceService.js'
 import { prepareTemplateWorkspace } from '../services/templates/templateService.js'

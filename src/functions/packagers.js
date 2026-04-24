@@ -2,7 +2,8 @@ import { mkdir, copyFile } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core'
 import { join } from '@tauri-apps/api/path'
 
-import { getBuildPaths, copyDirectory, copyResourceDirectory, getCopyPath } from './env.js'
+import { copyDirectory } from '../services/files/fileTransferService.js'
+import { copyResourceDirectory, getBuildPaths, getCopyPath } from '../services/workspace/pathService.js'
 
 export const macos = async (info) => {
   const { home, desktopDirPath } = await getBuildPaths()

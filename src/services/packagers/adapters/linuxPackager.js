@@ -2,7 +2,8 @@ import { mkdir } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core'
 import { join } from '@tauri-apps/api/path'
 
-import { copyDirectory, copyResourceDirectory, getBuildPaths } from '../../../functions/env.js'
+import { copyDirectory } from '../../files/fileTransferService.js'
+import { getBuildPaths, copyResourceDirectory } from '../../workspace/pathService.js'
 
 export const packageForLinux = async (projectInfo) => {
   const { home, desktopDirPath } = await getBuildPaths()

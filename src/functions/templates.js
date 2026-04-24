@@ -1,7 +1,10 @@
 import { readTextFile, BaseDirectory, writeTextFile } from '@tauri-apps/plugin-fs'
 import { join } from '@tauri-apps/api/path'
 
-import { copyTemplateToConvertHome, updatePackageJson } from './env.js'
+import {
+  copyTemplateToConvertHome,
+  updatePackageJson
+} from '../services/templates/templateWorkspaceService.js'
 
 export const online = async (info) => {
   const home = await copyTemplateToConvertHome('online')

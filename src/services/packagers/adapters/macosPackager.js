@@ -1,6 +1,7 @@
 import { join } from '@tauri-apps/api/path'
 
-import { copyDirectory, copyResourceDirectory, getBuildPaths } from '../../../functions/env.js'
+import { copyDirectory } from '../../files/fileTransferService.js'
+import { getBuildPaths, copyResourceDirectory } from '../../workspace/pathService.js'
 
 export const packageForMacOS = async (projectInfo) => {
   const { home, desktopDirPath } = await getBuildPaths()
