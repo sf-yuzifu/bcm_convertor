@@ -10,11 +10,11 @@ import {
   online,
   windows
 } from '../functions/convert.js'
-import { type } from '@tauri-apps/api/os'
+import { type } from '@tauri-apps/plugin-os'
 import { join, homeDir, desktopDir } from '@tauri-apps/api/path'
-import { removeDir } from '@tauri-apps/api/fs'
+import { remove } from '@tauri-apps/plugin-fs'
 import NProgress from 'nprogress'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 
 const homeDirPath = await homeDir()
 const osType = await type()
@@ -39,7 +39,7 @@ const checkNum = (event) => {
 const convert = async () => {
   try {
     if (osType === 'Windows_NT') {
-      await removeDir(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
+      await remove(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
     }
   } catch (error) {}
   console.log(props.ver, props.status, workid.value)
@@ -55,6 +55,7 @@ const convert = async () => {
   if (project_info === null) {
     emit('pro', 0)
     NProgress.done()
+    return
   }
   if (props.status === 'online') {
     await online(project_info)
@@ -71,9 +72,9 @@ const convert = async () => {
     await windows(project_info)
   }
   try {
-    await removeDir(await join(homeDirPath, 'convert_tmp'), { recursive: true })
+    await remove(await join(homeDirPath, 'convert_tmp'), { recursive: true })
     if (osType === 'Windows_NT') {
-      await removeDir(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
+      await remove(await join(homeDirPath, 'convert_tmp2'), { recursive: true })
     }
   } catch (error) {
     console.error(error)

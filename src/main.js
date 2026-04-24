@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import './styles.css'
 import 'nprogress/nprogress.css'
 import App from './App.vue'
-import { open } from '@tauri-apps/api/shell'
+import { open } from '@tauri-apps/plugin-shell'
 
 createApp(App).mount('#app')
 

@@ -1,5 +1,6 @@
 <script setup>
-import { appWindow } from '@tauri-apps/api/window'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+const appWindow = getCurrentWebviewWindow()
 const showAbout = () => {
   document.getElementById('aboutUs').style.transform = 'scale(1)'
 }

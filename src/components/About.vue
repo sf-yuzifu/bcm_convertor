@@ -1,6 +1,6 @@
 <script setup>
 import { desktopDir } from '@tauri-apps/api/path'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 </script>
 
 <template>

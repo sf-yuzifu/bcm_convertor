@@ -1,9 +1,9 @@
-import { open } from '@tauri-apps/api/dialog'
-import { readTextFile, BaseDirectory, writeTextFile, createDir, copyFile } from '@tauri-apps/api/fs'
-import { fetch } from '@tauri-apps/api/http'
-import { invoke } from '@tauri-apps/api/tauri'
+import { open } from '@tauri-apps/plugin-dialog'
+import { readTextFile, BaseDirectory, writeTextFile, mkdir, copyFile } from '@tauri-apps/plugin-fs'
+import { fetch } from '@tauri-apps/plugin-http'
+import { invoke } from '@tauri-apps/api/core'
 import { homeDir, resourceDir, join, desktopDir } from '@tauri-apps/api/path'
-import { type } from '@tauri-apps/api/os'
+import { type } from '@tauri-apps/plugin-os'
 import swal from 'sweetalert'
 
 const osType = await type()
@@ -75,16 +75,16 @@ export const online = async (info) => {
     from: await join(resourceDirPath, 'convert', 'online'),
     to: home
   })
-  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example')))
+  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example'), { dir: BaseDirectory.Home }))
   contents.name = info.name
   contents.author = info.data['author_nickname']
-  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents))
-  contents = await readTextFile(await join(home, 'index.js'))
+  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents), { dir: BaseDirectory.Home })
+  contents = await readTextFile(await join(home, 'index.js'), { dir: BaseDirectory.Home })
   contents = contents.replace(
     'thisisaplacewhichshouldbereplace',
     'https://player.codemao.cn/we/' + info.id
   )
-  await writeTextFile(await join(home, 'index.js'), contents)
+  await writeTextFile(await join(home, 'index.js'), contents, { dir: BaseDirectory.Home })
 }
 export const kitten3 = async (info) => {
   let home
@@ -97,10 +97,10 @@ export const kitten3 = async (info) => {
     from: await join(resourceDirPath, 'convert', 'kitten3'),
     to: home
   })
-  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example')))
+  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example'), { dir: BaseDirectory.Home }))
   contents.name = info.name
-  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents))
-  await writeTextFile(await join(home, 'resource.bcm'), JSON.stringify(info.data))
+  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents), { dir: BaseDirectory.Home })
+  await writeTextFile(await join(home, 'resource.bcm'), JSON.stringify(info.data), { dir: BaseDirectory.Home })
 }
 export const kitten4 = async (info) => {
   let home
@@ -113,13 +113,13 @@ export const kitten4 = async (info) => {
     from: await join(resourceDirPath, 'convert', 'kitten4'),
     to: home
   })
-  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example')))
+  let contents = JSON.parse(await readTextFile(await join(home, 'package.json.example'), { dir: BaseDirectory.Home }))
   contents.author = info.data['author_nickname']
   contents.name = info.name
-  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents))
-  contents = await readTextFile(await join(home, 'main', 'preload.js'))
+  await writeTextFile(await join(home, 'package.json'), JSON.stringify(contents), { dir: BaseDirectory.Home })
+  contents = await readTextFile(await join(home, 'main', 'preload.js'), { dir: BaseDirectory.Home })
   contents = contents.replace('thisisaplacewhichshouldbereplace', JSON.stringify(info.data))
-  await writeTextFile(await join(home, 'main', 'preload.js'), contents)
+  await writeTextFile(await join(home, 'main', 'preload.js'), contents, { dir: BaseDirectory.Home })
 }
 
 export const macos = async (info) => {
@@ -156,7 +156,7 @@ export const linux = async (info) => {
     from: await join(resourceDirPath, 'convert', 'linux'),
     to: home
   })
-  await createDir(await join(home, 'linux', 'AppDir', 'usr', 'bin', 'resources'), {
+  await mkdir(await join(home, 'linux', 'AppDir', 'usr', 'bin', 'resources'), {
     recursive: true
   })
   await invoke('copy_dict', {
