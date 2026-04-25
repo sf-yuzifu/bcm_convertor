@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -7,6 +7,8 @@ const scriptDir = dirname(fileURLToPath(import.meta.url))
 const builderDir = resolve(scriptDir, '..')
 const toolchainDir = join(builderDir, 'toolchain')
 const toolchainMarker = join(toolchainDir, 'node_modules', 'electron-builder', 'out', 'index.js')
+const electronModuleDir = join(toolchainDir, 'node_modules', 'electron')
+const appBuilderBinDir = join(toolchainDir, 'node_modules', 'app-builder-bin')
 
 const getBundledRuntimeTarget = () => {
   if (process.platform === 'win32' && process.arch === 'x64') {
@@ -80,9 +82,64 @@ const ensureBundledToolchain = () => {
   }
 }
 
+const removeIfExists = (targetPath) => {
+  if (existsSync(targetPath)) {
+    rmSync(targetPath, { recursive: true, force: true })
+  }
+}
+
+const pruneAppBuilderBin = () => {
+  if (!existsSync(appBuilderBinDir)) {
+    return
+  }
+
+  if (process.platform === 'win32') {
+    removeIfExists(join(appBuilderBinDir, 'linux'))
+    removeIfExists(join(appBuilderBinDir, 'mac'))
+
+    if (process.arch === 'x64') {
+      removeIfExists(join(appBuilderBinDir, 'win', 'ia32'))
+    }
+
+    return
+  }
+
+  if (process.platform === 'linux') {
+    removeIfExists(join(appBuilderBinDir, 'mac'))
+    removeIfExists(join(appBuilderBinDir, 'win'))
+
+    if (process.arch === 'x64') {
+      removeIfExists(join(appBuilderBinDir, 'linux', 'arm'))
+      removeIfExists(join(appBuilderBinDir, 'linux', 'arm64'))
+      removeIfExists(join(appBuilderBinDir, 'linux', 'ia32'))
+    }
+
+    return
+  }
+
+  if (process.platform === 'darwin') {
+    removeIfExists(join(appBuilderBinDir, 'linux'))
+    removeIfExists(join(appBuilderBinDir, 'win'))
+
+    if (process.arch === 'arm64') {
+      removeIfExists(join(appBuilderBinDir, 'mac', 'app-builder_amd64'))
+    }
+
+    if (process.arch === 'x64') {
+      removeIfExists(join(appBuilderBinDir, 'mac', 'app-builder_arm64'))
+    }
+  }
+}
+
+const pruneBundledToolchain = () => {
+  removeIfExists(electronModuleDir)
+  pruneAppBuilderBin()
+}
+
 const main = () => {
   ensureBundledNodeRuntime()
   ensureBundledToolchain()
+  pruneBundledToolchain()
 }
 
 main()

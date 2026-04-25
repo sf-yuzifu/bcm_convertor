@@ -54,6 +54,7 @@ const getRequire = (root) => createRequire(pathToFileURL(join(root, 'package.jso
 const getElectronVersion = (root) => {
   const packageJson = readJson(join(root, 'package.json'))
   const version =
+    packageJson.bcmBuilder?.electronVersion ||
     packageJson.devDependencies?.electron ||
     packageJson.dependencies?.electron ||
     packageJson.optionalDependencies?.electron
