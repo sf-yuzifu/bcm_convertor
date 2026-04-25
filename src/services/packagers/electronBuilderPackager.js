@@ -67,7 +67,7 @@ const createBuildContext = async (projectInfo, osType) => {
   }
 }
 
-export const packageWithElectronBuilder = async (projectInfo) => {
+export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {}) => {
   const osType = await type()
   const buildContext = await createBuildContext(projectInfo, osType)
   const contextPath = await join(buildContext.workspaceDir, CONTEXT_FILE_NAME)
@@ -81,8 +81,16 @@ export const packageWithElectronBuilder = async (projectInfo) => {
     { title, text }
   )
 
+  onProgress?.({ stage: 'postprocess', message: '正在复制安装包到桌面', percent: 90 })
   const artifactName = await basename(result.artifactPath)
-  await copyPath(result.artifactPath, await join(buildContext.desktopDirPath, artifactName))
+  const desktopArtifactPath = await join(buildContext.desktopDirPath, artifactName)
+  await copyPath(result.artifactPath, desktopArtifactPath)
+  onProgress?.({
+    stage: 'postprocess',
+    message: '正在整理输出文件',
+    percent: 96,
+    detail: desktopArtifactPath
+  })
 
   return result
 }
