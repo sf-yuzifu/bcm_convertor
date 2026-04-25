@@ -1,0 +1,10 @@
+{
+  "name": "bcm-builder-toolchain",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Offline electron-builder toolchain for bcm_convertor",
+  "devDependencies": {
+    "electron": "^19.0.7",
+    "electron-builder": "^24.13.3"
+  }
+}

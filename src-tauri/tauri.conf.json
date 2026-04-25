@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "yarn dev",
-    "beforeBuildCommand": "yarn build",
+    "beforeDevCommand": "yarn prepare:builder && yarn dev",
+    "beforeBuildCommand": "yarn prepare:builder && yarn build",
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420"
   },
@@ -9,7 +9,8 @@
     "active": true,
     "targets": "all",
     "resources": [
-      "./convert"
+      "./convert",
+      "./builder"
     ],
     "icon": [
       "icons/linux.svg",

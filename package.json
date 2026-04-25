@@ -5,6 +5,7 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
+    "prepare:builder": "node ./src-tauri/builder/scripts/prepare-builder.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -23,6 +24,8 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",
     "@vitejs/plugin-vue": "^6.0.6",
+    "electron": "^19.0.7",
+    "electron-builder": "^24.13.3",
     "esbuild": "^0.25.11",
     "eslint": "^10.2.1",
     "eslint-plugin-vue": "^10.9.0",

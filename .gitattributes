@@ -1,3 +1,0 @@
-src-tauri/convert/linux/AppDir/usr/bin/bcm filter=lfs diff=lfs merge=lfs -text
-src-tauri/convert/windows/bcm_file/bcm.exe filter=lfs diff=lfs merge=lfs -text
-src-tauri/convert/mac/bcm.app/Contents/Frameworks/Electron[[:space:]]Framework.framework/Versions/A/Electron[[:space:]]Framework filter=lfs diff=lfs merge=lfs -text

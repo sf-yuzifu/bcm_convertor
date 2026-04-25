@@ -18,8 +18,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::files::open_file,
             commands::files::copy_dict,
-            commands::packaging::appimage_packager,
-            commands::packaging::winrar_packager,
+            commands::packaging::run_electron_builder,
             commands::network::fetch_online_info
         ])
         .run(tauri::generate_context!())
