@@ -45,7 +45,24 @@ fn copy_file(source: &Path, destination: &Path) -> Result<(), String> {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
 
-    fs::copy(source, &target).map_err(|e| e.to_string())?;
+    if target.exists() {
+        if target.is_dir() {
+            return Err(format!("目标路径是目录，无法覆盖文件: {}", target.display()));
+        }
+
+        ensure_writable(&target)?;
+        fs::remove_file(&target)
+            .map_err(|e| format!("删除已存在目标文件失败: {} ({})", target.display(), e))?;
+    }
+
+    fs::copy(source, &target).map_err(|e| {
+        format!(
+            "复制文件失败: {} -> {} ({})",
+            source.display(),
+            target.display(),
+            e
+        )
+    })?;
     sync_permissions(source, &target)?;
     Ok(())
 }
