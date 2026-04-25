@@ -9,6 +9,8 @@ const toolchainDir = join(builderDir, 'toolchain')
 const toolchainMarker = join(toolchainDir, 'node_modules', 'electron-builder', 'out', 'index.js')
 const electronModuleDir = join(toolchainDir, 'node_modules', 'electron')
 const appBuilderBinDir = join(toolchainDir, 'node_modules', 'app-builder-bin')
+const runtimesDir = join(builderDir, 'runtimes')
+const npmCommand = process.platform === 'win32' ? 'npm' : 'npm'
 
 const getBundledRuntimeTarget = () => {
   if (process.platform === 'win32' && process.arch === 'x64') {
@@ -42,6 +44,30 @@ const getBundledRuntimeTarget = () => {
   return null
 }
 
+const hasRequiredAppBuilderBin = () => {
+  if (!existsSync(appBuilderBinDir)) {
+    return false
+  }
+
+  if (process.platform === 'win32') {
+    return (
+      existsSync(join(appBuilderBinDir, 'win', 'x64', 'app-builder.exe')) &&
+      existsSync(join(appBuilderBinDir, 'win', 'ia32', 'app-builder.exe'))
+    )
+  }
+
+  if (process.platform === 'linux') {
+    return existsSync(join(appBuilderBinDir, 'linux', process.arch, 'app-builder'))
+  }
+
+  if (process.platform === 'darwin') {
+    const binaryName = process.arch === 'arm64' ? 'app-builder_arm64' : 'app-builder_amd64'
+    return existsSync(join(appBuilderBinDir, 'mac', binaryName))
+  }
+
+  return true
+}
+
 const ensureBundledNodeRuntime = () => {
   const runtimeTarget = getBundledRuntimeTarget()
 
@@ -66,19 +92,29 @@ const ensureBundledNodeRuntime = () => {
 }
 
 const ensureBundledToolchain = () => {
-  if (existsSync(toolchainMarker)) {
+  const hasToolchain = existsSync(toolchainMarker)
+
+  if (hasToolchain && hasRequiredAppBuilderBin()) {
     return
   }
 
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+  if (hasToolchain) {
+    removeIfExists(appBuilderBinDir)
+  }
+
   const result = spawnSync(npmCommand, ['install'], {
     cwd: toolchainDir,
     stdio: 'inherit',
-    env: process.env
+    env: process.env,
+    shell: process.platform === 'win32'
   })
 
+  if (result.error) {
+    throw new Error(`初始化内置 electron-builder 工具链失败: ${result.error.message}`)
+  }
+
   if (result.status !== 0) {
-    throw new Error(`初始化内置 electron-builder 工具链失败，退出码: ${result.status ?? 'unknown'}`)
+    throw new Error(`初始化内置 electron-builder 工具链失败，退出码: ${result.status}`)
   }
 }
 
@@ -96,11 +132,6 @@ const pruneAppBuilderBin = () => {
   if (process.platform === 'win32') {
     removeIfExists(join(appBuilderBinDir, 'linux'))
     removeIfExists(join(appBuilderBinDir, 'mac'))
-
-    if (process.arch === 'x64') {
-      removeIfExists(join(appBuilderBinDir, 'win', 'ia32'))
-    }
-
     return
   }
 
@@ -131,9 +162,31 @@ const pruneAppBuilderBin = () => {
   }
 }
 
+const pruneBundledRuntimes = () => {
+  const runtimeTarget = getBundledRuntimeTarget()
+
+  if (!runtimeTarget || !existsSync(runtimesDir)) {
+    return
+  }
+
+  const runtimeDirs = [
+    join(runtimesDir, 'windows-x64'),
+    join(runtimesDir, 'linux-x64'),
+    join(runtimesDir, 'macos-arm64'),
+    join(runtimesDir, 'macos-x64')
+  ]
+
+  for (const runtimeDir of runtimeDirs) {
+    if (resolve(runtimeDir) !== resolve(runtimeTarget.runtimeDir)) {
+      removeIfExists(runtimeDir)
+    }
+  }
+}
+
 const pruneBundledToolchain = () => {
   removeIfExists(electronModuleDir)
   pruneAppBuilderBin()
+  pruneBundledRuntimes()
 }
 
 const main = () => {
