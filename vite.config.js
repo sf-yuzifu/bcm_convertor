@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [
-    vue(),
+    tailwindcss(),
+    react(),
     topLevelAwait({
       // The export name of top-level await promise for each chunk module
       promiseExportName: '__tla',
