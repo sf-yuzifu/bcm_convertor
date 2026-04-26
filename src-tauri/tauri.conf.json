@@ -30,7 +30,7 @@
   "identifier": "com.bcm-convertor.yzf",
   "plugins": {},
   "app": {
-    "withGlobalTauri": false,
+    "withGlobalTauri": true,
     "macOSPrivateApi": true,
     "windows": [
       {
@@ -40,8 +40,19 @@
         "width": 640,
         "height": 440,
         "decorations": false,
+        "shadow": true,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
+        "acceptFirstMouse": true,
         "label": "bcm_convertor",
-        "useHttpsScheme": true
+        "useHttpsScheme": true,
+        "transparent": true,
+        "windowEffects": {
+          "effects": [
+            "acrylic",
+            "blur"
+          ]
+        }
       }
     ],
     "security": {

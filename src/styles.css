@@ -1,5 +1,5 @@
 body {
-  background-color: rgb(255, 252, 247);
+  background-color: rgba(255, 252, 247, 0.8);
   user-select: none;
   -webkit-user-select: none;
 }
