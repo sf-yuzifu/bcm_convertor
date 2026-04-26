@@ -22,7 +22,7 @@ const openOutputDirectory = async () => {
     <div class="navbar" data-tauri-drag-region></div>
     <div id="version">
       <div id="pic"></div>
-      <p class="bold">版本号：v2.0.0</p>
+      <p class="bold">版本号：v2.5.0</p>
       <a href="https://shequ.codemao.cn/user/438403">小鱼yuzifu</a>
     </div>
     <div id="intro">
