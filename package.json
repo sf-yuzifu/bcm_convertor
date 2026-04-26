@@ -8,6 +8,8 @@
     "prepare:builder": "node ./src-tauri/builder/scripts/prepare-builder.mjs",
     "dev": "vite",
     "build": "vite build",
+    "format": "prettier . --write --ignore-unknown",
+    "format:check": "prettier . --check --ignore-unknown",
     "preview": "vite preview",
     "tauri": "tauri"
   },

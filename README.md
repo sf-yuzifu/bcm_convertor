@@ -12,7 +12,7 @@
 </h1>
 <br>
 
-**作者：小鱼yuzifu**  [(编程猫id：438403)](https://shequ.codemao.cn/user/438403)
+**作者：小鱼yuzifu** [(编程猫id：438403)](https://shequ.codemao.cn/user/438403)
 
 ### 简单介绍
 
@@ -20,16 +20,17 @@
 
 #### 优点
 
-* 文件大小不受限制（官方限制30MB）
-* 使用Tauri封装，多平台支持
-* 无次数限制
-* 转换等待时间短
-* 并入kitten3转换
-* 支持在线作品转换（支持云变量呦～）
-* 与Electron版本相比，体积更小，运行速度更快
+- 文件大小不受限制（官方限制30MB）
+- 使用Tauri封装，多平台支持
+- 无次数限制
+- 转换等待时间短
+- 并入kitten3转换
+- 支持在线作品转换（支持云变量呦～）
+- 与Electron版本相比，体积更小，运行速度更快
 
 #### 缺点
-* 目前已知在转换过程中会卡顿
+
+- 目前已知在转换过程中会卡顿
 
 ### 安装方式
 
@@ -37,14 +38,14 @@
 
 > 更新时间：不定（通常与Github提供时间相同）
 
-* 目前只提供Linux下星火应用商店和UOS应用商店下载
+- 目前只提供Linux下星火应用商店和UOS应用商店下载
 
 #### 2. 直接下载文件安装（更新速度较快）
 
 > 更新时间：2024-2-13（Windows/Mac OS/Linux）
 
-* Github：[https://github.com/sf-yuzifu/bcm_convertor/releases/latest](https://github.com/sf-yuzifu/bcm_convertor/releases/latest)
-* Gitee：[https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest](https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest)
+- Github：[https://github.com/sf-yuzifu/bcm_convertor/releases/latest](https://github.com/sf-yuzifu/bcm_convertor/releases/latest)
+- Gitee：[https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest](https://gitee.com/sf-yuzifu/bcm_convertor/releases/latest)
 
 #### 3. 通过 Winget 下载
 

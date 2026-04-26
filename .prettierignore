@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.trae
+yarn.lock
+src-tauri/builder/runtimes
+src-tauri/convert
+src-tauri/gen
+src-tauri/icons
+src-tauri/Cargo.lock
