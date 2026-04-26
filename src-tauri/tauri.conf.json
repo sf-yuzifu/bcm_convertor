@@ -8,16 +8,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "resources": [
-      "./convert",
-      "./builder"
-    ],
-    "icon": [
-      "icons/linux.svg",
-      "icons/mac.icns",
-      "icons/win.ico",
-      "icons/bcm_convertor.png"
-    ],
+    "resources": ["./convert", "./builder"],
+    "icon": ["icons/linux.svg", "icons/mac.icns", "icons/win.ico", "icons/bcm_convertor.png"],
     "copyright": "小鱼yuzifu",
     "publisher": "小鱼yuzifu",
     "shortDescription": "编程猫格式工厂",
@@ -48,10 +40,7 @@
         "useHttpsScheme": true,
         "transparent": true,
         "windowEffects": {
-          "effects": [
-            "acrylic",
-            "blur"
-          ]
+          "effects": ["acrylic", "blur"]
         }
       }
     ],

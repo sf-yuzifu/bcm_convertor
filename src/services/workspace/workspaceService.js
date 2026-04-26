@@ -39,8 +39,12 @@ export const cleanupAfterConvert = async () => {
 }
 
 export const revealOutputDirectory = async () => {
-  await invokeBackendCommand('open_file', { path: await desktopDir() }, {
-    title: '打开输出目录失败',
-    text: '已完成打包，但无法自动打开输出目录，请手动前往桌面查看'
-  })
+  await invokeBackendCommand(
+    'open_file',
+    { path: await desktopDir() },
+    {
+      title: '打开输出目录失败',
+      text: '已完成打包，但无法自动打开输出目录，请手动前往桌面查看'
+    }
+  )
 }

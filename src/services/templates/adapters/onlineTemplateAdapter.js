@@ -1,10 +1,7 @@
 import { readTextFile, BaseDirectory, writeTextFile } from '@tauri-apps/plugin-fs'
 import { join } from '@tauri-apps/api/path'
 
-import {
-  copyTemplateToConvertHome,
-  updatePackageJson
-} from '../templateWorkspaceService.js'
+import { copyTemplateToConvertHome, updatePackageJson } from '../templateWorkspaceService.js'
 
 export const prepareOnlineTemplate = async (projectInfo) => {
   const home = await copyTemplateToConvertHome('online')
@@ -15,10 +12,7 @@ export const prepareOnlineTemplate = async (projectInfo) => {
   })
 
   let contents = await readTextFile(await join(home, 'index.js'), { dir: BaseDirectory.Home })
-  contents = contents.replace(
-    'thisisaplacewhichshouldbereplace',
-    `https://player.codemao.cn/we/${projectInfo.id}`
-  )
+  contents = contents.replace('thisisaplacewhichshouldbereplace', `https://player.codemao.cn/we/${projectInfo.id}`)
 
   await writeTextFile(await join(home, 'index.js'), contents, { dir: BaseDirectory.Home })
 }

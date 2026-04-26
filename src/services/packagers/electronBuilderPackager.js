@@ -75,11 +75,7 @@ export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {
   await writeTextFile(contextPath, JSON.stringify(buildContext, null, 2))
 
   const { title, text } = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
-  const result = await invokeBackendCommand(
-    'run_electron_builder',
-    { contextPath },
-    { title, text }
-  )
+  const result = await invokeBackendCommand('run_electron_builder', { contextPath }, { title, text })
 
   onProgress?.({ stage: 'postprocess', message: '正在复制安装包到桌面', percent: 90 })
   const artifactName = await basename(result.artifactPath)

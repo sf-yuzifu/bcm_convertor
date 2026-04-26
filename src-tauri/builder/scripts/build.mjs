@@ -6,8 +6,7 @@ import { createRequire } from 'node:module'
 const RESULT_MARKER = '__BCM_BUILDER_RESULT__='
 const PROGRESS_MARKER = '__BCM_BUILDER_PROGRESS__='
 const DEFAULT_ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'
-const DEFAULT_ELECTRON_BUILDER_BINARIES_MIRROR =
-  'https://npmmirror.com/mirrors/electron-builder-binaries/'
+const DEFAULT_ELECTRON_BUILDER_BINARIES_MIRROR = 'https://npmmirror.com/mirrors/electron-builder-binaries/'
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const bundledToolchainRoot = resolve(scriptDir, '..', 'toolchain')
 
@@ -318,9 +317,7 @@ const buildApp = async (context) => {
     publish: 'never'
   })
 
-  const artifactPath =
-    results.find((entry) => !entry.endsWith('.blockmap')) ||
-    results[0]
+  const artifactPath = results.find((entry) => !entry.endsWith('.blockmap')) || results[0]
 
   if (!artifactPath) {
     throw new Error('electron-builder 没有生成可用产物')
