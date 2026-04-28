@@ -13,6 +13,7 @@ export default function App() {
   const [process, setProcess] = useState(0)
   const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const showSearchChrome = panelStep === 'search' && process !== 2
 
   const controlState = useMemo(
     () => ({
@@ -45,9 +46,9 @@ export default function App() {
         />
         <Content className="relative flex h-[calc(100vh-40px)] bg-[#FFFCF7] items-center justify-center p-3">
           <div
-            className={`${panelStep === 'search' ? 'border border-[#F9E2BA] border-dashed rounded-b-xl' : ''} h-full w-full`}
+            className={`${showSearchChrome ? 'border border-[#F9E2BA] border-dashed rounded-b-xl' : ''} h-full w-full`}
           >
-            {panelStep === 'search' ? (
+            {showSearchChrome ? (
               <VersionControls
                 version={controlState.version}
                 status={controlState.status}

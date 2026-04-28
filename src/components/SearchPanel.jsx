@@ -1,4 +1,5 @@
 import { Button, InputNumber, Typography } from 'antd'
+import { FolderOpenOutlined, ReloadOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 
@@ -10,9 +11,27 @@ export default function SearchPanel({
   workId,
   onWorkIdChange,
   onSubmit,
+  onOpenOutput,
+  onContinue,
   buttonIcon,
   buttonText
 }) {
+  if (process === 2) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-between">
+        <img src="/success.png" alt="转换成功" className="mt-9 h-[210px] object-contain" />
+        <div className="flex items-center gap-3 mb-9">
+          <Button icon={<FolderOpenOutlined />} onClick={onOpenOutput}>
+            打开文件
+          </Button>
+          <Button type="primary" icon={<ReloadOutlined />} onClick={onContinue}>
+            继续转换
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <img src="/icn_upload.png" alt="logo" className="mb-6 w-[148px]" />

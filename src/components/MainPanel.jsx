@@ -11,6 +11,7 @@ import {
 import { showAlert } from '../services/system/dialogService.js'
 import { showErrorAlert } from '../services/system/errorHandlingService.js'
 import { isTauri } from '../services/system/runtimeService.js'
+import { revealOutputDirectory } from '../services/workspace/workspaceService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const STAGE_SOFT_CAP = {
@@ -148,6 +149,7 @@ export default function MainPanel({
   const [builderLastEventAt, setBuilderLastEventAt] = useState(0)
   const [packageConfig, setPackageConfig] = useState(createEmptyPackageConfig)
   const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
+  const [lastOutputDirectory, setLastOutputDirectory] = useState('')
   const targetPercentRef = useRef(0)
 
   const resetBuilderProgress = () => {
@@ -256,6 +258,7 @@ export default function MainPanel({
     cleanupIconPreview(packageConfig.projectIconPreview)
     setPackageConfig(createEmptyPackageConfig())
     setLoadedProjectInfo(null)
+    setLastOutputDirectory('')
   }, [onPanelStepChange, status, version])
 
   useEffect(() => () => cleanupIconPreview(packageConfig.projectIconPreview), [packageConfig.projectIconPreview])
@@ -379,6 +382,7 @@ export default function MainPanel({
 
     resetBuilderProgress()
     applyProgressPayload({ stage: 'process-files', message: '正在准备转换任务', percent: 0 })
+    setLastOutputDirectory('')
     onProcessChange(1)
 
     try {
@@ -391,8 +395,8 @@ export default function MainPanel({
       })
 
       if (result.status === 'success') {
+        setLastOutputDirectory(result.outputDirectory || packageConfig.exportPath || '')
         onProcessChange(2)
-        onPanelStepChange?.('search')
         applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
         return
       }
@@ -419,9 +423,7 @@ export default function MainPanel({
     }
 
     if (process === 2) {
-      onProcessChange(0)
-      resetBuilderProgress()
-      onPanelStepChange?.('search')
+      handleContinueConvert()
       return
     }
 
@@ -432,6 +434,7 @@ export default function MainPanel({
 
     resetBuilderProgress()
     applyProgressPayload({ stage: 'process-files', message: '正在准备转换任务', percent: 0 })
+    setLastOutputDirectory('')
     onProcessChange(1)
 
     try {
@@ -443,6 +446,7 @@ export default function MainPanel({
       })
 
       if (result.status === 'success') {
+        setLastOutputDirectory(result.outputDirectory || '')
         onProcessChange(2)
         applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
         return
@@ -458,6 +462,17 @@ export default function MainPanel({
       onProcessChange(0)
       await showErrorAlert(error)
     }
+  }
+
+  const handleContinueConvert = () => {
+    onProcessChange(0)
+    resetBuilderProgress()
+    setLastOutputDirectory('')
+    onPanelStepChange?.('search')
+  }
+
+  const handleOpenOutput = async () => {
+    await revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
   }
 
   const buttonText = showInput ? null : process === 2 ? '完成' : '选择文件'
@@ -488,6 +503,8 @@ export default function MainPanel({
       workId={workId}
       onWorkIdChange={handleWorkIdChange}
       onSubmit={convert}
+      onOpenOutput={handleOpenOutput}
+      onContinue={handleContinueConvert}
       buttonIcon={buttonIcon}
       buttonText={buttonText}
     />

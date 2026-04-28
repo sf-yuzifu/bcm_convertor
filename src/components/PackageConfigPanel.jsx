@@ -27,11 +27,7 @@ export default function PackageConfigPanel({
             <div className="flex h-[198px] w-[198px] items-center justify-center rounded-xl border border-[#d9d4cc] bg-[#f7f4ef]">
               <div className="relative flex h-[168px] w-[168px] items-center justify-center">
                 {isProcessing ? (
-                  <svg
-                    viewBox="0 0 168 168"
-                    className="-rotate-90 absolute inset-0 h-full w-full"
-                    aria-hidden="true"
-                  >
+                  <svg viewBox="0 0 168 168" className="-rotate-90 absolute inset-0 h-full w-full" aria-hidden="true">
                     <circle cx="84" cy="84" r={circleRadius} fill="none" stroke="#E7E1D8" strokeWidth="6" />
                     <circle
                       cx="84"
@@ -60,7 +56,12 @@ export default function PackageConfigPanel({
           <div className="flex flex-col justify-between w-[320px]">
             <label className="flex flex-col">
               <span>作品名称：</span>
-              <Input value={packageConfig.projectName} placeholder="Input" onChange={onProjectNameChange} disabled={isProcessing} />
+              <Input
+                value={packageConfig.projectName}
+                placeholder="Input"
+                onChange={onProjectNameChange}
+                disabled={isProcessing}
+              />
             </label>
             <div className="flex flex-col">
               <span>作品图标：</span>
@@ -70,7 +71,12 @@ export default function PackageConfigPanel({
             </div>
             <label className="flex flex-col">
               <span>导出路径：</span>
-              <Input value={packageConfig.exportPath} placeholder="Input" onChange={onExportPathChange} disabled={isProcessing} />
+              <Input
+                value={packageConfig.exportPath}
+                placeholder="Input"
+                onChange={onExportPathChange}
+                disabled={isProcessing}
+              />
             </label>
           </div>
         </div>
@@ -79,9 +85,9 @@ export default function PackageConfigPanel({
             <div className="mb-3 text-center text-[16px] leading-none font-medium">{progressText}</div>
           ) : null}
           <div className="flex items-center justify-center gap-3">
-          <Button icon={<ReloadOutlined />} onClick={onBack} disabled={isProcessing}>
-            重新选择
-          </Button>
+            <Button icon={<ReloadOutlined />} onClick={onBack} disabled={isProcessing}>
+              重新选择
+            </Button>
             <Button type="primary" icon={<ThunderboltOutlined />} onClick={onSubmit} loading={isProcessing}>
               一键转换
             </Button>
