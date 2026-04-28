@@ -38,13 +38,14 @@ export const cleanupAfterConvert = async () => {
   await removeDirectoryIfExists(primaryWorkspacePath)
 }
 
-export const revealOutputDirectory = async () => {
+export const revealOutputDirectory = async (outputPath) => {
+  const targetPath = outputPath || (await desktopDir())
   await invokeBackendCommand(
     'open_file',
-    { path: await desktopDir() },
+    { path: targetPath },
     {
       title: '打开输出目录失败',
-      text: '已完成打包，但无法自动打开输出目录，请手动前往桌面查看'
+      text: '已完成打包，但无法自动打开输出目录，请手动前往导出目录查看'
     }
   )
 }

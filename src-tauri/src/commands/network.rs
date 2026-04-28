@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct OnlineInfo {
     name: String,
     id: u64,
+    preview: Option<String>,
     data: serde_json::Value,
 }
 
@@ -33,6 +34,7 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
         "https://api-creation.codemao.cn/kitten/r2/work/player/load/{}",
         workid
     );
+    let works_url = format!("https://api.codemao.cn/creation-tools/v1/works/{}", workid);
 
     let meta_res = client
         .get(meta_url)
@@ -50,6 +52,31 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| "missing name".to_string())?
         .to_string();
+
+    let works_preview = match client.get(works_url).send().await {
+        Ok(response) if response.status().is_success() => {
+            let works_json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
+            ["preview", "screenshot_cover_url", "cover_url", "cover", "thumbnail"]
+                .iter()
+                .find_map(|key| works_json.get(key).and_then(|v| v.as_str()))
+                .map(str::to_string)
+        }
+        Ok(_) | Err(_) => None,
+    };
+
+    let preview = works_preview.or_else(|| {
+        [
+            "preview",
+            "preview_url",
+            "cover_url",
+            "cover",
+            "thumbnail",
+            "work_pic",
+        ]
+        .iter()
+        .find_map(|key| meta_json.get(key).and_then(|v| v.as_str()))
+        .map(str::to_string)
+    });
 
     let source_url = meta_json
         .get("source_urls")
@@ -73,6 +100,7 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
     Ok(OnlineInfo {
         name,
         id: workid,
+        preview,
         data: data_json,
     })
 }

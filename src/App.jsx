@@ -11,6 +11,7 @@ export default function App() {
   const [version, setVersion] = useState('kitten4')
   const [status, setStatus] = useState('offline')
   const [process, setProcess] = useState(0)
+  const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
 
   const controlState = useMemo(
@@ -43,18 +44,24 @@ export default function App() {
           onCloseAbout={() => setAboutOpen(false)}
         />
         <Content className="relative flex h-[calc(100vh-40px)] bg-[#FFFCF7] items-center justify-center p-3">
-          <div className="border border-[#F9E2BA] border-dashed rounded-b-xl w-full h-full">
-            <VersionControls
-              version={controlState.version}
-              status={controlState.status}
-              process={controlState.process}
-              onVersionChange={handleVersionChange}
-              onStatusChange={handleStatusChange}
-            />
+          <div
+            className={`${panelStep === 'search' ? 'border border-[#F9E2BA] border-dashed rounded-b-xl' : ''} h-full w-full`}
+          >
+            {panelStep === 'search' ? (
+              <VersionControls
+                version={controlState.version}
+                status={controlState.status}
+                process={controlState.process}
+                onVersionChange={handleVersionChange}
+                onStatusChange={handleStatusChange}
+              />
+            ) : null}
             <MainPanel
               version={controlState.version}
               status={controlState.status}
               process={controlState.process}
+              panelStep={panelStep}
+              onPanelStepChange={setPanelStep}
               onProcessChange={setProcess}
             />
           </div>

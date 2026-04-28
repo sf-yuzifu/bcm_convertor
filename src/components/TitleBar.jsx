@@ -57,9 +57,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
       className="relative flex h-10 items-center border-b border-[rgba(250,154,75,0.12)] bg-white px-3"
       data-tauri-drag-region
     >
-      <div className={`absolute flex gap-3 ${isMac ? 'left-3' : 'right-3'}`}>
-        {buttonNodes}
-      </div>
+      <div className={`absolute flex gap-3 ${isMac ? 'left-3' : 'right-3'}`}>{buttonNodes}</div>
       <div className="text-lg font-bold text-[#d48b22]" data-tauri-drag-region>
         编程猫格式工厂
       </div>

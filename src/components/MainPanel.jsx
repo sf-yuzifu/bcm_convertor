@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, InputNumber, Typography } from 'antd'
 import { SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { listen } from '@tauri-apps/api/event'
+import PackageConfigPanel from './PackageConfigPanel.jsx'
+import SearchPanel from './SearchPanel.jsx'
+import {
+  chooseProjectIconFile,
+  loadPackageConfigDefaults,
+  revokeObjectUrlIfNeeded
+} from '../services/packageConfig/packageConfigService.js'
 import { showAlert } from '../services/system/dialogService.js'
 import { showErrorAlert } from '../services/system/errorHandlingService.js'
 import { isTauri } from '../services/system/runtimeService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
-
-const { Text } = Typography
 
 const STAGE_SOFT_CAP = {
   idle: 0,
@@ -32,6 +36,14 @@ const STAGE_DRIFT_PER_SECOND = {
   success: 0,
   error: 0
 }
+
+const createEmptyPackageConfig = () => ({
+  projectName: '',
+  projectIcon: '',
+  projectIconPreview: '',
+  exportPath: '',
+  fetchedIcon: ''
+})
 
 const normalizePercent = (value) => {
   const numericValue = Number(value)
@@ -115,7 +127,18 @@ const mapBuilderProgress = (payload, currentTargetPercent) => {
   }
 }
 
-export default function MainPanel({ version, status, process, onProcessChange }) {
+export default function MainPanel({
+  version,
+  status,
+  process,
+  panelStep,
+  onPanelStepChange,
+  onProcessChange,
+  onProjectFetched,
+  onPackageConfigChange,
+  onChooseProjectIcon,
+  onSubmitPackageConfig
+}) {
   const [workId, setWorkId] = useState('6654365')
   const [builderMessage, setBuilderMessage] = useState('正在准备转换任务')
   const [builderPercent, setBuilderPercent] = useState(0)
@@ -123,6 +146,8 @@ export default function MainPanel({ version, status, process, onProcessChange })
   const [builderDetail, setBuilderDetail] = useState('')
   const [builderStage, setBuilderStage] = useState('idle')
   const [builderLastEventAt, setBuilderLastEventAt] = useState(0)
+  const [packageConfig, setPackageConfig] = useState(createEmptyPackageConfig)
+  const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
   const targetPercentRef = useRef(0)
 
   const resetBuilderProgress = () => {
@@ -133,6 +158,10 @@ export default function MainPanel({ version, status, process, onProcessChange })
     setBuilderStage('idle')
     setBuilderLastEventAt(0)
     targetPercentRef.current = 0
+  }
+
+  const cleanupIconPreview = (previewUrl) => {
+    revokeObjectUrlIfNeeded(previewUrl)
   }
 
   const applyProgressPayload = (payload) => {
@@ -222,7 +251,20 @@ export default function MainPanel({ version, status, process, onProcessChange })
     return () => window.clearInterval(timer)
   }, [builderLastEventAt, builderStage, process])
 
+  useEffect(() => {
+    onPanelStepChange?.('search')
+    cleanupIconPreview(packageConfig.projectIconPreview)
+    setPackageConfig(createEmptyPackageConfig())
+    setLoadedProjectInfo(null)
+  }, [onPanelStepChange, status, version])
+
+  useEffect(() => () => cleanupIconPreview(packageConfig.projectIconPreview), [packageConfig.projectIconPreview])
+
   const titleText = useMemo(() => {
+    if (panelStep === 'config') {
+      return '打包配置'
+    }
+
     if (process === 1) {
       return builderMessage
     }
@@ -234,9 +276,10 @@ export default function MainPanel({ version, status, process, onProcessChange })
     return status === 'offline' && version === 'kitten3'
       ? '选择 kitten3 作品文件进行转换'
       : `将 ${version} 作品 ID 输入这里进行转换`
-  }, [builderMessage, process, status, version])
+  }, [builderMessage, panelStep, process, status, version])
 
   const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
+  const showInput = !isOfflineKitten3 && panelStep === 'search'
 
   const handleWorkIdChange = (value) => {
     let nextValue = String(value ?? '').replace(/\D/g, '')
@@ -246,14 +289,144 @@ export default function MainPanel({ version, status, process, onProcessChange })
     setWorkId(nextValue)
   }
 
+  const updatePackageConfig = (patch) => {
+    setPackageConfig((prev) => {
+      const next = { ...prev, ...patch }
+      onPackageConfigChange?.(next)
+      return next
+    })
+  }
+
+  const openPackageConfigPanel = async () => {
+    const defaults = await loadPackageConfigDefaults({
+      version,
+      status,
+      workId: Number(workId || 0)
+    })
+
+    if (defaults === null) {
+      return false
+    }
+
+    cleanupIconPreview(packageConfig.projectIconPreview)
+    setLoadedProjectInfo(defaults.projectInfo)
+    setPackageConfig(defaults.packageConfig)
+    onPanelStepChange?.('config')
+    onProjectFetched?.({
+      workId: Number(workId || 0),
+      version,
+      status,
+      projectInfo: defaults.projectInfo,
+      config: defaults.packageConfig
+    })
+
+    return true
+  }
+
+  const handleProjectNameChange = (event) => {
+    updatePackageConfig({ projectName: event.target.value })
+  }
+
+  const handleExportPathChange = (event) => {
+    updatePackageConfig({ exportPath: event.target.value })
+  }
+
+  const handleChooseProjectIcon = async () => {
+    const selectedIcon = await chooseProjectIconFile()
+    if (!selectedIcon) {
+      return
+    }
+
+    cleanupIconPreview(packageConfig.projectIconPreview)
+    const nextConfig = {
+      projectIcon: selectedIcon.path,
+      projectIconPreview: selectedIcon.previewUrl
+    }
+    updatePackageConfig(nextConfig)
+    onChooseProjectIcon?.({ ...packageConfig, ...nextConfig })
+  }
+
+  const handleBackToSearch = () => {
+    cleanupIconPreview(packageConfig.projectIconPreview)
+    onPanelStepChange?.('search')
+  }
+
+  const handleSubmitPackageConfig = async () => {
+    if (!packageConfig.exportPath.trim()) {
+      await showAlert('缺少导出路径', '请选择或填写导出路径')
+      return
+    }
+
+    const projectInfo = loadedProjectInfo
+    if (!projectInfo) {
+      await showAlert('缺少作品信息', '请返回重新选择作品后再试')
+      return
+    }
+
+    const finalProjectInfo = {
+      ...projectInfo,
+      name: packageConfig.projectName.trim() || projectInfo.name,
+      packageConfig
+    }
+
+    onSubmitPackageConfig?.({
+      workId: Number(workId || 0),
+      version,
+      status,
+      projectInfo: finalProjectInfo,
+      config: packageConfig
+    })
+
+    resetBuilderProgress()
+    applyProgressPayload({ stage: 'process-files', message: '正在准备转换任务', percent: 0 })
+    onProcessChange(1)
+
+    try {
+      const result = await runConvertWorkflow({
+        version,
+        status,
+        workId: Number(workId || 0),
+        projectInfo: finalProjectInfo,
+        onProgress: applyProgressPayload
+      })
+
+      if (result.status === 'success') {
+        onProcessChange(2)
+        onPanelStepChange?.('search')
+        applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
+        return
+      }
+
+      onProcessChange(0)
+
+      if (result.status === 'unavailable') {
+        await showAlert('当前环境不支持', '请在桌面应用中使用转换功能')
+      }
+    } catch (error) {
+      console.error(error)
+      onProcessChange(0)
+      await showErrorAlert(error)
+    }
+  }
+
   const convert = async () => {
     if (process === 1) {
+      return
+    }
+
+    if (panelStep === 'config') {
       return
     }
 
     if (process === 2) {
       onProcessChange(0)
       resetBuilderProgress()
+      onPanelStepChange?.('search')
+      return
+    }
+
+    if (!isOfflineKitten3) {
+      await openPackageConfigPanel()
       return
     }
 
@@ -287,50 +460,33 @@ export default function MainPanel({ version, status, process, onProcessChange })
     }
   }
 
-  const showInput = !isOfflineKitten3
   const buttonText = showInput ? null : process === 2 ? '完成' : '选择文件'
   const buttonIcon = isOfflineKitten3 ? <UploadOutlined /> : <SearchOutlined />
 
+  if (panelStep === 'config') {
+    return (
+      <PackageConfigPanel
+        packageConfig={packageConfig}
+        onProjectNameChange={handleProjectNameChange}
+        onExportPathChange={handleExportPathChange}
+        onChooseProjectIcon={handleChooseProjectIcon}
+        onBack={handleBackToSearch}
+        onSubmit={handleSubmitPackageConfig}
+      />
+    )
+  }
+
   return (
-    <div className="flex w-full h-full justify-center items-center flex-col">
-      <img src="/icn_upload.png" alt="logo" className="w-[148px] mb-6" />
-      <div className="text-4 text-[#3D3D3D] mb-3">{titleText}</div>
-      {process === 1 ? (
-        <Text className="mb-3 text-[rgba(61,61,61,0.65)]">{`${Math.round(builderPercent)}%`}</Text>
-      ) : null}
-      <div className="flex items-center gap-3">
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-out ${
-            showInput ? 'w-[160px] opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-2 pointer-events-none'
-          }`}
-        >
-          <InputNumber
-            value={workId ? Number(workId) : null}
-            onChange={handleWorkIdChange}
-            className={`!w-[160px] origin-left transition-all duration-300 ease-out ${
-              showInput ? 'opacity-100 blur-0' : 'w-0 opacity-0 blur-[2px]'
-            }`}
-            controls={false}
-            min={0}
-            max={999999999}
-            precision={0}
-            disabled={process === 1 || !showInput}
-            placeholder="作品 ID"
-          />
-        </div>
-        <Button
-          onClick={convert}
-          type="primary"
-          htmlType="button"
-          icon={buttonIcon}
-          loading={process === 1}
-          className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out ${
-            showInput ? '!w-10 !px-0' : '!w-[112px] !px-4'
-          }`}
-        >
-          {buttonText}
-        </Button>
-      </div>
-    </div>
+    <SearchPanel
+      titleText={titleText}
+      process={process}
+      builderPercent={builderPercent}
+      showInput={showInput}
+      workId={workId}
+      onWorkIdChange={handleWorkIdChange}
+      onSubmit={convert}
+      buttonIcon={buttonIcon}
+      buttonText={buttonText}
+    />
   )
 }

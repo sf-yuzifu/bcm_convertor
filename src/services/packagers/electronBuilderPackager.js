@@ -53,11 +53,12 @@ const createBuildContext = async (projectInfo, osType) => {
   const { desktopDirPath } = await getEnv()
   const platformConfig = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
   const artifactBaseName = sanitizeArtifactName(projectInfo.name)
+  const exportDir = projectInfo.packageConfig?.exportPath?.trim() || desktopDirPath
 
   return {
     workspaceDir,
     outputDir: await join(workspaceDir, 'dist'),
-    desktopDirPath,
+    exportDir,
     target: platformConfig.target,
     platform: osType,
     productName: projectInfo.name,
@@ -77,16 +78,19 @@ export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {
   const { title, text } = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
   const result = await invokeBackendCommand('run_electron_builder', { contextPath }, { title, text })
 
-  onProgress?.({ stage: 'postprocess', message: '正在复制安装包到桌面', percent: 90 })
+  onProgress?.({ stage: 'postprocess', message: '正在复制安装包到导出目录', percent: 90 })
   const artifactName = await basename(result.artifactPath)
-  const desktopArtifactPath = await join(buildContext.desktopDirPath, artifactName)
-  await copyPath(result.artifactPath, desktopArtifactPath)
+  const exportedArtifactPath = await join(buildContext.exportDir, artifactName)
+  await copyPath(result.artifactPath, exportedArtifactPath)
   onProgress?.({
     stage: 'postprocess',
     message: '正在整理输出文件',
     percent: 96,
-    detail: desktopArtifactPath
+    detail: exportedArtifactPath
   })
 
-  return result
+  return {
+    ...result,
+    outputDirectory: buildContext.exportDir
+  }
 }
