@@ -82,7 +82,7 @@ export default function PackageConfigPanel({
         </div>
         <div className="mb-9">
           {isProcessing ? (
-            <div className="mb-3 text-center text-[16px] leading-none font-medium">{progressText}</div>
+            <div className="mb-3 text-center text-4 leading-none font-medium text-[#3D3D3D]">{progressText}</div>
           ) : null}
           <div className="flex items-center justify-center gap-3">
             <Button icon={<ReloadOutlined />} onClick={onBack} disabled={isProcessing}>

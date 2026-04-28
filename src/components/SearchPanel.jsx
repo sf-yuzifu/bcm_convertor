@@ -35,7 +35,7 @@ export default function SearchPanel({
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <img src="/icn_upload.png" alt="logo" className="mb-6 w-[148px]" />
-      <div className="mb-3 text-4 text-[#3D3D3D]">{titleText}</div>
+      <div className="mb-3 text-4 text-[#3D3D3D] font-medium">{titleText}</div>
       {process === 1 ? (
         <Text className="mb-3 text-[rgba(61,61,61,0.65)]">{`${Math.round(builderPercent)}%`}</Text>
       ) : null}

@@ -1,19 +1,22 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'MiSans';
+  src: url('/MiSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('/MiSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
 :root {
   color: #6f5337;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    PingFang SC,
-    Hiragino Sans GB,
-    Noto Sans,
-    Microsoft YaHei,
-    Helvetica Neue,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: 'MiSans';
   color-scheme: light;
 }
 
