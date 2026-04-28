@@ -467,6 +467,9 @@ export default function MainPanel({
     return (
       <PackageConfigPanel
         packageConfig={packageConfig}
+        process={process}
+        progressText={builderMessage}
+        progressPercent={builderPercent}
         onProjectNameChange={handleProjectNameChange}
         onExportPathChange={handleExportPathChange}
         onChooseProjectIcon={handleChooseProjectIcon}
