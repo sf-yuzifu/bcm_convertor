@@ -264,16 +264,16 @@ export default function MainPanel({
   useEffect(() => () => cleanupIconPreview(packageConfig.projectIconPreview), [packageConfig.projectIconPreview])
 
   const titleText = useMemo(() => {
+    if (process === 2) {
+      return '转换与打包已完成'
+    }
+
     if (panelStep === 'config') {
       return '打包配置'
     }
 
     if (process === 1) {
       return builderMessage
-    }
-
-    if (process === 2) {
-      return '转换与打包已完成'
     }
 
     return status === 'offline' && version === 'kitten3'
@@ -478,7 +478,7 @@ export default function MainPanel({
   const buttonText = showInput ? null : process === 2 ? '完成' : '选择文件'
   const buttonIcon = isOfflineKitten3 ? <UploadOutlined /> : <SearchOutlined />
 
-  if (panelStep === 'config') {
+  if (panelStep === 'config' && process !== 2) {
     return (
       <PackageConfigPanel
         packageConfig={packageConfig}
