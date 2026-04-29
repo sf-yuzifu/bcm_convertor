@@ -30,7 +30,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
       type="text"
       className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="关于"
-      icon={<InfoCircleOutlined style={{ fontSize: 24 }} />}
+      icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
       onClick={onOpenAbout}
     />,
     <Button
@@ -38,7 +38,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
       type="text"
       className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="最小化"
-      icon={<LineOutlined style={{ fontSize: 24 }} />}
+      icon={<LineOutlined style={{ fontSize: 20}} />}
       onClick={handleMinimize}
     />,
     <Button
@@ -46,7 +46,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
       type="text"
       className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="关闭"
-      icon={<CloseOutlined style={{ fontSize: 24 }} />}
+      icon={<CloseOutlined style={{ fontSize: 20 }} />}
       onClick={handleClose}
     />
   ]
