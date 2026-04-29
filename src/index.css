@@ -80,3 +80,7 @@ input::-webkit-inner-spin-button {
   box-shadow: 0 12px 32px var(--app-color-shadow);
   border-radius: 18px;
 }
+
+.ant-btn-icon {
+  display: flex;
+}

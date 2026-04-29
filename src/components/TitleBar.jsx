@@ -28,26 +28,25 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
     <Button
       key="about"
       type="text"
-      className="!h-8 !w-8 !border-0 !text-lg !text-[var(--app-color-accent)] !shadow-none hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
+      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="关于"
-      icon={<InfoCircleOutlined />}
+      icon={<InfoCircleOutlined style={{ fontSize: 24 }} />}
       onClick={onOpenAbout}
     />,
     <Button
       key="minimize"
       type="text"
-      className="!h-8 !w-8 !border-0 !text-lg !text-[var(--app-color-accent)] !shadow-none hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
+      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="最小化"
-      icon={<LineOutlined />}
+      icon={<LineOutlined style={{ fontSize: 24 }} />}
       onClick={handleMinimize}
     />,
     <Button
       key="close"
       type="text"
-      danger
-      className="!h-8 !w-8 !border-0 !text-lg !text-[var(--app-color-accent)] !shadow-none hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
+      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
       aria-label="关闭"
-      icon={<CloseOutlined />}
+      icon={<CloseOutlined style={{ fontSize: 24 }} />}
       onClick={handleClose}
     />
   ]
