@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename, dirname, join, parse, resolve } from 'node:path'
+import { basename, dirname, extname, join, parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 
@@ -218,19 +218,85 @@ const getElectronVersion = (root) => {
   return String(version).replace(/^[^\d]*/, '')
 }
 
-const createTargetConfig = (context) => {
+const getResolvedIconPath = (context) => {
+  const iconPath = String(context.iconPath || '').trim()
+  if (!iconPath) {
+    return ''
+  }
+
+  const resolvedIconPath = resolve(iconPath)
+  if (!fileExists(resolvedIconPath)) {
+    throw new Error(`找不到自定义图标文件: ${resolvedIconPath}`)
+  }
+
+  return resolvedIconPath
+}
+
+const createGeneratedIconOutputPath = (context) => {
+  const artifactBaseName = String(context.artifactBaseName || 'app-icon')
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+    .trim()
+  return join(context.outputDir, '.builder-icons', `${artifactBaseName}.ico`)
+}
+
+const resolveBuilderIconPath = async (context, root) => {
+  const iconPath = getResolvedIconPath(context)
+  if (!iconPath) {
+    return ''
+  }
+
+  const extension = extname(iconPath).toLowerCase()
+  if (context.platform === 'windows' && extension === '.png') {
+    const toolchainRequire = getRequire(root)
+    const pngToIco = toolchainRequire('png-to-ico')
+    const outputPath = createGeneratedIconOutputPath(context)
+
+    mkdirSync(dirname(outputPath), { recursive: true })
+    const iconBuffer = await pngToIco(iconPath)
+    writeFileSync(outputPath, iconBuffer)
+    return outputPath
+  }
+
+  return iconPath
+}
+
+const validateIconExtension = (iconPath, platform) => {
+  if (!iconPath) {
+    return
+  }
+
+  const extension = extname(iconPath).toLowerCase()
+
+  if (platform === 'windows' && !['.ico', '.png'].includes(extension)) {
+    throw new Error('Windows 打包仅支持使用 .ico 或 .png 作为自定义图标')
+  }
+
+  if (platform === 'macos' && extension !== '.icns') {
+    throw new Error('macOS 打包仅支持使用 .icns 作为自定义图标')
+  }
+
+  if (platform === 'linux' && !['.png', '.jpg', '.jpeg', '.webp', '.svg', '.ico', '.icns'].includes(extension)) {
+    throw new Error('Linux 打包仅支持 png/jpg/jpeg/webp/svg/ico/icns 作为自定义图标')
+  }
+}
+
+const createTargetConfig = async (context, root) => {
+  const iconPath = await resolveBuilderIconPath(context, root)
+  validateIconExtension(iconPath, context.platform)
+
   if (context.platform === 'linux') {
-    return { linux: { target: [context.target] } }
+    return { linux: { target: [context.target], ...(iconPath ? { icon: iconPath } : {}) } }
   }
 
   if (context.platform === 'macos') {
-    return { mac: { target: [context.target] } }
+    return { mac: { target: [context.target], ...(iconPath ? { icon: iconPath } : {}) } }
   }
 
   return {
     win: {
       target: [context.target],
-      signAndEditExecutable: false,
+      ...(iconPath ? { icon: iconPath } : {}),
+      signAndEditExecutable: true,
       verifyUpdateCodeSignature: false
     }
   }
@@ -306,7 +372,7 @@ const buildApp = async (context) => {
       version: context.version || '1.0.0'
     },
     artifactName,
-    ...createTargetConfig(context)
+    ...(await createTargetConfig(context, toolchainRoot))
   }
 
   emitProgress({ stage: 'prepare', message: '正在生成打包配置', percent: 10 })

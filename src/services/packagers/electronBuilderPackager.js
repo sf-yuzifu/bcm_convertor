@@ -1,5 +1,6 @@
 import { basename, join } from '@tauri-apps/api/path'
-import { writeTextFile } from '@tauri-apps/plugin-fs'
+import { mkdir, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { fetch } from '@tauri-apps/plugin-http'
 import { type } from '@tauri-apps/plugin-os'
 
 import { copyPath } from '../files/fileTransferService.js'
@@ -48,12 +49,102 @@ const sanitizePackageName = (value) => {
   return normalized || 'bcm-project'
 }
 
+const normalizeOptionalPath = (value) => {
+  const normalized = String(value || '').trim()
+  return normalized || undefined
+}
+
+const isRemoteHttpUrl = (value) => /^https?:\/\//i.test(String(value || '').trim())
+
+const extractMimeType = (response) => {
+  const contentType = response.headers.get('content-type') || ''
+  return contentType.split(';')[0].trim().toLowerCase()
+}
+
+const blobToUint8Array = async (blob) => new Uint8Array(await blob.arrayBuffer())
+
+const convertImageBytesToPng = async (bytes, mimeType) => {
+  const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
+  const imageBitmap = await createImageBitmap(sourceBlob)
+  const canvas = document.createElement('canvas')
+
+  canvas.width = imageBitmap.width
+  canvas.height = imageBitmap.height
+  const context = canvas.getContext('2d')
+  if (!context) {
+    throw new Error('无法创建图标转换画布')
+  }
+
+  context.drawImage(imageBitmap, 0, 0)
+  imageBitmap.close()
+
+  const pngBlob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('远程图标转换 PNG 失败'))
+          return
+        }
+        resolve(blob)
+      },
+      'image/png',
+      1
+    )
+  })
+
+  return blobToUint8Array(pngBlob)
+}
+
+const getRemoteIconAssetPath = async (workspaceDir, osType) => {
+  const assetDir = await join(workspaceDir, '.builder-assets')
+  const fileName = osType === MACOS ? 'remote-project-icon.icns' : 'remote-project-icon.png'
+  return {
+    assetDir,
+    iconPath: await join(assetDir, fileName)
+  }
+}
+
+const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType) => {
+  if (!isRemoteHttpUrl(fetchedIcon)) {
+    return undefined
+  }
+
+  if (osType === MACOS) {
+    return undefined
+  }
+
+  const response = await fetch(fetchedIcon, { method: 'GET' })
+  if (!response.ok) {
+    throw new Error(`下载远程封面图失败: ${response.status} ${response.statusText}`)
+  }
+
+  const bytes = new Uint8Array(await response.arrayBuffer())
+  const mimeType = extractMimeType(response)
+  const pngBytes = await convertImageBytesToPng(bytes, mimeType)
+  const { assetDir, iconPath } = await getRemoteIconAssetPath(workspaceDir, osType)
+
+  await mkdir(assetDir, { recursive: true })
+  await writeFile(iconPath, pngBytes)
+
+  return iconPath
+}
+
+const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
+  const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
+  if (localIconPath) {
+    return localIconPath
+  }
+
+  return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType)
+}
+
 const createBuildContext = async (projectInfo, osType) => {
   const { home: workspaceDir } = await getConvertHome()
   const { desktopDirPath } = await getEnv()
   const platformConfig = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
   const artifactBaseName = sanitizeArtifactName(projectInfo.name)
   const exportDir = projectInfo.packageConfig?.exportPath?.trim() || desktopDirPath
+  const iconPath = await resolveProjectIconPath(projectInfo, workspaceDir, osType)
 
   return {
     workspaceDir,
@@ -64,7 +155,8 @@ const createBuildContext = async (projectInfo, osType) => {
     productName: projectInfo.name,
     artifactBaseName,
     safePackageName: sanitizePackageName(projectInfo.name),
-    version: '1.0.0'
+    version: '1.0.0',
+    iconPath
   }
 }
 

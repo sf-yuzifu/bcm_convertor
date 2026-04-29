@@ -1,5 +1,6 @@
 import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
+import { type } from '@tauri-apps/plugin-os'
 
 import { loadProjectInfo } from '../projectSources/projectSourceService.js'
 import { getEnv } from '../system/runtimeService.js'
@@ -40,6 +41,18 @@ const getImageMimeType = (path) => {
   return IMAGE_MIME_BY_EXTENSION[match[1]] || 'application/octet-stream'
 }
 
+const getProjectIconExtensions = (osType) => {
+  if (osType === 'windows') {
+    return ['png', 'ico']
+  }
+
+  if (osType === 'macos') {
+    return ['icns']
+  }
+
+  return ['png', 'jpg', 'jpeg', 'webp', 'svg', 'ico', 'icns']
+}
+
 export const revokeObjectUrlIfNeeded = (url) => {
   if (typeof url === 'string' && url.startsWith('blob:')) {
     URL.revokeObjectURL(url)
@@ -66,12 +79,13 @@ export const loadPackageConfigDefaults = async ({ version, status, workId }) => 
 }
 
 export const chooseProjectIconFile = async () => {
+  const osType = await type()
   const selected = await open({
     multiple: false,
     filters: [
       {
         name: '图片文件',
-        extensions: ['png', 'jpg', 'jpeg', 'webp', 'ico', 'icns']
+        extensions: getProjectIconExtensions(osType)
       }
     ]
   })
