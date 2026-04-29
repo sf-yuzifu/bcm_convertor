@@ -1,17 +1,66 @@
-import { desktopDir } from '@tauri-apps/api/path'
-import { Button, Divider, Modal, Space, Typography } from 'antd'
+import { useEffect, useState } from 'react'
+import packageJson from '../../package.json'
 import { invokeBackendCommand } from '../services/system/backendCommandService.js'
 import { openExternalUrl } from '../services/system/externalLinkService.js'
 import { showErrorAlert } from '../services/system/errorHandlingService.js'
+import { getEnv } from '../services/system/runtimeService.js'
 
-const { Link, Paragraph, Text, Title } = Typography
+const ABOUT_ITEMS = [
+  {
+    title: '1.生成的程序无法运行/找不到文件存放位置。',
+    lines: [
+      '答：如果无法打开，则为软件bug。可联系作者。默认情况下文件存放位置Windows/Mac OS在桌面上，而Linux在用户home目录下。'
+    ],
+    pathLabel: '当前文件存放位置:'
+  },
+  {
+    title: '2.转换后的应用程序大小远远大于bcm文件大小。',
+    lines: ['答：为了让bcm独立运行，需要很多其他文件的支持，这部分程序也是占空间的。因此APP文件至少也有200MB左右。']
+  },
+  {
+    title: '3.为什么离线模式下云变量作品无法使用。',
+    lines: [
+      '答：在编程猫中，云变量的使用是需要确定的作品ID的，但转换的文件并没有对应的作品ID，因此云变量的功能在转换的文件中是无法使用的，将会作为普通变量运行。（但可以使用在线转换）'
+    ]
+  },
+  {
+    title: '4.关于安卓APK。',
+    lines: ['答：嗯，不会出了...（试着用用'],
+    linkLabel: 'CoCo编辑器？',
+    linkUrl: 'https://coco.codemao.cn/',
+    suffix: '）'
+  }
+]
 
-export default function AboutModal({ open, onClose }) {
+export default function AboutModal({ open }) {
+  const [savingPath, setSavingPath] = useState('')
+
+  useEffect(() => {
+    let disposed = false
+
+    const loadSavingPath = async () => {
+      try {
+        const env = await getEnv()
+        if (!disposed) {
+          setSavingPath(env.desktopDirPath || '')
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    loadSavingPath()
+
+    return () => {
+      disposed = true
+    }
+  }, [])
+
   const openOutputDirectory = async () => {
     try {
       await invokeBackendCommand(
         'open_file',
-        { path: await desktopDir() },
+        { path: savingPath },
         {
           title: '打开输出目录失败',
           text: '无法自动打开输出目录，请手动前往桌面查看'
@@ -24,57 +73,73 @@ export default function AboutModal({ open, onClose }) {
   }
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      centered
-      width={760}
-      className="[&_.ant-modal-content]:rounded-[28px] [&_.ant-modal-content]:bg-[linear-gradient(180deg,#fffefa_0%,#fff6ee_100%)] [&_.ant-modal-content]:px-6 [&_.ant-modal-content]:pb-3 [&_.ant-modal-content]:pt-6 [&_.ant-modal-header]:!bg-transparent"
-      title="关于格式工厂"
+    <div
+      className={`absolute inset-0 z-[35] bg-[var(--app-color-surface-elevated)] text-[13px] text-[var(--app-color-text)] transition-transform duration-500 ${
+        open ? 'pointer-events-auto scale-100' : 'pointer-events-none scale-0'
+      }`}
+      style={{ transformOrigin: 'center center' }}
     >
-      <div className="flex items-center gap-5 max-[760px]:flex-col max-[760px]:items-start">
-        <img src="/pic_aboutUs.png" alt="格式工厂" className="w-[252px] max-w-[45%] max-[760px]:max-w-full" />
-        <Space direction="vertical" size={4}>
-          <Title level={3} className="!m-0">
-            版本号：v2.5.0
-          </Title>
-          <Link onClick={() => openExternalUrl('https://shequ.codemao.cn/user/438403')}>小鱼yuzifu</Link>
-        </Space>
+      <div className="absolute inset-x-0 top-0 h-10 bg-transparent" data-tauri-drag-region />
+
+      <div className="relative flex h-[78px] flex-col items-center text-center">
+        <img src="/pic_aboutUs.png" alt="" className="absolute top-0 h-[78px] w-[252px]" />
+        <p className="z-[8] !mt-1 !mb-1 ml-[10px] text-[18px] font-bold">版本号：v{packageJson.version}</p>
+        <a
+          href="https://shequ.codemao.cn/user/438403"
+          target="_blank"
+          rel="noreferrer"
+          className="z-[8] text-[14px] ml-[10px] text-current !underline"
+          onClick={(event) => {
+            event.preventDefault()
+            openExternalUrl('https://shequ.codemao.cn/user/438403')
+          }}
+        >
+          小鱼yuzifu
+        </a>
       </div>
-      <Divider />
-      <Space direction="vertical" size={18} className="w-full">
-        <div>
-          <Text strong>1. 生成的程序无法运行 / 找不到文件存放位置。</Text>
-          <Paragraph>
-            如果无法打开，则可能是软件问题，可联系作者。Windows 和 macOS 的输出通常在桌面，Linux 通常位于用户的 home
-            目录。
-            <Button type="link" className="!px-1.5" onClick={openOutputDirectory}>
-              点我查看文件位置
-            </Button>
-          </Paragraph>
-        </div>
-        <div>
-          <Text strong>2. 转换后的应用程序大小远大于 bcm 文件大小。</Text>
-          <Paragraph>
-            为了让 bcm 独立运行，需要附带额外运行时与资源文件，因此最终生成的应用体积通常会明显增大。
-          </Paragraph>
-        </div>
-        <div>
-          <Text strong>3. 为什么离线模式下云变量作品无法使用。</Text>
-          <Paragraph>
-            编程猫中的云变量需要绑定明确的作品 ID。离线转换得到的文件不具备对应线上作品 ID，因此云变量会退化为普通变量。
-          </Paragraph>
-        </div>
-        <div>
-          <Text strong>4. 关于安卓 APK。</Text>
-          <Paragraph>
-            当前暂不提供 APK 输出。你可以试试
-            <Link onClick={() => openExternalUrl('https://coco.codemao.cn/')}> CoCo 编辑器 </Link>
-            相关方案。
-          </Paragraph>
-        </div>
-      </Space>
-    </Modal>
+
+      <div className="px-8">
+        <p className="!mb-4 text-[14px] font-bold">关于格式工厂你需要知道：</p>
+        {ABOUT_ITEMS.map((item, index) => (
+          <div key={item.title} className="!mb-4">
+            <p className="!my-0 font-bold">{item.title}</p>
+            {item.lines.map((line) => (
+              <p key={line} className="!my-0 ml-3">
+                {line}
+                {item.linkUrl && line === item.lines[item.lines.length - 1] ? (
+                  <>
+                    <a
+                      href={item.linkUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-current"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        openExternalUrl(item.linkUrl)
+                      }}
+                    >
+                      {item.linkLabel}
+                    </a>
+                    {item.suffix}
+                  </>
+                ) : null}
+              </p>
+            ))}
+            {item.pathLabel ? (
+              <p className="!my-0 ml-3">
+                {item.pathLabel}
+                <button
+                  type="button"
+                  className="!ml-1 cursor-pointer border-0 bg-transparent p-0 font-bold text-current underline"
+                  onClick={openOutputDirectory}
+                >
+                  {savingPath || '加载中...'}
+                </button>
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

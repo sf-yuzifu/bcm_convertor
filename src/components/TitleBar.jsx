@@ -24,42 +24,42 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
     }
   }
 
-  const buttonNodes = [
-    <Button
-      key="about"
-      type="text"
-      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
-      aria-label="关于"
-      icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
-      onClick={onOpenAbout}
-    />,
-    <Button
-      key="minimize"
-      type="text"
-      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
-      aria-label="最小化"
-      icon={<LineOutlined style={{ fontSize: 20}} />}
-      onClick={handleMinimize}
-    />,
-    <Button
-      key="close"
-      type="text"
-      className="!text-[var(--app-color-accent)]  hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]"
-      aria-label="关闭"
-      icon={<CloseOutlined style={{ fontSize: 20 }} />}
-      onClick={handleClose}
-    />
-  ]
-
+  const buttonBaseClass =
+    '!flex !h-[32px] !w-[32px] !items-center !justify-center !rounded-[5px] !border-0 !bg-[var(--app-color-surface-elevated)] !p-0 !shadow-none hover:!bg-[var(--app-color-primary-hover)] hover:!text-[var(--app-color-primary)]'
   return (
-    <header
-      className="relative flex h-10 items-center border-b border-[var(--app-color-primary-hover)] bg-[var(--app-color-surface-elevated)] px-3"
-      data-tauri-drag-region
-    >
-      <div className={`absolute flex gap-2 ${isMac ? 'left-3' : 'right-3'}`}>{buttonNodes}</div>
-      <div className="text-lg font-bold text-[var(--app-color-accent)]" data-tauri-drag-region>
-        编程猫格式工厂
+    <div className="relative h-10">
+      <header
+        className="relative flex h-10 items-center border-b border-[var(--app-color-primary-hover)] bg-[var(--app-color-surface-elevated)] px-3"
+        data-tauri-drag-region
+      >
+        <div className="text-lg font-bold text-[var(--app-color-accent)]" data-tauri-drag-region>
+          编程猫格式工厂
+        </div>
+      </header>
+
+      <div className={`absolute top-[4px] inline-flex w-fit flex-row-reverse right-1 gap-1`}>
+        <Button
+          type="text"
+          className={`${buttonBaseClass} !z-[40] !text-[var(--app-color-accent)]`}
+          aria-label={aboutOpen ? '关闭关于页面' : '关闭'}
+          icon={<CloseOutlined style={{ fontSize: 20 }} />}
+          onClick={handleClose}
+        />
+        <Button
+          type="text"
+          className={`${buttonBaseClass} !z-[10] mx-[3px] !text-[var(--app-color-accent)]`}
+          aria-label="最小化"
+          icon={<LineOutlined style={{ fontSize: 20 }} />}
+          onClick={handleMinimize}
+        />
+        <Button
+          type="text"
+          className={`${buttonBaseClass} !text-[var(--app-color-accent)]`}
+          aria-label="关于"
+          icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+          onClick={onOpenAbout}
+        />
       </div>
-    </header>
+    </div>
   )
 }

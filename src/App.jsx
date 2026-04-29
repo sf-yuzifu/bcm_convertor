@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <AntdApp>
-      <Layout className="h-full !bg-transparent">
+      <Layout className="relative h-full !bg-transparent">
         <TitleBar
           aboutOpen={aboutOpen}
           onOpenAbout={() => setAboutOpen(true)}
@@ -67,7 +67,7 @@ export default function App() {
             />
           </div>
         </Content>
-        <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+        <AboutModal open={aboutOpen} />
       </Layout>
     </AntdApp>
   )
