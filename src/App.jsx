@@ -44,9 +44,9 @@ export default function App() {
           onOpenAbout={() => setAboutOpen(true)}
           onCloseAbout={() => setAboutOpen(false)}
         />
-        <Content className="relative flex h-[calc(100vh-40px)] bg-[#FFFCF7] items-center justify-center p-3">
+        <Content className="relative flex h-[calc(100vh-40px)] items-center justify-center bg-[var(--app-color-surface)] p-3">
           <div
-            className={`${showSearchChrome ? 'border border-[#F9E2BA] border-dashed rounded-b-xl' : ''} h-full w-full`}
+            className={`${showSearchChrome ? 'rounded-b-xl border border-dashed border-[var(--app-color-border)]' : ''} h-full w-full`}
           >
             {showSearchChrome ? (
               <VersionControls

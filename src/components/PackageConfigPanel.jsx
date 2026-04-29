@@ -24,17 +24,24 @@ export default function PackageConfigPanel({
       <div className="w-full h-full flex flex-col justify-between">
         <div className="flex justify-between mt-12">
           <div className="w-[198px] shrink-0">
-            <div className="flex h-[198px] w-[198px] items-center justify-center rounded-xl border border-[#d9d4cc] bg-[#f7f4ef]">
+            <div className="flex h-[198px] w-[198px] items-center justify-center rounded-xl border border-[var(--app-color-border-muted)]">
               <div className="relative flex h-[168px] w-[168px] items-center justify-center">
                 {isProcessing ? (
                   <svg viewBox="0 0 168 168" className="-rotate-90 absolute inset-0 h-full w-full" aria-hidden="true">
-                    <circle cx="84" cy="84" r={circleRadius} fill="none" stroke="#E7E1D8" strokeWidth="6" />
                     <circle
                       cx="84"
                       cy="84"
                       r={circleRadius}
                       fill="none"
-                      stroke="#2F80ED"
+                      stroke="var(--app-color-ring-track)"
+                      strokeWidth="6"
+                    />
+                    <circle
+                      cx="84"
+                      cy="84"
+                      r={circleRadius}
+                      fill="none"
+                      stroke="var(--app-color-primary)"
                       strokeWidth="6"
                       strokeLinecap="round"
                       strokeDasharray={circleLength}
@@ -82,7 +89,9 @@ export default function PackageConfigPanel({
         </div>
         <div className="mb-9">
           {isProcessing ? (
-            <div className="mb-3 text-center text-4 leading-none font-medium text-[#3D3D3D]">{progressText}</div>
+            <div className="mb-3 text-center text-[16px] leading-none font-medium text-[var(--app-color-text-strong)]">
+              {progressText}
+            </div>
           ) : null}
           <div className="flex items-center justify-center gap-3">
             <Button icon={<ReloadOutlined />} onClick={onBack} disabled={isProcessing}>

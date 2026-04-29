@@ -15,8 +15,24 @@
 }
 
 :root {
-  color: #6f5337;
-  font-family: 'MiSans';
+  --app-font-family: 'MiSans', 'Microsoft YaHei', sans-serif;
+  --app-color-text: #6f5337;
+  --app-color-text-strong: #3d3d3d;
+  --app-color-text-muted: rgba(61, 61, 61, 0.65);
+  --app-color-primary: #fa9a4b;
+  --app-color-primary-hover: rgba(250, 154, 75, 0.12);
+  --app-color-accent: #ffcc22;
+  --app-color-success: #52c41a;
+  --app-color-surface: #fffcf7;
+  --app-color-surface-muted: #f7f4ef;
+  --app-color-surface-elevated: #ffffff;
+  --app-color-border: #f9e2ba;
+  --app-color-border-muted: #d9d4cc;
+  --app-color-ring-track: #e7e1d8;
+  --app-color-progress: #2f80ed;
+  --app-color-shadow: rgba(95, 53, 24, 0.2);
+  color: var(--app-color-text);
+  font-family: var(--app-font-family);
   color-scheme: light;
 }
 
@@ -32,6 +48,9 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  background-color: var(--app-color-surface);
+  color: var(--app-color-text);
+  font-family: var(--app-font-family);
 }
 
 img {
@@ -58,6 +77,6 @@ input::-webkit-inner-spin-button {
 .swal-modal {
   min-width: 374px;
   width: 374px;
-  box-shadow: 0 12px 32px rgba(95, 53, 24, 0.2);
+  box-shadow: 0 12px 32px var(--app-color-shadow);
   border-radius: 18px;
 }
