@@ -51,6 +51,38 @@ const getToolchainRoot = () => {
 
 const getRequire = (root) => createRequire(pathToFileURL(join(root, 'package.json')))
 
+const emitLog = (message) => {
+  process.stdout.write(`[bcm-builder] ${message}\n`)
+}
+
+const formatCommandPart = (value) => {
+  const text = String(value)
+  if (/[\s"]/u.test(text)) {
+    return JSON.stringify(text)
+  }
+
+  return text
+}
+
+const formatCommandLine = (parts) => parts.map((part) => formatCommandPart(part)).join(' ')
+
+const mergeCsvEnvValue = (currentValue, nextValues) => {
+  const merged = new Set(
+    String(currentValue || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  )
+
+  nextValues.forEach((item) => {
+    if (item) {
+      merged.add(item)
+    }
+  })
+
+  return [...merged].join(',')
+}
+
 const emitProgress = ({ stage, message, percent, detail }) => {
   const payload = {
     stage,
@@ -242,6 +274,7 @@ const createGeneratedIconOutputPath = (context) => {
 const resolveBuilderIconPath = async (context, root) => {
   const iconPath = getResolvedIconPath(context)
   if (!iconPath) {
+    emitLog('未提供自定义图标，继续使用默认图标配置')
     return ''
   }
 
@@ -252,11 +285,15 @@ const resolveBuilderIconPath = async (context, root) => {
     const outputPath = createGeneratedIconOutputPath(context)
 
     mkdirSync(dirname(outputPath), { recursive: true })
+    emitLog(`检测到 Windows PNG 图标，开始转换为 ICO`)
+    emitLog(`图标转换: ${iconPath} -> ${outputPath}`)
     const iconBuffer = await pngToIco(iconPath)
     writeFileSync(outputPath, iconBuffer)
+    emitLog(`图标转换完成: ${outputPath}`)
     return outputPath
   }
 
+  emitLog(`使用自定义图标: ${iconPath}`)
   return iconPath
 }
 
@@ -333,6 +370,18 @@ const applyDownloadMirrors = () => {
   process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||= DEFAULT_ELECTRON_BUILDER_BINARIES_MIRROR
 }
 
+const applyDebugLogging = () => {
+  process.env.DEBUG = mergeCsvEnvValue(process.env.DEBUG, [
+    'electron-builder',
+    'electron-builder:*',
+    'app-builder-lib',
+    'app-builder-lib:*',
+    'builder-util',
+    'builder-util:*'
+  ])
+  process.env.DEBUG_COLORS ||= '0'
+}
+
 const getCacheRoot = (context) =>
   process.env.BCM_BUILDER_CACHE_ROOT || join(dirname(context.outputDir), '.builder-cache')
 
@@ -350,8 +399,22 @@ const buildApp = async (context) => {
   normalizeAppPackageJson(context)
   mkdirSync(cacheRoot, { recursive: true })
   applyDownloadMirrors()
+  applyDebugLogging()
   process.env.ELECTRON_BUILDER_CACHE = join(cacheRoot, 'electron-builder')
   process.env.ELECTRON_CACHE = join(cacheRoot, 'electron')
+  emitLog(`工具链目录: ${toolchainRoot}`)
+  emitLog(`工作目录: ${context.workspaceDir}`)
+  emitLog(`输出目录: ${context.outputDir}`)
+  emitLog(`缓存目录: ${cacheRoot}`)
+  emitLog(`构建目标: ${context.platform}/${context.target}`)
+  emitLog(`应用名称: ${context.productName}`)
+  emitLog(`应用版本: ${context.version || '1.0.0'}`)
+  emitLog(`Electron 版本: ${electronVersion}`)
+  emitLog(`镜像地址: ${process.env.ELECTRON_MIRROR}`)
+  emitLog(`DEBUG: ${process.env.DEBUG}`)
+  emitLog(`DEBUG_COLORS: ${process.env.DEBUG_COLORS}`)
+  emitLog(`builder 缓存: ${process.env.ELECTRON_BUILDER_CACHE}`)
+  emitLog(`electron 缓存: ${process.env.ELECTRON_CACHE}`)
 
   const config = {
     appId: 'com.bcm-convertor.generated',
@@ -374,14 +437,38 @@ const buildApp = async (context) => {
     artifactName,
     ...(await createTargetConfig(context, toolchainRoot))
   }
+  emitLog('electron-builder 配置摘要:')
+  emitLog(
+    JSON.stringify(
+      {
+        projectDir: toolchainRoot,
+        publish: 'never',
+        config
+      },
+      null,
+      2
+    )
+  )
+  emitLog(
+    `等效命令: ${formatCommandLine([
+      join(toolchainRoot, 'node_modules', '.bin', 'electron-builder'),
+      '--projectDir',
+      toolchainRoot,
+      '--publish',
+      'never'
+    ])}`
+  )
 
   emitProgress({ stage: 'prepare', message: '正在生成打包配置', percent: 10 })
   emitProgress({ stage: 'build', message: '正在执行 electron-builder', percent: 15 })
+  emitLog('开始执行 electron-builder')
   const results = await build({
     projectDir: toolchainRoot,
     config,
     publish: 'never'
   })
+  emitLog('electron-builder 执行完成')
+  emitLog(`输出产物: ${JSON.stringify(results, null, 2)}`)
 
   const artifactPath = results.find((entry) => !entry.endsWith('.blockmap')) || results[0]
 

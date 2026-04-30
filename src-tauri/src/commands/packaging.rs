@@ -9,6 +9,7 @@ use tauri::{AppHandle, Emitter, Manager};
 const RESULT_MARKER: &str = "__BCM_BUILDER_RESULT__=";
 const PROGRESS_MARKER: &str = "__BCM_BUILDER_PROGRESS__=";
 const BUILDER_STATUS_EVENT: &str = "builder-status";
+const BUILDER_LOG_EVENT: &str = "builder-log";
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -36,6 +37,13 @@ struct BuilderStatusPayload {
     percent: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     detail: Option<String>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct BuilderLogPayload {
+    stream: String,
+    line: String,
 }
 
 #[derive(Debug)]
@@ -168,6 +176,32 @@ fn emit_builder_status(
             detail,
         },
     );
+}
+
+fn emit_builder_log(app: &AppHandle, stream: OutputStream, line: &str) {
+    if line.starts_with(PROGRESS_MARKER) || line.starts_with(RESULT_MARKER) {
+        return;
+    }
+
+    let payload = BuilderLogPayload {
+        stream: match stream {
+            OutputStream::Stdout => "stdout".to_string(),
+            OutputStream::Stderr => "stderr".to_string(),
+        },
+        line: line.to_string(),
+    };
+
+    let _ = app.emit(BUILDER_LOG_EVENT, payload);
+}
+
+fn format_command_arg(value: &Path) -> String {
+    let text = value.to_string_lossy();
+
+    if text.contains(' ') || text.contains('"') {
+        format!("\"{}\"", text.replace('"', "\\\""))
+    } else {
+        text.into_owned()
+    }
 }
 
 fn parse_progress_payload(line: &str) -> Option<BuilderStatusPayload> {
@@ -416,6 +450,32 @@ fn run_builder_process(
         command.creation_flags(CREATE_NO_WINDOW);
     }
 
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!(
+            "[runner] 执行命令: {} {} {}",
+            format_command_arg(command.get_program().as_ref()),
+            format_command_arg(&script_path),
+            format_command_arg(Path::new(context_path))
+        ),
+    );
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[runner] 工作目录: {}", working_dir.display()),
+    );
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[runner] 资源目录: {}", resource_dir.display()),
+    );
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[runner] 缓存目录: {}", cache_root.display()),
+    );
+
     let mut child = command.spawn().map_err(|e| e.to_string())?;
     let stdout = child
         .stdout
@@ -436,6 +496,8 @@ fn run_builder_process(
     let mut tracker = BuilderStatusTracker::default();
 
     for message in receiver {
+        emit_builder_log(&app, message.stream, &message.line);
+
         match message.stream {
             OutputStream::Stdout => push_output(&mut stdout_text, &message.line),
             OutputStream::Stderr => push_output(&mut stderr_text, &message.line),

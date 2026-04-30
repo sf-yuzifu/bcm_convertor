@@ -46,6 +46,8 @@ const createEmptyPackageConfig = () => ({
   fetchedIcon: ''
 })
 
+const MAX_BUILDER_LOG_LINES = 400
+
 const normalizePercent = (value) => {
   const numericValue = Number(value)
   if (!Number.isFinite(numericValue)) {
@@ -147,6 +149,7 @@ export default function MainPanel({
   const [builderDetail, setBuilderDetail] = useState('')
   const [builderStage, setBuilderStage] = useState('idle')
   const [builderLastEventAt, setBuilderLastEventAt] = useState(0)
+  const [builderLogs, setBuilderLogs] = useState([])
   const [packageConfig, setPackageConfig] = useState(createEmptyPackageConfig)
   const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
   const [lastOutputDirectory, setLastOutputDirectory] = useState('')
@@ -159,6 +162,7 @@ export default function MainPanel({
     setBuilderDetail('')
     setBuilderStage('idle')
     setBuilderLastEventAt(0)
+    setBuilderLogs([])
     targetPercentRef.current = 0
   }
 
@@ -193,6 +197,7 @@ export default function MainPanel({
     }
 
     let unlistenBuilderStatus
+    let unlistenBuilderLog
     let disposed = false
 
     const setupListener = async () => {
@@ -204,6 +209,23 @@ export default function MainPanel({
         const mappedPayload = mapBuilderProgress(event.payload || {}, targetPercentRef.current)
         applyProgressPayload(mappedPayload)
       })
+
+      unlistenBuilderLog = await listen('builder-log', (event) => {
+        if (disposed) {
+          return
+        }
+
+        const payload = event.payload || {}
+        const line = String(payload.line || '').trim()
+        if (!line) {
+          return
+        }
+
+        setBuilderLogs((prev) => {
+          const next = [...prev, { stream: payload.stream || 'stdout', line }]
+          return next.slice(-MAX_BUILDER_LOG_LINES)
+        })
+      })
     }
 
     setupListener()
@@ -211,6 +233,7 @@ export default function MainPanel({
     return () => {
       disposed = true
       unlistenBuilderStatus?.()
+      unlistenBuilderLog?.()
     }
   }, [])
 
@@ -485,6 +508,7 @@ export default function MainPanel({
         process={process}
         progressText={builderMessage}
         progressPercent={builderPercent}
+        builderLogs={builderLogs}
         onProjectNameChange={handleProjectNameChange}
         onExportPathChange={handleExportPathChange}
         onChooseProjectIcon={handleChooseProjectIcon}
