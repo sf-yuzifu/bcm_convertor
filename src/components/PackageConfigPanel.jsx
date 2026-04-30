@@ -50,9 +50,9 @@ export default function PackageConfigPanel({
                     />
                   </svg>
                 ) : null}
-                <div className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-2xl">
+                <div className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden">
                   {displayIcon ? (
-                    <img src={displayIcon} alt="作品图标" className="h-[84px] w-[84px] rounded-2xl object-cover" />
+                    <img src={displayIcon} alt="作品图标" className="h-[84px] w-[84px] object-cover" />
                   ) : (
                     <img src="/icn_upload.png" alt="默认图标" className="w-[84px] object-contain opacity-90" />
                   )}
@@ -73,7 +73,7 @@ export default function PackageConfigPanel({
             <div className="flex flex-col">
               <span>作品图标：</span>
               <Button className="w-fit" icon={<UploadOutlined />} onClick={onChooseProjectIcon} disabled={isProcessing}>
-                Upload
+                上传图标
               </Button>
             </div>
             <label className="flex flex-col">
