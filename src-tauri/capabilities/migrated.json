@@ -16,6 +16,8 @@
     "fs:allow-remove",
     "fs:allow-rename",
     "fs:allow-exists",
+    "fs:allow-applocaldata-read-recursive",
+    "fs:allow-applocaldata-write-recursive",
     {
       "identifier": "fs:scope",
       "allow": [
@@ -31,6 +33,8 @@
         "$HOME/convert_tmp/**",
         "$HOME/convert_tmp2",
         "$HOME/convert_tmp2/**",
+        "$RESOURCE/convert",
+        "$RESOURCE/convert/**",
         "$DESKTOP",
         "$DESKTOP/*",
         "$DESKTOP/**"
