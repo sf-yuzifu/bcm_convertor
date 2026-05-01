@@ -71,7 +71,16 @@ const getBuildLogDirectory = async () => {
   return join(appDataPath, 'logs')
 }
 
-const buildLogContent = ({ projectName, status, progressText, progressPercent, outputPath, logPath, builderLogs, error }) => {
+const buildLogContent = ({
+  projectName,
+  status,
+  progressText,
+  progressPercent,
+  outputPath,
+  logPath,
+  builderLogs,
+  error
+}) => {
   const errorMessage =
     typeof error === 'string' ? error : error?.detail || error?.message || (error ? String(error) : '')
 
