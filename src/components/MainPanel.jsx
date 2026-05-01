@@ -480,50 +480,7 @@ export default function MainPanel({
       return
     }
 
-    if (!isOfflineKitten3) {
-      await openPackageConfigPanel()
-      return
-    }
-
-    resetBuilderProgress()
-    applyProgressPayload({ stage: 'process-files', message: '正在准备转换任务', percent: 0 })
-    setLastOutputDirectory('')
-    onProcessChange(1)
-
-    try {
-      const result = await runConvertWorkflow({
-        version,
-        status,
-        workId: Number(workId || 0),
-        onProgress: applyProgressPayload
-      })
-
-      if (result.status === 'success') {
-        setLastOutputDirectory(result.outputDirectory || '')
-        await persistBuildLog({
-          projectName: result.projectInfo?.name || loadedProjectInfo?.name || `work-${workId}`,
-          outputPath: result.outputDirectory,
-          status: 'success'
-        })
-        onProcessChange(2)
-        applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
-        return
-      }
-
-      onProcessChange(0)
-
-      if (result.status === 'unavailable') {
-        await showAlert('当前环境不支持', '请在桌面应用中使用转换功能')
-      }
-    } catch (error) {
-      console.error(error)
-      onProcessChange(0)
-      await handleBuildFailure({
-        error,
-        projectName: loadedProjectInfo?.name || `work-${workId}`,
-        outputPath: packageConfig.exportPath || lastOutputDirectory
-      })
-    }
+    await openPackageConfigPanel()
   }
 
   const handleContinueConvert = () => {

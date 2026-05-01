@@ -1,3 +1,4 @@
+import { join } from '@tauri-apps/api/path'
 import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
 import { type } from '@tauri-apps/plugin-os'
@@ -53,9 +54,23 @@ const getProjectIconExtensions = (osType) => {
   return ['png', 'jpg', 'jpeg', 'webp', 'svg', 'ico', 'icns']
 }
 
+const OFFLINE_KITTEN3_ICON_PREVIEW_URL = '/kitten3_player_icon.png'
+
 export const revokeObjectUrlIfNeeded = (url) => {
   if (typeof url === 'string' && url.startsWith('blob:')) {
     URL.revokeObjectURL(url)
+  }
+}
+
+const resolveOfflineKitten3Icon = async ({ version, status, resourceDirPath }) => {
+  if (!(status === 'offline' && version === 'kitten3')) {
+    return null
+  }
+
+  const iconPath = await join(resourceDirPath, 'convert', 'kitten3', 'player_icon.png')
+  return {
+    path: iconPath,
+    previewUrl: OFFLINE_KITTEN3_ICON_PREVIEW_URL
   }
 }
 
@@ -65,13 +80,15 @@ export const loadPackageConfigDefaults = async ({ version, status, workId }) => 
     return null
   }
 
-  const { desktopDirPath } = await getEnv()
+  const { desktopDirPath, resourceDirPath } = await getEnv()
+  const offlineKitten3Icon = await resolveOfflineKitten3Icon({ version, status, resourceDirPath })
+
   return {
     projectInfo,
     packageConfig: {
       projectName: projectInfo.name || '',
-      projectIcon: '',
-      projectIconPreview: '',
+      projectIcon: offlineKitten3Icon?.path || '',
+      projectIconPreview: offlineKitten3Icon?.previewUrl || '',
       exportPath: desktopDirPath,
       fetchedIcon: resolveProjectPreview(projectInfo)
     }
