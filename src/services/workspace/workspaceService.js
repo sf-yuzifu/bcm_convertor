@@ -1,4 +1,4 @@
-import { desktopDir, homeDir, join } from '@tauri-apps/api/path'
+import { appLocalDataDir, desktopDir, homeDir, join } from '@tauri-apps/api/path'
 import { exists, mkdir, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 
 import { invokeBackendCommand } from '../system/backendCommandService.js'
@@ -66,7 +66,12 @@ const createLogStamp = (date = new Date()) =>
     date.getMinutes()
   )}${padTime(date.getSeconds())}`
 
-const buildLogContent = ({ projectName, status, progressText, progressPercent, outputPath, builderLogs, error }) => {
+const getBuildLogDirectory = async () => {
+  const appDataPath = await appLocalDataDir()
+  return join(appDataPath, 'logs')
+}
+
+const buildLogContent = ({ projectName, status, progressText, progressPercent, outputPath, logPath, builderLogs, error }) => {
   const errorMessage =
     typeof error === 'string' ? error : error?.detail || error?.message || (error ? String(error) : '')
 
@@ -77,6 +82,7 @@ const buildLogContent = ({ projectName, status, progressText, progressPercent, o
     `当前阶段: ${progressText || '未知'}`,
     `当前进度: ${Number.isFinite(progressPercent) ? `${Math.round(progressPercent)}%` : '未知'}`,
     `导出目录: ${outputPath || '未设置'}`,
+    `日志目录: ${logPath || '未知'}`,
     `生成时间: ${new Date().toLocaleString('zh-CN', { hour12: false })}`
   ]
 
@@ -98,7 +104,7 @@ export const writeBuildLogFile = async ({
   status,
   error
 }) => {
-  const targetPath = outputPath || (await desktopDir())
+  const targetPath = await getBuildLogDirectory()
   await mkdir(targetPath, { recursive: true })
 
   const logFilePath = await join(targetPath, `${sanitizeFileName(projectName)}-build-${createLogStamp()}.log`)
@@ -107,7 +113,8 @@ export const writeBuildLogFile = async ({
     status,
     progressText,
     progressPercent,
-    outputPath: targetPath,
+    outputPath: outputPath || (await desktopDir()),
+    logPath: targetPath,
     builderLogs,
     error
   })
@@ -122,7 +129,7 @@ export const openBuildLogFile = async (logFilePath) => {
     { path: logFilePath },
     {
       title: '打开打包日志失败',
-      text: '打包失败，但无法自动打开日志文件，请手动前往导出目录查看'
+      text: '打包失败，但无法自动打开日志文件，请手动前往应用日志目录查看'
     }
   )
 }
