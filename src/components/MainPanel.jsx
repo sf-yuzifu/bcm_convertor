@@ -11,7 +11,7 @@ import {
 import { showAlert } from '../services/system/dialogService.js'
 import { showErrorAlert } from '../services/system/errorHandlingService.js'
 import { isTauri } from '../services/system/runtimeService.js'
-import { revealOutputDirectory } from '../services/workspace/workspaceService.js'
+import { openBuildLogFile, revealOutputDirectory, writeBuildLogFile } from '../services/workspace/workspaceService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const STAGE_SOFT_CAP = {
@@ -126,6 +126,9 @@ export default function MainPanel({
   const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
   const [lastOutputDirectory, setLastOutputDirectory] = useState('')
   const targetPercentRef = useRef(0)
+  const builderLogsRef = useRef([])
+  const builderMessageRef = useRef('正在准备转换任务')
+  const builderPercentRef = useRef(0)
 
   const resetBuilderProgress = () => {
     setBuilderMessage('正在准备转换任务')
@@ -136,6 +139,9 @@ export default function MainPanel({
     setBuilderLastEventAt(0)
     setBuilderLogs([])
     targetPercentRef.current = 0
+    builderLogsRef.current = []
+    builderMessageRef.current = '正在准备转换任务'
+    builderPercentRef.current = 0
   }
 
   const cleanupIconPreview = (previewUrl) => {
@@ -143,7 +149,9 @@ export default function MainPanel({
   }
 
   const applyProgressPayload = (payload) => {
-    setBuilderMessage(payload.message || '正在打包，请稍候')
+    const nextMessage = payload.message || '正在打包，请稍候'
+    setBuilderMessage(nextMessage)
+    builderMessageRef.current = nextMessage
     setBuilderDetail(payload.detail || '')
     setBuilderStage(payload.stage || 'idle')
     setBuilderLastEventAt(Date.now())
@@ -195,7 +203,9 @@ export default function MainPanel({
 
         setBuilderLogs((prev) => {
           const next = [...prev, { stream: payload.stream || 'stdout', line }]
-          return next.slice(-MAX_BUILDER_LOG_LINES)
+          const trimmed = next.slice(-MAX_BUILDER_LOG_LINES)
+          builderLogsRef.current = trimmed
+          return trimmed
         })
       })
     }
@@ -208,6 +218,10 @@ export default function MainPanel({
       unlistenBuilderLog?.()
     }
   }, [])
+
+  useEffect(() => {
+    builderPercentRef.current = builderPercent
+  }, [builderPercent])
 
   useEffect(() => {
     let lastTickAt = Date.now()
@@ -247,6 +261,41 @@ export default function MainPanel({
 
     return () => window.clearInterval(timer)
   }, [builderLastEventAt, builderStage, process])
+
+  const persistBuildLog = async ({ projectName, outputPath, status, error }) => {
+    if (!builderLogsRef.current.length && !error) {
+      return null
+    }
+
+    return writeBuildLogFile({
+      projectName: projectName || packageConfig.projectName || loadedProjectInfo?.name || `work-${workId}`,
+      outputPath,
+      builderLogs: builderLogsRef.current,
+      progressText: builderMessageRef.current,
+      progressPercent: builderPercentRef.current,
+      status,
+      error
+    })
+  }
+
+  const handleBuildFailure = async ({ error, projectName, outputPath }) => {
+    try {
+      const logFilePath = await persistBuildLog({
+        projectName,
+        outputPath,
+        status: 'error',
+        error
+      })
+
+      if (logFilePath) {
+        await openBuildLogFile(logFilePath)
+      }
+    } catch (logError) {
+      console.error('failed to persist or open build log', logError)
+    }
+
+    await showErrorAlert(error)
+  }
 
   useEffect(() => {
     onPanelStepChange?.('search')
@@ -391,6 +440,11 @@ export default function MainPanel({
 
       if (result.status === 'success') {
         setLastOutputDirectory(result.outputDirectory || packageConfig.exportPath || '')
+        await persistBuildLog({
+          projectName: finalProjectInfo.name,
+          outputPath: result.outputDirectory || packageConfig.exportPath,
+          status: 'success'
+        })
         onProcessChange(2)
         applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
         return
@@ -404,7 +458,11 @@ export default function MainPanel({
     } catch (error) {
       console.error(error)
       onProcessChange(0)
-      await showErrorAlert(error)
+      await handleBuildFailure({
+        error,
+        projectName: finalProjectInfo.name,
+        outputPath: packageConfig.exportPath
+      })
     }
   }
 
@@ -442,6 +500,11 @@ export default function MainPanel({
 
       if (result.status === 'success') {
         setLastOutputDirectory(result.outputDirectory || '')
+        await persistBuildLog({
+          projectName: result.projectInfo?.name || loadedProjectInfo?.name || `work-${workId}`,
+          outputPath: result.outputDirectory,
+          status: 'success'
+        })
         onProcessChange(2)
         applyProgressPayload({ stage: 'success', message: '转换与打包已完成', percent: 100 })
         return
@@ -455,7 +518,11 @@ export default function MainPanel({
     } catch (error) {
       console.error(error)
       onProcessChange(0)
-      await showErrorAlert(error)
+      await handleBuildFailure({
+        error,
+        projectName: loadedProjectInfo?.name || `work-${workId}`,
+        outputPath: packageConfig.exportPath || lastOutputDirectory
+      })
     }
   }
 
