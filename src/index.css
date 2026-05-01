@@ -84,3 +84,28 @@ input::-webkit-inner-spin-button {
 .ant-btn-icon {
   display: flex;
 }
+
+.builder-log-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 transparent;
+}
+
+.builder-log-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-log-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-log-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(115, 128, 147, 0.9) 0%, rgba(86, 96, 109, 0.9) 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+.builder-log-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(145, 158, 176, 0.95) 0%, rgba(108, 120, 135, 0.95) 100%);
+  background-clip: padding-box;
+}

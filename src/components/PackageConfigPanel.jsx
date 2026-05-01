@@ -41,24 +41,22 @@ export default function PackageConfigPanel({
     <div className="flex h-full w-full items-center justify-center px-6">
       <div className="w-full h-full flex flex-col justify-between">
         {isProcessing && showDetailedLogs ? (
-          <div className="mt-12">
-            <div
-              ref={logContainerRef}
-              className="h-[208px] overflow-y-auto rounded-xl border border-[#2b2b2b] bg-[#0f1115] px-4 py-3 font-mono text-[12px] leading-5 text-[#d7dde7]"
-            >
-              {builderLogs.length ? (
-                builderLogs.map((entry, index) => (
-                  <div
-                    key={`${index}-${entry.stream}`}
-                    className={entry.stream === 'stderr' ? 'text-[#ff9c9c]' : 'text-[#d7dde7]'}
-                  >
-                    {entry.line}
-                  </div>
-                ))
-              ) : (
-                <div className="text-[#8b949e]">正在启动打包任务，请稍候...</div>
-              )}
-            </div>
+          <div
+            ref={logContainerRef}
+            className="builder-log-scrollbar h-full w-full overflow-y-auto rounded-xl p-3 bg-[#0f1115] !my-3 font-mono text-[14px] text-[#d7dde7]"
+          >
+            {builderLogs.length ? (
+              builderLogs.map((entry, index) => (
+                <div
+                  key={`${index}-${entry.stream}`}
+                  className={entry.stream === 'stderr' ? 'text-[#ff9c9c]' : 'text-[#d7dde7]'}
+                >
+                  {entry.line}
+                </div>
+              ))
+            ) : (
+              <div className="text-[#8b949e]">正在启动打包任务，请稍候...</div>
+            )}
           </div>
         ) : (
           <div className="flex justify-between mt-12">
@@ -134,16 +132,15 @@ export default function PackageConfigPanel({
         )}
         <div className="mb-9">
           {isProcessing ? (
-            <button
-              type="button"
-              className="mb-3 block w-full cursor-pointer border-0 bg-transparent p-0 text-center text-[16px] leading-none font-medium text-[var(--app-color-text-strong)]"
+            <div
+              className="mb-3 text-center text-[16px] leading-none font-medium text-[var(--app-color-text-strong)]"
               onClick={() => setShowDetailedLogs((prev) => !prev)}
             >
               {progressText}
-              <span className="ml-2 text-[12px] font-normal text-[var(--app-color-text-muted)]">
+              {/* <span className="ml-2 text-[12px] font-normal text-[var(--app-color-text-muted)]">
                 {showDetailedLogs ? '点击切换图形进度' : '点击查看详细日志'}
-              </span>
-            </button>
+              </span> */}
+            </div>
           ) : null}
           <div className="flex items-center justify-center gap-3">
             <Button icon={<ReloadOutlined />} onClick={onBack} disabled={isProcessing}>
