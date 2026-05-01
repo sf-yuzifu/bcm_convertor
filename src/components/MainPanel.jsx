@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { listen } from '@tauri-apps/api/event'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import PackageConfigPanel from './PackageConfigPanel.jsx'
 import SearchPanel from './SearchPanel.jsx'
 import {
@@ -51,6 +52,7 @@ const createEmptyPackageConfig = () => ({
 })
 
 const MAX_BUILDER_LOG_LINES = 400
+const BCM_FILE_PATTERN = /\.bcm$/i
 
 const normalizePercent = (value) => {
   const numericValue = Number(value)
@@ -109,12 +111,14 @@ export default function MainPanel({
   panelStep,
   onPanelStepChange,
   onProcessChange,
+  onFileDragActiveChange,
   onProjectFetched,
   onPackageConfigChange,
   onChooseProjectIcon,
   onSubmitPackageConfig
 }) {
   const [workId, setWorkId] = useState('6654365')
+  const [isDragActive, setIsDragActive] = useState(false)
   const [builderMessage, setBuilderMessage] = useState('正在准备转换任务')
   const [builderPercent, setBuilderPercent] = useState(0)
   const [builderTargetPercent, setBuilderTargetPercent] = useState(0)
@@ -129,6 +133,7 @@ export default function MainPanel({
   const builderLogsRef = useRef([])
   const builderMessageRef = useRef('正在准备转换任务')
   const builderPercentRef = useRef(0)
+  const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
 
   const resetBuilderProgress = () => {
     setBuilderMessage('正在准备转换任务')
@@ -222,6 +227,75 @@ export default function MainPanel({
   useEffect(() => {
     builderPercentRef.current = builderPercent
   }, [builderPercent])
+
+  useEffect(() => {
+    onFileDragActiveChange?.(isDragActive)
+  }, [isDragActive, onFileDragActiveChange])
+
+  useEffect(() => {
+    if (!isOfflineKitten3 || process === 1 || panelStep !== 'search') {
+      setIsDragActive(false)
+    }
+  }, [isOfflineKitten3, panelStep, process])
+
+  useEffect(() => {
+    if (!isTauri()) {
+      return undefined
+    }
+
+    let disposed = false
+    let unlistenDragDrop
+
+    const setupDragDrop = async () => {
+      unlistenDragDrop = await getCurrentWindow().onDragDropEvent(async (event) => {
+        if (disposed || !isOfflineKitten3 || process === 1 || panelStep !== 'search') {
+          return
+        }
+
+        if (event.payload.type === 'enter' || event.payload.type === 'over') {
+          setIsDragActive(true)
+          return
+        }
+
+        if (event.payload.type === 'leave') {
+          setIsDragActive(false)
+          return
+        }
+
+        if (event.payload.type !== 'drop') {
+          return
+        }
+
+        setIsDragActive(false)
+        const droppedPaths = Array.isArray(event.payload.paths) ? event.payload.paths : []
+        const bcmPath = droppedPaths.find((path) => BCM_FILE_PATTERN.test(path))
+
+        if (!bcmPath) {
+          await showAlert('文件格式不支持', '请拖入一个 .bcm 文件')
+          return
+        }
+
+        if (droppedPaths.length > 1) {
+          await showAlert('检测到多个文件', '本次只会导入第一个 .bcm 文件')
+        }
+
+        try {
+          await openPackageConfigPanel({ sourceFilePath: bcmPath })
+        } catch (error) {
+          console.error(error)
+          await showErrorAlert(error)
+        }
+      })
+    }
+
+    setupDragDrop()
+
+    return () => {
+      disposed = true
+      onFileDragActiveChange?.(false)
+      unlistenDragDrop?.()
+    }
+  }, [isOfflineKitten3, onFileDragActiveChange, panelStep, process])
 
   useEffect(() => {
     let lastTickAt = Date.now()
@@ -325,7 +399,6 @@ export default function MainPanel({
       : `将 ${version} 作品 ID 输入这里进行转换`
   }, [builderMessage, panelStep, process, status, version])
 
-  const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
   const showInput = !isOfflineKitten3 && panelStep === 'search'
 
   const handleWorkIdChange = (value) => {
@@ -344,11 +417,12 @@ export default function MainPanel({
     })
   }
 
-  const openPackageConfigPanel = async () => {
+  const openPackageConfigPanel = async ({ sourceFilePath } = {}) => {
     const defaults = await loadPackageConfigDefaults({
       version,
       status,
-      workId: Number(workId || 0)
+      workId: Number(workId || 0),
+      sourceFilePath
     })
 
     if (defaults === null) {
@@ -519,6 +593,7 @@ export default function MainPanel({
       titleText={titleText}
       process={process}
       builderPercent={builderPercent}
+      isOfflineKitten3={isOfflineKitten3}
       showInput={showInput}
       workId={workId}
       onWorkIdChange={handleWorkIdChange}

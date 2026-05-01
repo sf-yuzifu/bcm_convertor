@@ -1,5 +1,16 @@
 import { open } from '@tauri-apps/plugin-dialog'
-import { readTextFile, BaseDirectory } from '@tauri-apps/plugin-fs'
+
+import { invokeBackendCommand } from '../../system/backendCommandService.js'
+
+export const loadOfflineKitten3ProjectFromFile = async (filePath) =>
+  invokeBackendCommand(
+    'read_bcm_project',
+    { path: filePath },
+    {
+      title: '读取 bcm 文件失败',
+      text: '无法读取所选 bcm 文件，请确认文件内容完整且格式正确'
+    }
+  )
 
 export const loadOfflineKitten3Project = async () => {
   const file = await open({
@@ -15,6 +26,5 @@ export const loadOfflineKitten3Project = async () => {
     return null
   }
 
-  const projectData = JSON.parse(await readTextFile(file, { dir: BaseDirectory.AppConfig }))
-  return { name: projectData['project_name'], data: projectData }
+  return loadOfflineKitten3ProjectFromFile(file)
 }

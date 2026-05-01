@@ -74,8 +74,8 @@ const resolveOfflineKitten3Icon = async ({ version, status, resourceDirPath }) =
   }
 }
 
-export const loadPackageConfigDefaults = async ({ version, status, workId }) => {
-  const projectInfo = await loadProjectInfo({ version, status, workId })
+export const loadPackageConfigDefaults = async ({ version, status, workId, sourceFilePath }) => {
+  const projectInfo = await loadProjectInfo({ version, status, workId, sourceFilePath })
   if (projectInfo === null) {
     return null
   }

@@ -13,6 +13,7 @@ export default function App() {
   const [process, setProcess] = useState(0)
   const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [isFileDragActive, setIsFileDragActive] = useState(false)
   const showSearchChrome = panelStep === 'search' && process !== 2
 
   const controlState = useMemo(
@@ -46,8 +47,21 @@ export default function App() {
         />
         <Content className="relative flex h-[calc(100vh-40px)] items-center justify-center bg-[var(--app-color-surface)] p-3">
           <div
-            className={`${showSearchChrome ? 'rounded-b-xl border border-dashed border-[var(--app-color-border)]' : ''} h-full w-full`}
+            className={`h-full w-full overflow-hidden transition-colors duration-200 ${
+              showSearchChrome ? 'rounded-b-xl border border-dashed border-[var(--app-color-border)]' : ''
+            }`}
           >
+            {showSearchChrome ? (
+              <div
+                className={`pointer-events-none border-2 border-dashed border-[var(--app-color-primary)] absolute inset-3 z-10 flex items-center justify-center rounded-b-xl bg-[#fff/0.3] backdrop-blur-[6px] transition-opacity duration-200 ${
+                  isFileDragActive ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <div className="px-4 text-center text-[16px] font-medium text-[var(--app-color-primary)]">
+                  松开即可导入 `.bcm` 文件
+                </div>
+              </div>
+            ) : null}
             {showSearchChrome ? (
               <VersionControls
                 version={controlState.version}
@@ -64,6 +78,7 @@ export default function App() {
               panelStep={panelStep}
               onPanelStepChange={setPanelStep}
               onProcessChange={setProcess}
+              onFileDragActiveChange={setIsFileDragActive}
             />
           </div>
         </Content>

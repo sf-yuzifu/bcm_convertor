@@ -1,6 +1,15 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct OfflineBcmProjectPayload {
+    name: String,
+    data: serde_json::Value,
+    path: String,
+}
+
 #[cfg(target_family = "windows")]
 fn ensure_writable(path: &Path) -> Result<(), String> {
     let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
@@ -148,6 +157,52 @@ fn recreate_symlink(target: &Path, link: &Path) -> Result<(), String> {
 #[tauri::command]
 pub fn open_file(path: String) -> Result<(), String> {
     open::that(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn read_bcm_project(path: String) -> Result<OfflineBcmProjectPayload, String> {
+    let source = PathBuf::from(&path);
+
+    if !source.exists() {
+        return Err(format!("文件不存在: {}", source.display()));
+    }
+
+    if !source.is_file() {
+        return Err(format!("拖入的不是文件: {}", source.display()));
+    }
+
+    let is_bcm = source
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .map(|extension| extension.eq_ignore_ascii_case("bcm"))
+        .unwrap_or(false);
+    if !is_bcm {
+        return Err(format!("仅支持导入 .bcm 文件: {}", source.display()));
+    }
+
+    let content = fs::read_to_string(&source)
+        .map_err(|e| format!("读取 bcm 文件失败: {} ({})", source.display(), e))?;
+    let data: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("解析 bcm 文件失败: {} ({})", source.display(), e))?;
+
+    let name = data
+        .get("project_name")
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.trim().is_empty())
+        .map(|value| value.to_string())
+        .or_else(|| {
+            source
+                .file_stem()
+                .and_then(|value| value.to_str())
+                .map(|value| value.to_string())
+        })
+        .unwrap_or_else(|| "未命名作品".to_string());
+
+    Ok(OfflineBcmProjectPayload {
+        name,
+        data,
+        path: source.display().to_string(),
+    })
 }
 
 #[tauri::command]
