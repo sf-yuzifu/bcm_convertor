@@ -19,7 +19,7 @@
   "productName": "编程猫格式工厂",
   "mainBinaryName": "编程猫格式工厂",
   "version": "2.5.0",
-  "identifier": "com.bcm-convertor.yzf",
+  "identifier": "moe.yzf.bcm-convertor",
   "plugins": {},
   "app": {
     "withGlobalTauri": true,
