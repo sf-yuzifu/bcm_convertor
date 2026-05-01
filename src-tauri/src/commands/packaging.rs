@@ -112,13 +112,12 @@ fn map_percent_to_range(percent: f64, start: f64, end: f64) -> f64 {
 
 fn map_stage_percent(stage: &str, percent: f64) -> f64 {
     match stage {
-        "start" => 0.0,
-        "prepare" => percent.clamp(0.0, 12.0),
-        "build" => percent.clamp(12.0, 20.0),
-        // 下载阶段使用真实日志百分比，但映射到整体进度区间，避免后续阶段出现倒退。
-        "download" => map_percent_to_range(percent, 20.0, 72.0),
-        "package" => percent.clamp(78.0, 92.0),
-        "finalize" => percent.clamp(94.0, 98.0),
+        "start" => percent.clamp(0.0, 10.0),
+        "prepare" => map_percent_to_range(percent, 10.0, 24.0),
+        "build" => map_percent_to_range(percent, 24.0, 30.0),
+        "download" => map_percent_to_range(percent, 30.0, 45.0),
+        "package" => map_percent_to_range(percent, 45.0, 88.0),
+        "finalize" => map_percent_to_range(percent, 88.0, 90.0),
         "success" => 100.0,
         _ => percent.clamp(0.0, 100.0),
     }
@@ -256,7 +255,81 @@ fn parse_output_progress(line: &str) -> Option<BuilderStatusPayload> {
     }
 
     let lower = trimmed.to_ascii_lowercase();
-    if lower.contains("download") || lower.contains("downloading") {
+    if trimmed.starts_with("[bcm-builder] 检测到 Windows PNG 图标")
+        || trimmed.starts_with("[bcm-builder] 图标转换:")
+        || trimmed.starts_with("[bcm-builder] 使用自定义图标:")
+    {
+        return Some(BuilderStatusPayload {
+            stage: "prepare".to_string(),
+            message: "正在处理应用图标".to_string(),
+            percent: Some(55.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if trimmed.starts_with("[bcm-builder] 图标转换完成:") {
+        return Some(BuilderStatusPayload {
+            stage: "prepare".to_string(),
+            message: "正在处理应用图标".to_string(),
+            percent: Some(72.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if trimmed.starts_with("[bcm-builder] electron-builder 配置摘要:")
+        || trimmed.starts_with("[bcm-builder] 等效命令:")
+    {
+        return Some(BuilderStatusPayload {
+            stage: "prepare".to_string(),
+            message: "正在生成打包配置".to_string(),
+            percent: Some(85.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if trimmed.starts_with("[bcm-builder] 开始执行 electron-builder") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "正在启动打包引擎".to_string(),
+            percent: Some(10.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("found existing") {
+        if lower.contains("wincodesign") {
+            return Some(BuilderStatusPayload {
+                stage: "package".to_string(),
+                message: "正在复用已缓存的签名工具".to_string(),
+                percent: Some(42.0),
+                detail: Some(trimmed.to_string()),
+            });
+        }
+
+        if lower.contains("nsis") {
+            return Some(BuilderStatusPayload {
+                stage: "package".to_string(),
+                message: "正在复用已缓存的安装包工具".to_string(),
+                percent: Some(80.0),
+                detail: Some(trimmed.to_string()),
+            });
+        }
+
+        if lower.contains("electron-builder") || lower.contains("electron") {
+            return Some(BuilderStatusPayload {
+                stage: "download".to_string(),
+                message: "正在复用已缓存的打包依赖".to_string(),
+                percent: Some(100.0),
+                detail: Some(trimmed.to_string()),
+            });
+        }
+    }
+
+    let has_download_percent = extract_percent(trimmed).is_some();
+    if lower.contains("downloading")
+        || (has_download_percent
+            && (lower.contains(" download ") || lower.starts_with("download ")))
+    {
         let percent = extract_percent(trimmed);
         let message = percent
             .map(|value| format!("正在下载打包依赖 {:.0}%", value.round()))
@@ -273,8 +346,62 @@ fn parse_output_progress(line: &str) -> Option<BuilderStatusPayload> {
     if lower.contains("packaging") {
         return Some(BuilderStatusPayload {
             stage: "package".to_string(),
-            message: "正在封装应用".to_string(),
+            message: "正在封装应用文件".to_string(),
+            percent: Some(12.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("execute command") && lower.contains("rcedit") {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在写入程序图标和版本信息".to_string(),
+            percent: Some(45.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("command executed") && lower.contains("rcedit") {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在校验应用可执行文件".to_string(),
+            percent: Some(58.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building") && lower.contains("target=portable") {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在生成便携版程序".to_string(),
             percent: Some(78.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building") && (lower.contains("target=nsis") || lower.contains("makensis")) {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在生成安装包".to_string(),
+            percent: Some(82.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building") && lower.contains("target=appimage") {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在生成 AppImage 包".to_string(),
+            percent: Some(82.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building") && lower.contains("target=dir") {
+        return Some(BuilderStatusPayload {
+            stage: "package".to_string(),
+            message: "正在生成应用目录".to_string(),
+            percent: Some(82.0),
             detail: Some(trimmed.to_string()),
         });
     }
@@ -283,7 +410,7 @@ fn parse_output_progress(line: &str) -> Option<BuilderStatusPayload> {
         return Some(BuilderStatusPayload {
             stage: "package".to_string(),
             message: "正在生成安装包".to_string(),
-            percent: Some(90.0),
+            percent: Some(86.0),
             detail: Some(trimmed.to_string()),
         });
     }
@@ -295,7 +422,7 @@ fn parse_output_progress(line: &str) -> Option<BuilderStatusPayload> {
         return Some(BuilderStatusPayload {
             stage: "finalize".to_string(),
             message: "正在整理打包产物".to_string(),
-            percent: Some(96.0),
+            percent: Some(85.0),
             detail: Some(trimmed.to_string()),
         });
     }

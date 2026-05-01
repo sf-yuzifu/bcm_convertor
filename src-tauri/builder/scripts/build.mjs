@@ -285,14 +285,17 @@ const resolveBuilderIconPath = async (context, root) => {
     const outputPath = createGeneratedIconOutputPath(context)
 
     mkdirSync(dirname(outputPath), { recursive: true })
+    emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 45 })
     emitLog(`检测到 Windows PNG 图标，开始转换为 ICO`)
     emitLog(`图标转换: ${iconPath} -> ${outputPath}`)
     const iconBuffer = await pngToIco(iconPath)
     writeFileSync(outputPath, iconBuffer)
+    emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 70 })
     emitLog(`图标转换完成: ${outputPath}`)
     return outputPath
   }
 
+  emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 60 })
   emitLog(`使用自定义图标: ${iconPath}`)
   return iconPath
 }
@@ -395,13 +398,14 @@ const buildApp = async (context) => {
   const artifactName = createArtifactName(context)
   const cacheRoot = getCacheRoot(context)
 
-  emitProgress({ stage: 'prepare', message: '正在检查打包环境', percent: 3 })
+  emitProgress({ stage: 'prepare', message: '正在准备打包环境', percent: 10 })
   normalizeAppPackageJson(context)
   mkdirSync(cacheRoot, { recursive: true })
   applyDownloadMirrors()
   applyDebugLogging()
   process.env.ELECTRON_BUILDER_CACHE = join(cacheRoot, 'electron-builder')
   process.env.ELECTRON_CACHE = join(cacheRoot, 'electron')
+  emitProgress({ stage: 'prepare', message: '正在准备打包环境', percent: 30 })
   emitLog(`工具链目录: ${toolchainRoot}`)
   emitLog(`工作目录: ${context.workspaceDir}`)
   emitLog(`输出目录: ${context.outputDir}`)
@@ -459,8 +463,8 @@ const buildApp = async (context) => {
     ])}`
   )
 
-  emitProgress({ stage: 'prepare', message: '正在生成打包配置', percent: 10 })
-  emitProgress({ stage: 'build', message: '正在执行 electron-builder', percent: 15 })
+  emitProgress({ stage: 'prepare', message: '正在生成打包配置', percent: 85 })
+  emitProgress({ stage: 'build', message: '正在启动打包引擎', percent: 10 })
   emitLog('开始执行 electron-builder')
   const results = await build({
     projectDir: toolchainRoot,
@@ -476,7 +480,7 @@ const buildApp = async (context) => {
     throw new Error('electron-builder 没有生成可用产物')
   }
 
-  emitProgress({ stage: 'finalize', message: '正在整理打包产物', percent: 95 })
+  emitProgress({ stage: 'finalize', message: '正在整理打包产物', percent: 60 })
   return {
     artifactPath
   }

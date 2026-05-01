@@ -16,24 +16,28 @@ import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
 
 const STAGE_SOFT_CAP = {
   idle: 0,
+  start: 10,
   'process-files': 10,
-  'builder-prepare': 14,
-  download: 40,
-  package: 90,
+  prepare: 24,
+  build: 30,
+  download: 45,
+  package: 88,
   postprocess: 99,
-  finalize: 99,
+  finalize: 90,
   success: 100,
   error: 100
 }
 
 const STAGE_DRIFT_PER_SECOND = {
   idle: 0,
+  start: 0.8,
   'process-files': 1.2,
-  'builder-prepare': 0.8,
-  download: 0.15,
-  package: 0.55,
+  prepare: 0.6,
+  build: 0.4,
+  download: 0.12,
+  package: 0.45,
   postprocess: 0.8,
-  finalize: 0.25,
+  finalize: 0.2,
   success: 0,
   error: 0
 }
@@ -57,52 +61,11 @@ const normalizePercent = (value) => {
   return Math.min(100, Math.max(0, Math.round(numericValue)))
 }
 
-const mapPercentToRange = (value, fromStart, fromEnd, toStart, toEnd) => {
-  const numericValue = Number(value)
-  if (!Number.isFinite(numericValue)) {
-    return null
-  }
-
-  if (fromEnd === fromStart) {
-    return toEnd
-  }
-
-  const ratio = Math.min(1, Math.max(0, (numericValue - fromStart) / (fromEnd - fromStart)))
-  return toStart + ratio * (toEnd - toStart)
-}
-
 const mapBuilderProgress = (payload, currentTargetPercent) => {
-  const rawStage = payload.stage || 'builder-prepare'
+  const rawStage = payload.stage || 'prepare'
   const rawPercent = Number(payload.percent)
   const message = payload.message || '正在打包，请稍候'
   const detail = payload.detail || ''
-
-  if (rawStage === 'download') {
-    return {
-      stage: 'download',
-      message,
-      detail,
-      percent: mapPercentToRange(rawPercent, 20, 72, 10, 40) ?? mapPercentToRange(rawPercent, 0, 100, 10, 40) ?? 14
-    }
-  }
-
-  if (rawStage === 'package') {
-    return {
-      stage: 'package',
-      message,
-      detail,
-      percent: mapPercentToRange(rawPercent, 78, 92, 40, 84) ?? (message.includes('安装包') ? 78 : 40)
-    }
-  }
-
-  if (rawStage === 'finalize') {
-    return {
-      stage: 'package',
-      message,
-      detail,
-      percent: mapPercentToRange(rawPercent, 94, 98, 84, 90) ?? 88
-    }
-  }
 
   if (rawStage === 'success') {
     return {
@@ -122,11 +85,20 @@ const mapBuilderProgress = (payload, currentTargetPercent) => {
     }
   }
 
+  if (!Number.isFinite(rawPercent)) {
+    return {
+      stage: rawStage,
+      message,
+      detail,
+      percent: currentTargetPercent
+    }
+  }
+
   return {
-    stage: 'builder-prepare',
+    stage: rawStage,
     message,
     detail,
-    percent: message.includes('生成打包配置') ? 12 : message.includes('执行 electron-builder') ? 14 : 11
+    percent: rawPercent
   }
 }
 
