@@ -79,7 +79,7 @@ export default function AboutModal({ open }) {
       }`}
       style={{ transformOrigin: 'center center' }}
     >
-      <div className="absolute inset-x-0 top-0 h-10 bg-transparent" data-tauri-drag-region />
+      <div className="absolute inset-x-0 top-0 h-10 bg-transparent z-[16]" data-tauri-drag-region />
 
       <div className="relative flex h-[78px] flex-col items-center text-center">
         <img src="/pic_aboutUs.png" alt="" className="absolute top-0 h-[78px] w-[252px]" />
