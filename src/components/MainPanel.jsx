@@ -138,6 +138,8 @@ export default function MainPanel({
   const builderMessageRef = useRef('正在准备转换任务')
   const builderPercentRef = useRef(0)
   const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
+  const numericWorkId = Number(workId || 0)
+  const activeOutputDirectory = lastOutputDirectory || packageConfig.exportPath
 
   const resetBuilderProgress = () => {
     setBuilderMessage('正在准备转换任务')
@@ -445,7 +447,7 @@ export default function MainPanel({
     const defaults = await loadPackageConfigDefaults({
       version,
       status,
-      workId: Number(workId || 0),
+      workId: numericWorkId,
       sourceFilePath
     })
 
@@ -458,7 +460,7 @@ export default function MainPanel({
     setPackageConfig(defaults.packageConfig)
     onPanelStepChange?.('config')
     onProjectFetched?.({
-      workId: Number(workId || 0),
+      workId: numericWorkId,
       version,
       status,
       projectInfo: defaults.projectInfo,
@@ -515,7 +517,7 @@ export default function MainPanel({
     }
 
     onSubmitPackageConfig?.({
-      workId: Number(workId || 0),
+      workId: numericWorkId,
       version,
       status,
       projectInfo: finalProjectInfo,
@@ -531,7 +533,7 @@ export default function MainPanel({
       const result = await runConvertWorkflow({
         version,
         status,
-        workId: Number(workId || 0),
+        workId: numericWorkId,
         projectInfo: finalProjectInfo,
         onProgress: applyProgressPayload
       })
@@ -590,11 +592,11 @@ export default function MainPanel({
 
   const handleOpenOutput = async () => {
     try {
-      await revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
+      await revealOutputDirectory(activeOutputDirectory)
     } catch (error) {
       console.error(error)
       await showErrorAlert(error, {
-        onRetryOpenOutput: async () => revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
+        onRetryOpenOutput: async () => revealOutputDirectory(activeOutputDirectory)
       })
     }
   }

@@ -156,7 +156,15 @@ const sortLogEntries = (entries = []) =>
 
 const pruneBuildLogs = async (directoryPath) => {
   const entries = await readDir(directoryPath)
-  const logFiles = sortLogEntries(entries.filter((entry) => entry.isFile && String(entry.name || '').toLowerCase().endsWith('.log')))
+  const logFiles = sortLogEntries(
+    entries.filter(
+      (entry) =>
+        entry.isFile &&
+        String(entry.name || '')
+          .toLowerCase()
+          .endsWith('.log')
+    )
+  )
 
   const staleEntries = logFiles.slice(BUILD_LOG_POLICY.maxFiles)
   await Promise.all(
