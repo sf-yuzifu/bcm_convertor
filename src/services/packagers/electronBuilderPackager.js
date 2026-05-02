@@ -79,20 +79,58 @@ const getFileExtension = (value) => {
   return matched?.[1] || ''
 }
 
-const convertImageBytesToPng = async (bytes, mimeType) => {
-  const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
-  const imageBitmap = await createImageBitmap(sourceBlob)
-  const canvas = document.createElement('canvas')
+const loadImageElementFromBlob = async (blob) => {
+  const objectUrl = URL.createObjectURL(blob)
+  const image = new Image()
 
-  canvas.width = imageBitmap.width
-  canvas.height = imageBitmap.height
+  try {
+    image.decoding = 'async'
+    image.src = objectUrl
+
+    await new Promise((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('图标图片解码失败'))
+    })
+
+    return image
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+const drawSourceToCanvas = (source) => {
+  const canvas = document.createElement('canvas')
+  const width = Math.max(1, Math.round(source.width || source.naturalWidth || 0))
+  const height = Math.max(1, Math.round(source.height || source.naturalHeight || 0))
+
+  canvas.width = width
+  canvas.height = height
   const context = canvas.getContext('2d')
   if (!context) {
     throw new Error('无法创建图标转换画布')
   }
 
-  context.drawImage(imageBitmap, 0, 0)
-  imageBitmap.close()
+  context.drawImage(source, 0, 0, width, height)
+  return canvas
+}
+
+const convertImageBytesToPng = async (bytes, mimeType) => {
+  const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
+  let canvas
+
+  if (mimeType === 'image/svg+xml') {
+    const image = await loadImageElementFromBlob(sourceBlob)
+    canvas = drawSourceToCanvas(image)
+  } else {
+    try {
+      const imageBitmap = await createImageBitmap(sourceBlob)
+      canvas = drawSourceToCanvas(imageBitmap)
+      imageBitmap.close()
+    } catch (error) {
+      const image = await loadImageElementFromBlob(sourceBlob)
+      canvas = drawSourceToCanvas(image)
+    }
+  }
 
   const pngBlob = await new Promise((resolve, reject) => {
     canvas.toBlob(

@@ -39,6 +39,37 @@ fn sync_permissions(_source: &Path, destination: &Path) -> Result<(), String> {
     ensure_writable(destination)
 }
 
+#[cfg(target_family = "windows")]
+fn notify_shell_path_changed(path: &Path, is_directory: bool) {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::Shell::{
+        SHChangeNotify, SHCNF_PATHW, SHCNE_UPDATEDIR, SHCNE_UPDATEITEM,
+    };
+
+    let wide_path = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<u16>>();
+    let event_id = if is_directory {
+        SHCNE_UPDATEDIR
+    } else {
+        SHCNE_UPDATEITEM
+    } as i32;
+
+    unsafe {
+        SHChangeNotify(
+            event_id,
+            SHCNF_PATHW,
+            wide_path.as_ptr() as *const _,
+            std::ptr::null(),
+        );
+    }
+}
+
+#[cfg(not(target_family = "windows"))]
+fn notify_shell_path_changed(_path: &Path, _is_directory: bool) {}
+
 fn copy_file(source: &Path, destination: &Path) -> Result<(), String> {
     let target = if destination.is_dir() {
         destination.join(
@@ -73,6 +104,10 @@ fn copy_file(source: &Path, destination: &Path) -> Result<(), String> {
         )
     })?;
     sync_permissions(source, &target)?;
+    notify_shell_path_changed(&target, false);
+    if let Some(parent) = target.parent() {
+        notify_shell_path_changed(parent, true);
+    }
     Ok(())
 }
 
@@ -100,6 +135,7 @@ fn copy_dir_recursive(source: &Path, destination: &Path) -> Result<(), String> {
         }
     }
 
+    notify_shell_path_changed(destination, true);
     Ok(())
 }
 
