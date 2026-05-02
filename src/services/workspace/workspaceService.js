@@ -101,7 +101,9 @@ const buildLogContent = ({
   if (normalizedError) {
     headerLines.push(`错误码: ${normalizedError.code || 'UNKNOWN_ERROR'}`)
     headerLines.push(`错误阶段: ${normalizedError.stage || 'unknown'}`)
-    headerLines.push(`是否可重试: ${normalizedError.retryable === true ? '是' : normalizedError.retryable === false ? '否' : '未知'}`)
+    headerLines.push(
+      `是否可重试: ${normalizedError.retryable === true ? '是' : normalizedError.retryable === false ? '否' : '未知'}`
+    )
     headerLines.push(`错误标题: ${normalizedError.title || '未知'}`)
     headerLines.push(`错误提示: ${normalizedError.text || '未知'}`)
     if (normalizedError.detail) {

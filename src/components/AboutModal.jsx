@@ -71,7 +71,9 @@ export default function AboutModal({ open }) {
       )
     } catch (error) {
       console.error(error)
-      await showErrorAlert(error)
+      await showErrorAlert(error, {
+        onRetryOpenOutput: openOutputDirectory
+      })
     }
   }
 

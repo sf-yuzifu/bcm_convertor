@@ -14,16 +14,16 @@ const extractCommandErrorDetail = (error) => {
   return String(error || '')
 }
 
-export const invokeBackendCommand = async (
-  command,
-  args,
-  { code, title, text, stage, retryable, logPath } = {}
-) => {
+export const invokeBackendCommand = async (command, args, { code, title, text, stage, retryable, logPath } = {}) => {
   try {
     return await invoke(command, args)
   } catch (error) {
     throw createUserFacingError({
-      code: code || `BACKEND_${String(command || 'UNKNOWN').replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_FAILED`,
+      code:
+        code ||
+        `BACKEND_${String(command || 'UNKNOWN')
+          .replace(/[^A-Za-z0-9]+/g, '_')
+          .toUpperCase()}_FAILED`,
       title,
       text,
       detail: extractCommandErrorDetail(error),

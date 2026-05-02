@@ -361,9 +361,10 @@ export default function MainPanel({
       code: 'CONVERT_WORKFLOW_FAILED',
       stage: builderStage || 'error'
     })
+    let logFilePath = ''
 
     try {
-      const logFilePath = await persistBuildLog({
+      logFilePath = await persistBuildLog({
         projectName,
         outputPath,
         status: 'error',
@@ -378,7 +379,21 @@ export default function MainPanel({
       console.error('failed to persist or open build log', logError)
     }
 
-    await showErrorAlert(normalizedError)
+    await showErrorAlert(normalizedError, {
+      onOpenLog:
+        logFilePath && normalizedError.logPath
+          ? async () => {
+              try {
+                await openBuildLogFile(logFilePath)
+              } catch (openLogError) {
+                console.error(openLogError)
+                await showErrorAlert(openLogError, {
+                  onRetryOpenLog: async () => openBuildLogFile(logFilePath)
+                })
+              }
+            }
+          : undefined
+    })
   }
 
   useEffect(() => {
@@ -575,7 +590,14 @@ export default function MainPanel({
   }
 
   const handleOpenOutput = async () => {
-    await revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
+    try {
+      await revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
+    } catch (error) {
+      console.error(error)
+      await showErrorAlert(error, {
+        onRetryOpenOutput: async () => revealOutputDirectory(lastOutputDirectory || packageConfig.exportPath)
+      })
+    }
   }
 
   const buttonText = showInput ? null : process === 2 ? '完成' : '选择文件'

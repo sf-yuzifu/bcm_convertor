@@ -1,8 +1,23 @@
 import swal from 'sweetalert'
 
-export const showAlert = (title, text) =>
+const buildButtons = ({ buttonText = '关闭', actionButtonText } = {}) => {
+  if (!actionButtonText) {
+    return false
+  }
+
+  return {
+    action: {
+      text: actionButtonText,
+      value: 'action',
+      visible: true
+    }
+  }
+}
+
+export const showAlert = (title, text, options = {}) =>
   swal({
     title,
     text,
-    buttons: false
+    buttons: buildButtons(options),
+    dangerMode: options.dangerMode
   })
