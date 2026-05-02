@@ -10,7 +10,11 @@ import {
   revokeObjectUrlIfNeeded
 } from '../services/packageConfig/packageConfigService.js'
 import { showAlert } from '../services/system/dialogService.js'
-import { showErrorAlert } from '../services/system/errorHandlingService.js'
+import {
+  attachUserFacingErrorMetadata,
+  normalizeUserFacingError,
+  showErrorAlert
+} from '../services/system/errorHandlingService.js'
 import { isTauri } from '../services/system/runtimeService.js'
 import { openBuildLogFile, revealOutputDirectory, writeBuildLogFile } from '../services/workspace/workspaceService.js'
 import { runConvertWorkflow } from '../workflows/convertWorkflow.js'
@@ -353,22 +357,28 @@ export default function MainPanel({
   }
 
   const handleBuildFailure = async ({ error, projectName, outputPath }) => {
+    const normalizedError = normalizeUserFacingError(error, {
+      code: 'CONVERT_WORKFLOW_FAILED',
+      stage: builderStage || 'error'
+    })
+
     try {
       const logFilePath = await persistBuildLog({
         projectName,
         outputPath,
         status: 'error',
-        error
+        error: normalizedError
       })
 
       if (logFilePath) {
+        attachUserFacingErrorMetadata(normalizedError, { logPath: logFilePath })
         await openBuildLogFile(logFilePath)
       }
     } catch (logError) {
       console.error('failed to persist or open build log', logError)
     }
 
-    await showErrorAlert(error)
+    await showErrorAlert(normalizedError)
   }
 
   useEffect(() => {

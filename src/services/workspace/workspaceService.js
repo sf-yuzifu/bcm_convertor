@@ -1,6 +1,7 @@
 import { appLocalDataDir, desktopDir, homeDir, join } from '@tauri-apps/api/path'
 import { exists, mkdir, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 
+import { normalizeUserFacingError } from '../system/errorHandlingService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
 import { PRIMARY_WORKSPACE_NAME } from './pathService.js'
 
@@ -44,8 +45,11 @@ export const revealOutputDirectory = async (outputPath) => {
     'open_file',
     { path: targetPath },
     {
+      code: 'OUTPUT_DIRECTORY_OPEN_FAILED',
       title: '打开输出目录失败',
-      text: '已完成打包，但无法自动打开输出目录，请手动前往导出目录查看'
+      text: '已完成打包，但无法自动打开输出目录，请手动前往导出目录查看',
+      stage: 'postprocess',
+      retryable: true
     }
   )
 }
@@ -81,8 +85,7 @@ const buildLogContent = ({
   builderLogs,
   error
 }) => {
-  const errorMessage =
-    typeof error === 'string' ? error : error?.detail || error?.message || (error ? String(error) : '')
+  const normalizedError = error ? normalizeUserFacingError(error) : null
 
   const headerLines = [
     'BCM Convertor Build Log',
@@ -95,8 +98,18 @@ const buildLogContent = ({
     `生成时间: ${new Date().toLocaleString('zh-CN', { hour12: false })}`
   ]
 
-  if (errorMessage) {
-    headerLines.push(`错误信息: ${errorMessage}`)
+  if (normalizedError) {
+    headerLines.push(`错误码: ${normalizedError.code || 'UNKNOWN_ERROR'}`)
+    headerLines.push(`错误阶段: ${normalizedError.stage || 'unknown'}`)
+    headerLines.push(`是否可重试: ${normalizedError.retryable === true ? '是' : normalizedError.retryable === false ? '否' : '未知'}`)
+    headerLines.push(`错误标题: ${normalizedError.title || '未知'}`)
+    headerLines.push(`错误提示: ${normalizedError.text || '未知'}`)
+    if (normalizedError.detail) {
+      headerLines.push(`错误详情: ${normalizedError.detail}`)
+    }
+    if (normalizedError.logPath) {
+      headerLines.push(`日志文件: ${normalizedError.logPath}`)
+    }
   }
 
   const bodyLines = (builderLogs || []).map((entry) => `[${entry.stream || 'stdout'}] ${entry.line}`)
@@ -137,8 +150,12 @@ export const openBuildLogFile = async (logFilePath) => {
     'open_file',
     { path: logFilePath },
     {
+      code: 'BUILD_LOG_OPEN_FAILED',
       title: '打开打包日志失败',
-      text: '打包失败，但无法自动打开日志文件，请手动前往应用日志目录查看'
+      text: '打包失败，但无法自动打开日志文件，请手动前往应用日志目录查看',
+      stage: 'error',
+      retryable: true,
+      logPath: logFilePath
     }
   )
 }

@@ -16,18 +16,24 @@ const CONTEXT_FILE_NAME = '.bcm-builder-context.json'
 const PLATFORM_CONFIG = {
   [WINDOWS]: {
     target: 'portable',
+    code: 'WINDOWS_PACKAGE_FAILED',
     title: 'Windows 打包失败',
-    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整'
+    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整',
+    stage: 'package'
   },
   [LINUX]: {
     target: 'AppImage',
+    code: 'LINUX_PACKAGE_FAILED',
     title: 'Linux 打包失败',
-    text: '内置 electron-builder 执行失败，请检查 AppImage 工具链是否完整'
+    text: '内置 electron-builder 执行失败，请检查 AppImage 工具链是否完整',
+    stage: 'package'
   },
   [MACOS]: {
     target: 'dir',
+    code: 'MACOS_PACKAGE_FAILED',
     title: 'macOS 打包失败',
-    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整'
+    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整',
+    stage: 'package'
   }
 }
 
@@ -167,8 +173,8 @@ export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {
 
   await writeTextFile(contextPath, JSON.stringify(buildContext, null, 2))
 
-  const { title, text } = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
-  const result = await invokeBackendCommand('run_electron_builder', { contextPath }, { title, text })
+  const { code, title, text, stage } = PLATFORM_CONFIG[osType] || PLATFORM_CONFIG[WINDOWS]
+  const result = await invokeBackendCommand('run_electron_builder', { contextPath }, { code, title, text, stage })
 
   onProgress?.({ stage: 'postprocess', message: '正在复制安装包到导出目录', percent: 90 })
   const artifactName = await basename(result.artifactPath)

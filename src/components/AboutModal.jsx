@@ -62,8 +62,11 @@ export default function AboutModal({ open }) {
         'open_file',
         { path: savingPath },
         {
+          code: 'ABOUT_OUTPUT_DIRECTORY_OPEN_FAILED',
           title: '打开输出目录失败',
-          text: '无法自动打开输出目录，请手动前往桌面查看'
+          text: '无法自动打开输出目录，请手动前往桌面查看',
+          stage: 'postprocess',
+          retryable: true
         }
       )
     } catch (error) {

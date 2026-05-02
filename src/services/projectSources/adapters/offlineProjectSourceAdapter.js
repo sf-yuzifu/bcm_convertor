@@ -7,8 +7,11 @@ export const loadOfflineKitten3ProjectFromFile = async (filePath) =>
     'read_bcm_project',
     { path: filePath },
     {
+      code: 'OFFLINE_BCM_READ_FAILED',
       title: '读取 bcm 文件失败',
-      text: '无法读取所选 bcm 文件，请确认文件内容完整且格式正确'
+      text: '无法读取所选 bcm 文件，请确认文件内容完整且格式正确',
+      stage: 'load-project',
+      retryable: true
     }
   )
 
