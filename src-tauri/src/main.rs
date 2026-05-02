@@ -5,6 +5,9 @@ mod commands;
 mod utils;
 
 fn main() {
+    #[cfg(target_os = "windows")]
+    commands::packaging::try_handle_elevated_builder_cli();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())

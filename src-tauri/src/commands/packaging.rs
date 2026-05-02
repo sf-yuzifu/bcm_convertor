@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::fs::{self, File};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager};
 
 const RESULT_MARKER: &str = "__BCM_BUILDER_RESULT__=";
@@ -13,11 +15,33 @@ const BUILDER_LOG_EVENT: &str = "builder-log";
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
+#[cfg(target_os = "windows")]
+const ELEVATED_BUILDER_FLAG: &str = "--elevated-builder";
 
 #[derive(Debug, Deserialize)]
 struct BuilderScriptResult {
     #[serde(rename = "artifactPath")]
     artifact_path: String,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Debug)]
+struct ElevatedBuilderCliArgs {
+    context_path: String,
+    resource_dir: String,
+    working_dir: String,
+    cache_root: String,
+    stdout_path: String,
+    stderr_path: String,
+    result_path: String,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ElevatedBuilderResultPayload {
+    status_code: Option<i32>,
+    error: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -63,6 +87,21 @@ enum OutputStream {
 struct OutputMessage {
     stream: OutputStream,
     line: String,
+}
+
+#[derive(Debug, Default)]
+struct OutputTailState {
+    offset: u64,
+    encoding: OutputEncoding,
+    pending: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+enum OutputEncoding {
+    #[default]
+    Unknown,
+    Utf8,
+    Utf16Le,
 }
 
 #[derive(Debug, Default)]
@@ -201,6 +240,91 @@ fn format_command_arg(value: &Path) -> String {
     } else {
         text.into_owned()
     }
+}
+
+fn create_elevated_session_dir(cache_root: &Path) -> Result<PathBuf, String> {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_millis();
+    let session_dir = cache_root.join("elevated-session").join(stamp.to_string());
+    fs::create_dir_all(&session_dir).map_err(|e| e.to_string())?;
+    Ok(session_dir)
+}
+
+fn is_windows_elevation_retry_candidate(output: &BuilderCommandOutput) -> bool {
+    let combined = format!("{}\n{}", output.stdout, output.stderr).to_ascii_lowercase();
+    let mentions_builder_tool = combined.contains("wincodesign")
+        || combined.contains("rcedit")
+        || combined.contains("7z")
+        || combined.contains("7-zip")
+        || combined.contains("signtool");
+    let mentions_privilege_issue = combined.contains("symbolic link")
+        || combined.contains("symlink")
+        || combined.contains("a required privilege is not held by the client")
+        || combined.contains("requested operation requires elevation")
+        || combined.contains("elevation required")
+        || combined.contains("error code 1314")
+        || combined.contains("1314")
+        || combined.contains("access is denied");
+
+    mentions_builder_tool && mentions_privilege_issue
+}
+
+#[cfg(target_os = "windows")]
+fn parse_elevated_builder_cli_args() -> Result<Option<ElevatedBuilderCliArgs>, String> {
+    let mut args = std::env::args();
+    let _program = args.next();
+
+    match args.next() {
+        Some(flag) if flag == ELEVATED_BUILDER_FLAG => {}
+        Some(_) | None => return Ok(None),
+    }
+
+    let mut context_path = None;
+    let mut resource_dir = None;
+    let mut working_dir = None;
+    let mut cache_root = None;
+    let mut stdout_path = None;
+    let mut stderr_path = None;
+    let mut result_path = None;
+
+    while let Some(flag) = args.next() {
+        let value = args
+            .next()
+            .ok_or_else(|| format!("缺少参数值: {}", flag))?;
+
+        match flag.as_str() {
+            "--context-path" => context_path = Some(value),
+            "--resource-dir" => resource_dir = Some(value),
+            "--working-dir" => working_dir = Some(value),
+            "--cache-root" => cache_root = Some(value),
+            "--stdout-log" => stdout_path = Some(value),
+            "--stderr-log" => stderr_path = Some(value),
+            "--result-path" => result_path = Some(value),
+            _ => return Err(format!("未知参数: {}", flag)),
+        }
+    }
+
+    Ok(Some(ElevatedBuilderCliArgs {
+        context_path: context_path.ok_or_else(|| "缺少 context-path 参数".to_string())?,
+        resource_dir: resource_dir.ok_or_else(|| "缺少 resource-dir 参数".to_string())?,
+        working_dir: working_dir.ok_or_else(|| "缺少 working-dir 参数".to_string())?,
+        cache_root: cache_root.ok_or_else(|| "缺少 cache-root 参数".to_string())?,
+        stdout_path: stdout_path.ok_or_else(|| "缺少 stdout-log 参数".to_string())?,
+        stderr_path: stderr_path.ok_or_else(|| "缺少 stderr-log 参数".to_string())?,
+        result_path: result_path.ok_or_else(|| "缺少 result-path 参数".to_string())?,
+    }))
+}
+
+#[cfg(target_os = "windows")]
+fn write_elevated_builder_result(path: &Path, payload: &ElevatedBuilderResultPayload) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    let content = serde_json::to_string(payload).map_err(|e| e.to_string())?;
+    fs::write(path, content).map_err(|e| e.to_string())
 }
 
 fn parse_progress_payload(line: &str) -> Option<BuilderStatusPayload> {
@@ -437,6 +561,195 @@ fn push_output(buffer: &mut String, line: &str) {
     buffer.push_str(line);
 }
 
+fn emit_output_line(
+    app: &AppHandle,
+    tracker: &mut BuilderStatusTracker,
+    buffer: &mut String,
+    stream: OutputStream,
+    line: &str,
+) {
+    emit_builder_log(app, stream, line);
+    push_output(buffer, line);
+
+    if let Some(progress) = parse_output_progress(line) {
+        emit_builder_status_payload(app, tracker, progress);
+    }
+}
+
+fn drain_tail_lines<F: FnMut(&str)>(pending: &mut Vec<u8>, mut on_line: F) {
+    let mut start = 0usize;
+    let mut index = 0usize;
+
+    while index < pending.len() {
+        let current = pending[index];
+        if current == b'\n' || current == b'\r' {
+            let line = String::from_utf8_lossy(&pending[start..index])
+                .trim()
+                .to_string();
+            if !line.is_empty() {
+                on_line(&line);
+            }
+
+            if current == b'\r' && pending.get(index + 1) == Some(&b'\n') {
+                index += 1;
+            }
+            start = index + 1;
+        }
+        index += 1;
+    }
+
+    if start > 0 {
+        pending.drain(..start);
+    }
+}
+
+fn looks_like_utf16le(bytes: &[u8]) -> bool {
+    let mut ascii_pairs = 0usize;
+    let mut total_pairs = 0usize;
+
+    for pair in bytes.chunks_exact(2).take(32) {
+        total_pairs += 1;
+        if pair[0].is_ascii() && pair[0] != 0 && pair[1] == 0 {
+            ascii_pairs += 1;
+        }
+    }
+
+    total_pairs >= 4 && ascii_pairs >= (total_pairs / 2).max(3)
+}
+
+fn decode_utf16le_lossy(bytes: &[u8]) -> String {
+    let units = bytes
+        .chunks_exact(2)
+        .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
+        .collect::<Vec<_>>();
+    String::from_utf16_lossy(&units)
+}
+
+fn detect_output_encoding(state: &mut OutputTailState) {
+    if !matches!(state.encoding, OutputEncoding::Unknown) {
+        return;
+    }
+
+    if state.pending.starts_with(&[0xFF, 0xFE]) {
+        state.encoding = OutputEncoding::Utf16Le;
+        state.pending.drain(..2);
+        return;
+    }
+
+    if state.pending.len() >= 8 {
+        state.encoding = if looks_like_utf16le(&state.pending) {
+            OutputEncoding::Utf16Le
+        } else {
+            OutputEncoding::Utf8
+        };
+    }
+}
+
+fn drain_tail_lines_utf16le<F: FnMut(&str)>(pending: &mut Vec<u8>, mut on_line: F) {
+    let available = pending.len() - (pending.len() % 2);
+    if available == 0 {
+        return;
+    }
+
+    let mut start = 0usize;
+    let mut index = 0usize;
+
+    while index + 1 < available {
+        let code = u16::from_le_bytes([pending[index], pending[index + 1]]);
+
+        if code == 0xFEFF && index == start {
+            start += 2;
+            index += 2;
+            continue;
+        }
+
+        if code == b'\n' as u16 || code == b'\r' as u16 {
+            let line = decode_utf16le_lossy(&pending[start..index]).trim().to_string();
+            if !line.is_empty() {
+                on_line(&line);
+            }
+
+            index += 2;
+            if code == b'\r' as u16
+                && index + 1 < available
+                && u16::from_le_bytes([pending[index], pending[index + 1]]) == b'\n' as u16
+            {
+                index += 2;
+            }
+            start = index;
+            continue;
+        }
+
+        index += 2;
+    }
+
+    if start > 0 {
+        pending.drain(..start);
+    }
+}
+
+fn poll_output_file(
+    path: &Path,
+    stream: OutputStream,
+    state: &mut OutputTailState,
+    app: &AppHandle,
+    tracker: &mut BuilderStatusTracker,
+    buffer: &mut String,
+) -> Result<(), String> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let mut file = File::open(path).map_err(|e| e.to_string())?;
+    file.seek(SeekFrom::Start(state.offset))
+        .map_err(|e| e.to_string())?;
+
+    let mut chunk = Vec::new();
+    file.read_to_end(&mut chunk).map_err(|e| e.to_string())?;
+    state.offset += chunk.len() as u64;
+    state.pending.extend_from_slice(&chunk);
+    detect_output_encoding(state);
+
+    match state.encoding {
+        OutputEncoding::Utf16Le => {
+            drain_tail_lines_utf16le(&mut state.pending, |line| {
+                emit_output_line(app, tracker, buffer, stream, line);
+            });
+        }
+        OutputEncoding::Utf8 | OutputEncoding::Unknown => {
+            drain_tail_lines(&mut state.pending, |line| {
+                emit_output_line(app, tracker, buffer, stream, line);
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn flush_output_tail(
+    stream: OutputStream,
+    state: &mut OutputTailState,
+    app: &AppHandle,
+    tracker: &mut BuilderStatusTracker,
+    buffer: &mut String,
+) {
+    detect_output_encoding(state);
+    let remaining = match state.encoding {
+        OutputEncoding::Utf16Le => {
+            let available = state.pending.len() - (state.pending.len() % 2);
+            decode_utf16le_lossy(&state.pending[..available]).trim().to_string()
+        }
+        OutputEncoding::Utf8 | OutputEncoding::Unknown => {
+            String::from_utf8_lossy(&state.pending).trim().to_string()
+        }
+    };
+    state.pending.clear();
+
+    if !remaining.is_empty() {
+        emit_output_line(app, tracker, buffer, stream, &remaining);
+    }
+}
+
 fn drain_lines(
     pending: &mut Vec<u8>,
     stream: OutputStream,
@@ -646,6 +959,284 @@ fn run_builder_process(
     })
 }
 
+#[cfg(target_os = "windows")]
+fn append_log_line(path: &Path, line: &str) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map_err(|e| e.to_string())?;
+    file.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
+    file.write_all(b"\n").map_err(|e| e.to_string())
+}
+
+#[cfg(target_os = "windows")]
+fn run_builder_process_to_log_files(
+    resource_dir: &Path,
+    working_dir: &Path,
+    context_path: &str,
+    cache_root: &Path,
+    stdout_path: &Path,
+    stderr_path: &Path,
+) -> Result<BuilderCommandOutput, String> {
+    let script_path = resource_dir.join("builder").join("scripts").join("build.mjs");
+    let node_command = resolve_node_command(resource_dir)?;
+
+    if let Some(parent) = stdout_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    if let Some(parent) = stderr_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    let stdout_file = File::create(stdout_path).map_err(|e| e.to_string())?;
+    let stderr_file = File::create(stderr_path).map_err(|e| e.to_string())?;
+    let mut command = Command::new(node_command);
+    command
+        .arg(&script_path)
+        .arg(context_path)
+        .current_dir(working_dir)
+        .env("BCM_RESOURCE_DIR", resource_dir)
+        .env("BCM_BUILDER_CACHE_ROOT", cache_root)
+        .stdout(Stdio::from(stdout_file))
+        .stderr(Stdio::from(stderr_file));
+
+    use std::os::windows::process::CommandExt;
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let status = command.status().map_err(|e| e.to_string())?;
+    Ok(BuilderCommandOutput {
+        status_code: status.code(),
+        stdout: String::new(),
+        stderr: String::new(),
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn quote_windows_arg(value: &str) -> String {
+    let escaped = value.replace('"', "\\\"");
+    format!("\"{}\"", escaped)
+}
+
+#[cfg(target_os = "windows")]
+fn launch_self_elevated(exe_path: &Path, params: &str, working_dir: &Path) -> Result<(), String> {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
+
+    let to_wide = |value: &OsStr| -> Vec<u16> { value.encode_wide().chain(std::iter::once(0)).collect() };
+    let operation = to_wide(OsStr::new("runas"));
+    let file = to_wide(exe_path.as_os_str());
+    let parameters = to_wide(OsStr::new(params));
+    let directory = to_wide(working_dir.as_os_str());
+
+    let result = unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            operation.as_ptr(),
+            file.as_ptr(),
+            parameters.as_ptr(),
+            directory.as_ptr(),
+            SW_HIDE,
+        )
+    } as isize;
+
+    if result <= 32 {
+        if result == 5 {
+            return Err("管理员授权已取消，无法继续完成 Windows 可执行文件处理".to_string());
+        }
+
+        return Err(format!("启动管理员进程失败，错误码: {}", result));
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn read_elevated_builder_result(path: &Path) -> Result<Option<ElevatedBuilderResultPayload>, String> {
+    if !path.exists() {
+        return Ok(None);
+    }
+
+    let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let payload = serde_json::from_str::<ElevatedBuilderResultPayload>(&content).map_err(|e| e.to_string())?;
+    Ok(Some(payload))
+}
+
+#[cfg(target_os = "windows")]
+pub fn try_handle_elevated_builder_cli() {
+    let Some(args) = parse_elevated_builder_cli_args().unwrap_or_else(|error| {
+        eprintln!("{}", error);
+        std::process::exit(1);
+    }) else {
+        return;
+    };
+
+    let stdout_path = PathBuf::from(&args.stdout_path);
+    let stderr_path = PathBuf::from(&args.stderr_path);
+    let result_path = PathBuf::from(&args.result_path);
+
+    let result = run_builder_process_to_log_files(
+        Path::new(&args.resource_dir),
+        Path::new(&args.working_dir),
+        &args.context_path,
+        Path::new(&args.cache_root),
+        &stdout_path,
+        &stderr_path,
+    );
+
+    let payload = match result {
+        Ok(output) => ElevatedBuilderResultPayload {
+            status_code: output.status_code,
+            error: None,
+        },
+        Err(error) => {
+            let _ = append_log_line(&stderr_path, &error);
+            ElevatedBuilderResultPayload {
+                status_code: Some(1),
+                error: Some(error),
+            }
+        }
+    };
+
+    if let Err(error) = write_elevated_builder_result(&result_path, &payload) {
+        eprintln!("{}", error);
+        std::process::exit(1);
+    }
+
+    std::process::exit(payload.status_code.unwrap_or(1));
+}
+
+#[cfg(target_os = "windows")]
+fn run_builder_process_elevated(
+    app: AppHandle,
+    resource_dir: &Path,
+    working_dir: &Path,
+    context_path: &str,
+    cache_root: &Path,
+) -> Result<BuilderCommandOutput, String> {
+    let session_dir = create_elevated_session_dir(cache_root)?;
+    let stdout_path = session_dir.join("builder.stdout.log");
+    let stderr_path = session_dir.join("builder.stderr.log");
+    let result_path = session_dir.join("builder.result.json");
+    let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let params = [
+        ELEVATED_BUILDER_FLAG.to_string(),
+        "--context-path".to_string(),
+        quote_windows_arg(context_path),
+        "--resource-dir".to_string(),
+        quote_windows_arg(&resource_dir.display().to_string()),
+        "--working-dir".to_string(),
+        quote_windows_arg(&working_dir.display().to_string()),
+        "--cache-root".to_string(),
+        quote_windows_arg(&cache_root.display().to_string()),
+        "--stdout-log".to_string(),
+        quote_windows_arg(&stdout_path.display().to_string()),
+        "--stderr-log".to_string(),
+        quote_windows_arg(&stderr_path.display().to_string()),
+        "--result-path".to_string(),
+        quote_windows_arg(&result_path.display().to_string()),
+    ]
+    .join(" ");
+
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        "[runner] 检测到权限受限，准备请求管理员权限继续打包",
+    );
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[runner] 提权输出目录: {}", session_dir.display()),
+    );
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[runner] 提权执行文件: {}", current_exe.display()),
+    );
+
+    launch_self_elevated(&current_exe, &params, working_dir)?;
+    let mut stdout_tail = OutputTailState::default();
+    let mut stderr_tail = OutputTailState::default();
+    let mut stdout_text = String::new();
+    let mut stderr_text = String::new();
+    let mut tracker = BuilderStatusTracker::default();
+    let result_payload;
+
+    loop {
+        poll_output_file(
+            &stdout_path,
+            OutputStream::Stdout,
+            &mut stdout_tail,
+            &app,
+            &mut tracker,
+            &mut stdout_text,
+        )?;
+        poll_output_file(
+            &stderr_path,
+            OutputStream::Stderr,
+            &mut stderr_tail,
+            &app,
+            &mut tracker,
+            &mut stderr_text,
+        )?;
+
+        if let Some(payload) = read_elevated_builder_result(&result_path)? {
+            result_payload = payload;
+            break;
+        }
+
+        thread::sleep(Duration::from_millis(180));
+    }
+
+    poll_output_file(
+        &stdout_path,
+        OutputStream::Stdout,
+        &mut stdout_tail,
+        &app,
+        &mut tracker,
+        &mut stdout_text,
+    )?;
+    poll_output_file(
+        &stderr_path,
+        OutputStream::Stderr,
+        &mut stderr_tail,
+        &app,
+        &mut tracker,
+        &mut stderr_text,
+    )?;
+    flush_output_tail(
+        OutputStream::Stdout,
+        &mut stdout_tail,
+        &app,
+        &mut tracker,
+        &mut stdout_text,
+    );
+    flush_output_tail(
+        OutputStream::Stderr,
+        &mut stderr_tail,
+        &app,
+        &mut tracker,
+        &mut stderr_text,
+    );
+
+    if let Some(error) = result_payload.error.clone() {
+        return Err(error);
+    }
+
+    let status_code = result_payload.status_code;
+    Ok(BuilderCommandOutput {
+        status_code,
+        stdout: stdout_text,
+        stderr: stderr_text,
+    })
+}
+
 #[tauri::command]
 pub async fn run_electron_builder(
     app: AppHandle,
@@ -697,6 +1288,53 @@ pub async fn run_electron_builder(
     })
     .await
     .map_err(|e| e.to_string())??;
+
+    let output = if output.status_code.unwrap_or_default() != 0 {
+        #[cfg(target_os = "windows")]
+        {
+            if is_windows_elevation_retry_candidate(&output) {
+                emit_builder_status(
+                    &app,
+                    &mut tracker,
+                    "package",
+                    "检测到系统权限限制，正在申请管理员权限继续打包",
+                    Some(58.0),
+                    None,
+                );
+                emit_builder_log(
+                    &app,
+                    OutputStream::Stdout,
+                    "[runner] 普通权限打包失败，正在尝试以管理员权限继续执行 electron-builder",
+                );
+
+                let app_for_retry = app.clone();
+                let resource_dir_for_retry = resource_dir.clone();
+                let working_dir_for_retry = working_dir.to_path_buf();
+                let context_path_for_retry = context_path.clone();
+                let cache_root_for_retry = cache_root.clone();
+                tauri::async_runtime::spawn_blocking(move || {
+                    run_builder_process_elevated(
+                        app_for_retry,
+                        &resource_dir_for_retry,
+                        &working_dir_for_retry,
+                        &context_path_for_retry,
+                        &cache_root_for_retry,
+                    )
+                })
+                .await
+                .map_err(|e| e.to_string())??
+            } else {
+                output
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            output
+        }
+    } else {
+        output
+    };
 
     if output.status_code.unwrap_or_default() != 0 {
         emit_builder_status(

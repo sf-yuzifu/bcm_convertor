@@ -78,6 +78,14 @@ const NORMALIZED_ERROR_PATTERNS = [
     text: '没有权限写入导出目录，请更换目录或以更高权限运行'
   },
   {
+    title: '已取消管理员授权',
+    match: (message) =>
+      message.includes('管理员授权已取消') ||
+      message.toLowerCase().includes('elevation was canceled by the user') ||
+      message.toLowerCase().includes('operation was canceled by the user'),
+    text: '已取消管理员授权，无法继续完成 Windows 可执行文件处理'
+  },
+  {
     title: '磁盘空间不足',
     match: (message) =>
       message.toLowerCase().includes('no space left on device') || message.toLowerCase().includes('enospc'),
