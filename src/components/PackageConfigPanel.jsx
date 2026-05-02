@@ -15,7 +15,7 @@ export default function PackageConfigPanel({
   onBack,
   onSubmit
 }) {
-  const displayIcon = packageConfig.projectIconPreview || packageConfig.fetchedIcon
+  const displayIcon = packageConfig.projectIconPreview || packageConfig.fetchedIconPreview || packageConfig.fetchedIcon
   const isProcessing = process === 1
   const normalizedPercent = Math.min(100, Math.max(0, Math.round(progressPercent || 0)))
   const previewCornerRadiusPercent = Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius || 22)))
@@ -68,9 +68,19 @@ export default function PackageConfigPanel({
                   style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
                 >
                   {displayIcon ? (
-                    <img src={displayIcon} alt="作品图标" className="h-[84px] w-[84px] object-cover" />
+                    <img
+                      src={displayIcon}
+                      alt="作品图标"
+                      className="h-[84px] w-[84px] object-cover"
+                      style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
+                    />
                   ) : (
-                    <img src="/icn_upload.png" alt="默认图标" className="w-[84px] object-contain opacity-90" />
+                    <img
+                      src="/icn_upload.png"
+                      alt="默认图标"
+                      className="w-[84px] object-contain opacity-90"
+                      style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
+                    />
                   )}
                 </div>
               </div>

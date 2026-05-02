@@ -1,6 +1,7 @@
 import { join } from '@tauri-apps/api/path'
 import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
+import { fetch } from '@tauri-apps/plugin-http'
 import { type } from '@tauri-apps/plugin-os'
 
 import { loadProjectInfo } from '../projectSources/projectSourceService.js'
@@ -26,6 +27,7 @@ const IMAGE_MIME_BY_EXTENSION = {
   png: 'image/png',
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
+  gif: 'image/gif',
   webp: 'image/webp',
   bmp: 'image/bmp',
   svg: 'image/svg+xml',
@@ -68,6 +70,14 @@ export const detectImageFormat = (fileBytes, path) => {
   }
 
   if (
+    bytes.length >= 6 &&
+    (startsWithBytes(bytes, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+      startsWithBytes(bytes, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]))
+  ) {
+    return { mimeType: 'image/gif', extension: '.gif' }
+  }
+
+  if (
     bytes.length >= 12 &&
     startsWithBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
     startsWithBytes(bytes.slice(8, 12), [0x57, 0x45, 0x42, 0x50])
@@ -103,14 +113,14 @@ export const detectImageFormat = (fileBytes, path) => {
 
 const getProjectIconExtensions = (osType) => {
   if (osType === 'windows') {
-    return ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'svg', 'ico']
+    return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'ico']
   }
 
   if (osType === 'macos') {
     return ['icns']
   }
 
-  return ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'svg', 'ico', 'icns']
+  return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'ico', 'icns']
 }
 
 const OFFLINE_KITTEN3_ICON_PREVIEW_URL = '/kitten3_player_icon.png'
@@ -118,6 +128,105 @@ const OFFLINE_KITTEN3_ICON_PREVIEW_URL = '/kitten3_player_icon.png'
 export const revokeObjectUrlIfNeeded = (url) => {
   if (typeof url === 'string' && url.startsWith('blob:')) {
     URL.revokeObjectURL(url)
+  }
+}
+
+const isRemoteHttpUrl = (value) => /^https?:\/\//i.test(String(value || '').trim())
+
+const loadImageElementFromBlob = async (blob) => {
+  const objectUrl = URL.createObjectURL(blob)
+  const image = new Image()
+
+  try {
+    image.decoding = 'async'
+    image.src = objectUrl
+
+    await new Promise((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('图标图片解码失败'))
+    })
+
+    return image
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+const drawSourceToCanvas = (source) => {
+  const canvas = document.createElement('canvas')
+  const width = Math.max(1, Math.round(source.width || source.naturalWidth || 0))
+  const height = Math.max(1, Math.round(source.height || source.naturalHeight || 0))
+
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) {
+    throw new Error('无法创建图标预览画布')
+  }
+
+  context.drawImage(source, 0, 0, width, height)
+  return canvas
+}
+
+const convertImageBytesToPreviewPng = async (bytes, mimeType) => {
+  const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
+  let canvas
+
+  if (mimeType === 'image/svg+xml' || mimeType === 'image/gif') {
+    const image = await loadImageElementFromBlob(sourceBlob)
+    canvas = drawSourceToCanvas(image)
+  } else {
+    try {
+      const imageBitmap = await createImageBitmap(sourceBlob)
+      canvas = drawSourceToCanvas(imageBitmap)
+      imageBitmap.close()
+    } catch {
+      const image = await loadImageElementFromBlob(sourceBlob)
+      canvas = drawSourceToCanvas(image)
+    }
+  }
+
+  const pngBlob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('图标预览转换失败'))
+          return
+        }
+        resolve(blob)
+      },
+      'image/png',
+      1
+    )
+  })
+
+  return URL.createObjectURL(pngBlob)
+}
+
+const resolvePreviewUrlFromBytes = async (bytes, mimeType) => {
+  if (mimeType === 'image/gif') {
+    return convertImageBytesToPreviewPng(bytes, mimeType)
+  }
+
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType || 'application/octet-stream' }))
+}
+
+const resolveFetchedIconPreviewUrl = async (iconUrl) => {
+  if (!isRemoteHttpUrl(iconUrl)) {
+    return ''
+  }
+
+  try {
+    const response = await fetch(iconUrl, { method: 'GET' })
+    if (!response.ok) {
+      return ''
+    }
+
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    const { mimeType } = detectImageFormat(bytes, iconUrl)
+    return resolvePreviewUrlFromBytes(bytes, mimeType)
+  } catch {
+    return ''
   }
 }
 
@@ -141,6 +250,8 @@ export const loadPackageConfigDefaults = async ({ version, status, workId, sourc
 
   const { desktopDirPath, resourceDirPath } = await getEnv()
   const offlineKitten3Icon = await resolveOfflineKitten3Icon({ version, status, resourceDirPath })
+  const fetchedIcon = resolveProjectPreview(projectInfo)
+  const fetchedIconPreview = await resolveFetchedIconPreviewUrl(fetchedIcon)
 
   return {
     projectInfo,
@@ -149,7 +260,8 @@ export const loadPackageConfigDefaults = async ({ version, status, workId, sourc
       projectIcon: offlineKitten3Icon?.path || '',
       projectIconPreview: offlineKitten3Icon?.previewUrl || '',
       exportPath: desktopDirPath,
-      fetchedIcon: resolveProjectPreview(projectInfo),
+      fetchedIcon,
+      fetchedIconPreview,
       roundedIconRadius: 22
     }
   }
@@ -173,10 +285,9 @@ export const chooseProjectIconFile = async () => {
 
   const fileBytes = await readFile(selected)
   const { mimeType } = detectImageFormat(fileBytes, selected)
-  const blob = new Blob([fileBytes], { type: mimeType })
 
   return {
     path: selected,
-    previewUrl: URL.createObjectURL(blob)
+    previewUrl: await resolvePreviewUrlFromBytes(fileBytes, mimeType)
   }
 }

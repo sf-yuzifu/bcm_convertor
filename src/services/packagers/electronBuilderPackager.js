@@ -13,7 +13,6 @@ const WINDOWS = 'windows'
 const LINUX = 'linux'
 const MACOS = 'macos'
 const CONTEXT_FILE_NAME = '.bcm-builder-context.json'
-const WINDOWS_DIRECT_ICON_MIME_TYPES = new Set(['image/png', 'image/x-icon'])
 
 const PLATFORM_CONFIG = {
   [WINDOWS]: {
@@ -64,11 +63,6 @@ const normalizeOptionalPath = (value) => {
 
 const isRemoteHttpUrl = (value) => /^https?:\/\//i.test(String(value || '').trim())
 
-const extractMimeType = (response) => {
-  const contentType = response.headers.get('content-type') || ''
-  return contentType.split(';')[0].trim().toLowerCase()
-}
-
 const blobToUint8Array = async (blob) => new Uint8Array(await blob.arrayBuffer())
 
 const getFileExtension = (value) => {
@@ -112,6 +106,28 @@ const drawSourceToCanvas = (source) => {
 
   context.drawImage(source, 0, 0, width, height)
   return canvas
+}
+
+const normalizeCanvasToSquare = (canvas) => {
+  const width = canvas.width
+  const height = canvas.height
+  if (width === height) {
+    return canvas
+  }
+
+  const size = Math.max(width, height)
+  const squareCanvas = document.createElement('canvas')
+  squareCanvas.width = size
+  squareCanvas.height = size
+  const context = squareCanvas.getContext('2d')
+  if (!context) {
+    throw new Error('无法创建图标转换画布')
+  }
+
+  const offsetX = Math.round((size - width) / 2)
+  const offsetY = Math.round((size - height) / 2)
+  context.drawImage(canvas, offsetX, offsetY)
+  return squareCanvas
 }
 
 const applyRoundedRectMask = (context, width, height, radius) => {
@@ -161,7 +177,7 @@ const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
   const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
   let canvas
 
-  if (mimeType === 'image/svg+xml') {
+  if (mimeType === 'image/svg+xml' || mimeType === 'image/gif') {
     const image = await loadImageElementFromBlob(sourceBlob)
     canvas = drawSourceToCanvas(image)
   } else {
@@ -173,6 +189,10 @@ const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
       const image = await loadImageElementFromBlob(sourceBlob)
       canvas = drawSourceToCanvas(image)
     }
+  }
+
+  if (options.squareIcon) {
+    canvas = normalizeCanvasToSquare(canvas)
   }
 
   if (options.roundedIcon) {
@@ -220,7 +240,7 @@ const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType, options = 
   }
 
   const bytes = new Uint8Array(await response.arrayBuffer())
-  const mimeType = extractMimeType(response)
+  const { mimeType } = detectImageFormat(bytes, fetchedIcon)
   const pngBytes = await convertImageBytesToPng(bytes, mimeType, options)
   const { assetDir, iconPath } = await getRemoteIconAssetPath(workspaceDir, osType)
 
@@ -257,13 +277,13 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
 
   if (
     !options.roundedIcon &&
-    WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType) &&
+    detectedFormat.mimeType === 'image/x-icon' &&
     sourceExtension === detectedFormat.extension
   ) {
     return localIconPath
   }
 
-  if (!options.roundedIcon && WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType)) {
+  if (!options.roundedIcon && detectedFormat.mimeType === 'image/x-icon') {
     const normalizedExtension =
       detectedFormat.extension || (detectedFormat.mimeType === 'image/x-icon' ? '.ico' : '.png')
     const { assetDir, iconPath } = await getLocalNormalizedIconAssetPath(workspaceDir, normalizedExtension)
@@ -283,16 +303,19 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
 
 const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
   const roundedIconRadius = Number(projectInfo.packageConfig?.roundedIconRadius || 22)
+  const squareIcon = osType === WINDOWS
   const roundedIcon = osType === WINDOWS && Number.isFinite(roundedIconRadius) && roundedIconRadius > 0
   const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
   if (localIconPath) {
     return normalizeLocalProjectIconPath(workspaceDir, localIconPath, osType, {
+      squareIcon,
       roundedIcon,
       roundedIconRadius
     })
   }
 
   return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType, {
+    squareIcon,
     roundedIcon,
     roundedIconRadius
   })

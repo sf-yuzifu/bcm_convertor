@@ -53,6 +53,7 @@ const createEmptyPackageConfig = () => ({
   projectIconPreview: '',
   exportPath: '',
   fetchedIcon: '',
+  fetchedIconPreview: '',
   roundedIconRadius: 22
 })
 
@@ -156,8 +157,8 @@ export default function MainPanel({
     builderPercentRef.current = 0
   }
 
-  const cleanupIconPreview = (previewUrl) => {
-    revokeObjectUrlIfNeeded(previewUrl)
+  const cleanupIconPreview = (...previewUrls) => {
+    previewUrls.forEach((previewUrl) => revokeObjectUrlIfNeeded(previewUrl))
   }
 
   const applyProgressPayload = (payload) => {
@@ -400,13 +401,16 @@ export default function MainPanel({
 
   useEffect(() => {
     onPanelStepChange?.('search')
-    cleanupIconPreview(packageConfig.projectIconPreview)
+    cleanupIconPreview(packageConfig.projectIconPreview, packageConfig.fetchedIconPreview)
     setPackageConfig(createEmptyPackageConfig())
     setLoadedProjectInfo(null)
     setLastOutputDirectory('')
   }, [onPanelStepChange, status, version])
 
-  useEffect(() => () => cleanupIconPreview(packageConfig.projectIconPreview), [packageConfig.projectIconPreview])
+  useEffect(
+    () => () => cleanupIconPreview(packageConfig.projectIconPreview, packageConfig.fetchedIconPreview),
+    [packageConfig.fetchedIconPreview, packageConfig.projectIconPreview]
+  )
 
   const titleText = useMemo(() => {
     if (process === 2) {
@@ -456,7 +460,7 @@ export default function MainPanel({
       return false
     }
 
-    cleanupIconPreview(packageConfig.projectIconPreview)
+    cleanupIconPreview(packageConfig.projectIconPreview, packageConfig.fetchedIconPreview)
     setLoadedProjectInfo(defaults.projectInfo)
     setPackageConfig(defaults.packageConfig)
     onPanelStepChange?.('config')
@@ -502,7 +506,7 @@ export default function MainPanel({
   }
 
   const handleBackToSearch = () => {
-    cleanupIconPreview(packageConfig.projectIconPreview)
+    cleanupIconPreview(packageConfig.projectIconPreview, packageConfig.fetchedIconPreview)
     onPanelStepChange?.('search')
   }
 
