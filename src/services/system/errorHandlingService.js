@@ -25,15 +25,38 @@ const ERROR_CODE_DEFINITIONS = {
   BUILDER_SCRIPT_MISSING: { title: 'Builder 脚本缺失', text: '找不到内置 builder 脚本，请确认应用资源已完整发布', stage: 'build' },
   BUILDER_TOOLCHAIN_MISSING: { title: 'Builder 工具链缺失', text: '找不到 electron-builder 工具链，请确认内置 builder 资源是否完整', stage: 'build' },
   ELECTRON_VERSION_MISSING: { title: 'Electron 版本缺失', text: '未找到 Electron 版本配置，请检查 builder 工具链依赖', stage: 'build' },
-  ICON_EXTENSION_INVALID: { title: '图标格式不支持', text: '所选图标格式不支持，请按当前系统要求重新选择图标后再试', stage: 'prepare', retryable: true },
-  REMOTE_ICON_DOWNLOAD_FAILED: { title: '远程封面下载失败', text: '远程封面图下载失败，请检查网络或更换封面后重试', stage: 'prepare', retryable: true },
+  ICON_EXTENSION_INVALID: {
+    title: '图标格式不支持',
+    text: '所选图标格式不支持，请按当前系统要求重新选择图标后再试',
+    stage: 'prepare',
+    retryable: true,
+    revealOriginalInAlert: true
+  },
+  REMOTE_ICON_DOWNLOAD_FAILED: {
+    title: '远程封面下载失败',
+    text: '远程封面图下载失败，请检查网络或更换封面后重试',
+    stage: 'prepare',
+    retryable: true,
+    revealOriginalInAlert: true
+  },
   REMOTE_ICON_CONVERT_FAILED: { title: '远程图标转换失败', text: '远程封面图无法转换为可用图标，请更换图片后重试', stage: 'prepare', retryable: true },
   ICON_FILE_INVALID: { title: '图标文件无效', text: '所选 PNG 图标文件无效或已损坏，请重新选择一张真正的 PNG 图片后再试', stage: 'prepare', retryable: true },
   OUTPUT_PERMISSION_DENIED: { title: '输出目录不可写', text: '没有权限写入导出目录，请更换目录或以更高权限运行', stage: 'postprocess', retryable: true },
   WINDOWS_ELEVATION_CANCELLED: { title: '已取消管理员授权', text: '已取消管理员授权，无法继续完成 Windows 可执行文件处理', stage: 'package', retryable: true },
   DISK_SPACE_EXHAUSTED: { title: '磁盘空间不足', text: '磁盘空间不足，请清理磁盘后重试', stage: 'download', retryable: true },
-  BUILDER_CACHE_UNAVAILABLE: { title: '缓存目录不可用', text: '打包缓存目录不可用，请检查缓存目录权限或清理后重试', stage: 'download', retryable: true },
-  BUILDER_COMMAND_FAILED: { title: '打包命令执行失败', text: '打包命令执行失败，请查看日志后重试', stage: 'package' },
+  BUILDER_CACHE_UNAVAILABLE: {
+    title: '缓存目录不可用',
+    text: '打包缓存目录不可用，请检查缓存目录权限或清理后重试',
+    stage: 'download',
+    retryable: true,
+    revealOriginalInAlert: true
+  },
+  BUILDER_COMMAND_FAILED: {
+    title: '打包命令执行失败',
+    text: '打包命令执行失败，请查看日志后重试',
+    stage: 'package',
+    revealOriginalInAlert: true
+  },
   RUNTIME_TAURI_REQUIRED: { title: '当前环境不支持', text: '请在桌面应用中使用转换功能', stage: 'runtime', retryable: false },
   WORK_NOT_FOUND: { title: '找不到作品', text: '请检查作品id是否正确', stage: 'load-project', retryable: true },
   WORK_SOURCE_URL_MISSING: { title: '找不到作品', text: '请确保作品有发布过一次', stage: 'load-project', retryable: true },
@@ -43,12 +66,42 @@ const ERROR_CODE_DEFINITIONS = {
   OUTPUT_DIRECTORY_OPEN_FAILED: { title: '打开输出目录失败', text: '已完成打包，但无法自动打开输出目录，请手动前往导出目录查看', stage: 'postprocess', retryable: true },
   ABOUT_OUTPUT_DIRECTORY_OPEN_FAILED: { title: '打开输出目录失败', text: '无法自动打开输出目录，请手动前往桌面查看', stage: 'postprocess', retryable: true },
   BUILD_LOG_OPEN_FAILED: { title: '打开打包日志失败', text: '打包失败，但无法自动打开日志文件，请手动前往应用日志目录查看', stage: 'error', retryable: true },
-  WINDOWS_PACKAGE_FAILED: { title: 'Windows 打包失败', text: '内置 electron-builder 执行失败，请检查内置工具链是否完整', stage: 'package' },
-  LINUX_PACKAGE_FAILED: { title: 'Linux 打包失败', text: '内置 electron-builder 执行失败，请检查 AppImage 工具链是否完整', stage: 'package' },
-  MACOS_PACKAGE_FAILED: { title: 'macOS 打包失败', text: '内置 electron-builder 执行失败，请检查内置工具链是否完整', stage: 'package' },
-  CONVERT_WORKFLOW_FAILED: { title: '转换失败', text: '转换过程中发生异常，请查看日志后重试', stage: 'error' },
-  BACKEND_ERROR: { title: '转换失败', text: '后端处理失败，请查看日志后重试', stage: 'unknown' },
-  CONVERT_FAILED: { title: '转换失败', text: '转换过程中发生异常，请稍后重试', stage: 'unknown' }
+  WINDOWS_PACKAGE_FAILED: {
+    title: 'Windows 打包失败',
+    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整',
+    stage: 'package',
+    revealOriginalInAlert: true
+  },
+  LINUX_PACKAGE_FAILED: {
+    title: 'Linux 打包失败',
+    text: '内置 electron-builder 执行失败，请检查 AppImage 工具链是否完整',
+    stage: 'package',
+    revealOriginalInAlert: true
+  },
+  MACOS_PACKAGE_FAILED: {
+    title: 'macOS 打包失败',
+    text: '内置 electron-builder 执行失败，请检查内置工具链是否完整',
+    stage: 'package',
+    revealOriginalInAlert: true
+  },
+  CONVERT_WORKFLOW_FAILED: {
+    title: '转换失败',
+    text: '转换过程中发生异常，请查看日志后重试',
+    stage: 'error',
+    revealOriginalInAlert: true
+  },
+  BACKEND_ERROR: {
+    title: '转换失败',
+    text: '后端处理失败，请查看日志后重试',
+    stage: 'unknown',
+    revealOriginalInAlert: true
+  },
+  CONVERT_FAILED: {
+    title: '转换失败',
+    text: '转换过程中发生异常，请稍后重试',
+    stage: 'unknown',
+    revealOriginalInAlert: true
+  }
 }
 
 const MESSAGE_ERROR_RULES = [
@@ -170,6 +223,9 @@ const resolveErrorDefinitionText = (definition, message) => {
   return definition.text
 }
 
+const GENERIC_USER_TEXT_PATTERNS = ['请查看日志后重试', '请稍后重试', '执行失败', '发生异常']
+const MAX_ALERT_RAW_DETAIL_LENGTH = 240
+
 const isNetworkError = (message) => {
   const normalizedMessage = message.toLowerCase()
   return NETWORK_ERROR_PATTERNS.some((pattern) => normalizedMessage.includes(pattern))
@@ -276,6 +332,59 @@ const extractReadableMessage = (message) => {
   }
 
   return '打包过程中发生异常，请稍后重试'
+}
+
+const sanitizeRawAlertDetail = (value) => {
+  const rawText = String(value || '').trim()
+  if (!rawText) {
+    return ''
+  }
+
+  const lines = extractReadableLines(rawText)
+    .map(stripNoisePrefix)
+    .filter(
+      (line) =>
+        line &&
+        line !== '[object Object]' &&
+        !line.startsWith('at ') &&
+        !line.startsWith('{') &&
+        !line.startsWith('}')
+    )
+
+  const merged = lines.join(' | ').replace(/\s+/g, ' ').trim()
+  if (!merged) {
+    return ''
+  }
+
+  if (merged.length <= MAX_ALERT_RAW_DETAIL_LENGTH) {
+    return merged
+  }
+
+  return `${merged.slice(0, MAX_ALERT_RAW_DETAIL_LENGTH - 1).trimEnd()}...`
+}
+
+const shouldRevealOriginalInAlert = (normalizedError) => {
+  const definition = getErrorDefinition(normalizedError?.code)
+  if (definition?.revealOriginalInAlert) {
+    return true
+  }
+
+  const text = String(normalizedError?.text || '')
+  return GENERIC_USER_TEXT_PATTERNS.some((pattern) => text.includes(pattern))
+}
+
+const buildAlertText = (normalizedError) => {
+  const baseText = normalizedError?.text || '发生未知错误'
+  if (!shouldRevealOriginalInAlert(normalizedError)) {
+    return baseText
+  }
+
+  const rawDetail = sanitizeRawAlertDetail(normalizedError?.detail)
+  if (!rawDetail || rawDetail === baseText) {
+    return baseText
+  }
+
+  return `${baseText}\n\n原始信息：${rawDetail}`
 }
 
 export const createUserFacingError = ({
@@ -477,7 +586,7 @@ export const getErrorAlertContent = (error) => {
 
   return {
     title: normalizedError.title,
-    text: normalizedError.text
+    text: buildAlertText(normalizedError)
   }
 }
 
