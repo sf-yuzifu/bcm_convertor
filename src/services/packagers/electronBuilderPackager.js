@@ -1,9 +1,10 @@
 import { basename, join } from '@tauri-apps/api/path'
-import { mkdir, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { mkdir, readFile, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { fetch } from '@tauri-apps/plugin-http'
 import { type } from '@tauri-apps/plugin-os'
 
 import { copyPath } from '../files/fileTransferService.js'
+import { detectImageFormat } from '../packageConfig/packageConfigService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
 import { getEnv } from '../system/runtimeService.js'
 import { getConvertHome } from '../workspace/pathService.js'
@@ -12,6 +13,7 @@ const WINDOWS = 'windows'
 const LINUX = 'linux'
 const MACOS = 'macos'
 const CONTEXT_FILE_NAME = '.bcm-builder-context.json'
+const WINDOWS_DIRECT_ICON_MIME_TYPES = new Set(['image/png', 'image/x-icon'])
 
 const PLATFORM_CONFIG = {
   [WINDOWS]: {
@@ -68,6 +70,14 @@ const extractMimeType = (response) => {
 }
 
 const blobToUint8Array = async (blob) => new Uint8Array(await blob.arrayBuffer())
+
+const getFileExtension = (value) => {
+  const matched = String(value || '')
+    .toLowerCase()
+    .match(/(\.[a-z0-9]+)$/)
+
+  return matched?.[1] || ''
+}
 
 const convertImageBytesToPng = async (bytes, mimeType) => {
   const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
@@ -135,10 +145,57 @@ const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType) => {
   return iconPath
 }
 
+const getLocalConvertedIconAssetPath = async (workspaceDir) => {
+  const assetDir = await join(workspaceDir, '.builder-assets')
+  return {
+    assetDir,
+    iconPath: await join(assetDir, 'local-project-icon.png')
+  }
+}
+
+const getLocalNormalizedIconAssetPath = async (workspaceDir, extension) => {
+  const assetDir = await join(workspaceDir, '.builder-assets')
+  return {
+    assetDir,
+    iconPath: await join(assetDir, `local-project-icon${extension}`)
+  }
+}
+
+const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType) => {
+  if (!localIconPath || osType !== WINDOWS) {
+    return localIconPath
+  }
+
+  const sourceExtension = getFileExtension(localIconPath)
+  const iconBytes = await readFile(localIconPath)
+  const detectedFormat = detectImageFormat(iconBytes, localIconPath)
+
+  if (WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType) && sourceExtension === detectedFormat.extension) {
+    return localIconPath
+  }
+
+  if (WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType)) {
+    const normalizedExtension =
+      detectedFormat.extension || (detectedFormat.mimeType === 'image/x-icon' ? '.ico' : '.png')
+    const { assetDir, iconPath } = await getLocalNormalizedIconAssetPath(workspaceDir, normalizedExtension)
+
+    await mkdir(assetDir, { recursive: true })
+    await writeFile(iconPath, iconBytes)
+    return iconPath
+  }
+
+  const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType)
+  const { assetDir, iconPath } = await getLocalConvertedIconAssetPath(workspaceDir)
+
+  await mkdir(assetDir, { recursive: true })
+  await writeFile(iconPath, pngBytes)
+  return iconPath
+}
+
 const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
   const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
   if (localIconPath) {
-    return localIconPath
+    return normalizeLocalProjectIconPath(workspaceDir, localIconPath, osType)
   }
 
   return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType)

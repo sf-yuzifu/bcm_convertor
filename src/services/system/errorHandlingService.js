@@ -67,7 +67,7 @@ const ERROR_CODE_DEFINITIONS = {
   },
   ICON_FILE_INVALID: {
     title: '图标文件无效',
-    text: '所选 PNG 图标文件无效或已损坏，请重新选择一张真正的 PNG 图片后再试',
+    text: '所选图标文件无效、已损坏或无法转换，请重新选择其他图片后再试',
     stage: 'prepare',
     retryable: true
   },

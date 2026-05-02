@@ -27,11 +27,13 @@ const IMAGE_MIME_BY_EXTENSION = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
   webp: 'image/webp',
+  bmp: 'image/bmp',
+  svg: 'image/svg+xml',
   ico: 'image/x-icon',
   icns: 'image/icns'
 }
 
-const getImageMimeType = (path) => {
+const getImageMimeTypeByPath = (path) => {
   const match = String(path || '')
     .toLowerCase()
     .match(/\.([a-z0-9]+)$/)
@@ -42,16 +44,73 @@ const getImageMimeType = (path) => {
   return IMAGE_MIME_BY_EXTENSION[match[1]] || 'application/octet-stream'
 }
 
+const startsWithBytes = (bytes, signature) => signature.every((value, index) => bytes[index] === value)
+
+const decodePreviewText = (bytes) => {
+  try {
+    return new TextDecoder('utf-8').decode(bytes).trimStart()
+  } catch {
+    return ''
+  }
+}
+
+export const detectImageFormat = (fileBytes, path) => {
+  const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes || [])
+  const previewBytes = bytes.slice(0, 512)
+  const previewText = decodePreviewText(previewBytes).replace(/^\uFEFF/, '')
+
+  if (bytes.length >= 8 && startsWithBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return { mimeType: 'image/png', extension: '.png' }
+  }
+
+  if (bytes.length >= 3 && startsWithBytes(bytes, [0xff, 0xd8, 0xff])) {
+    return { mimeType: 'image/jpeg', extension: '.jpg' }
+  }
+
+  if (
+    bytes.length >= 12 &&
+    startsWithBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+    startsWithBytes(bytes.slice(8, 12), [0x57, 0x45, 0x42, 0x50])
+  ) {
+    return { mimeType: 'image/webp', extension: '.webp' }
+  }
+
+  if (bytes.length >= 2 && startsWithBytes(bytes, [0x42, 0x4d])) {
+    return { mimeType: 'image/bmp', extension: '.bmp' }
+  }
+
+  if (bytes.length >= 4 && startsWithBytes(bytes, [0x00, 0x00, 0x01, 0x00])) {
+    return { mimeType: 'image/x-icon', extension: '.ico' }
+  }
+
+  if (bytes.length >= 4 && startsWithBytes(bytes, [0x69, 0x63, 0x6e, 0x73])) {
+    return { mimeType: 'image/icns', extension: '.icns' }
+  }
+
+  if (previewText.startsWith('<svg') || previewText.startsWith('<?xml') || previewText.includes('<svg')) {
+    return { mimeType: 'image/svg+xml', extension: '.svg' }
+  }
+
+  const fallbackMimeType = getImageMimeTypeByPath(path)
+  const fallbackExtension =
+    Object.entries(IMAGE_MIME_BY_EXTENSION).find(([, mimeType]) => mimeType === fallbackMimeType)?.[0] || ''
+
+  return {
+    mimeType: fallbackMimeType,
+    extension: fallbackExtension ? `.${fallbackExtension}` : ''
+  }
+}
+
 const getProjectIconExtensions = (osType) => {
   if (osType === 'windows') {
-    return ['png', 'ico']
+    return ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'svg', 'ico']
   }
 
   if (osType === 'macos') {
     return ['icns']
   }
 
-  return ['png', 'jpg', 'jpeg', 'webp', 'svg', 'ico', 'icns']
+  return ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'svg', 'ico', 'icns']
 }
 
 const OFFLINE_KITTEN3_ICON_PREVIEW_URL = '/kitten3_player_icon.png'
@@ -112,7 +171,8 @@ export const chooseProjectIconFile = async () => {
   }
 
   const fileBytes = await readFile(selected)
-  const blob = new Blob([fileBytes], { type: getImageMimeType(selected) })
+  const { mimeType } = detectImageFormat(fileBytes, selected)
+  const blob = new Blob([fileBytes], { type: mimeType })
 
   return {
     path: selected,
