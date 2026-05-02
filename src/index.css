@@ -81,6 +81,25 @@ input::-webkit-inner-spin-button {
   border-radius: 18px;
 }
 
+.swal-button.swal-action-button {
+  min-width: 108px;
+  border: 0;
+  background: var(--app-color-primary);
+  color: #fff7ef;
+  font-family: var(--app-font-family);
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 8px 20px;
+}
+
+.swal-button.swal-action-button:hover {
+  background: #f38b35 !important;
+}
+
+.swal-button.swal-action-button:focus {
+  box-shadow: none;
+}
+
 .ant-btn-icon {
   display: flex;
 }

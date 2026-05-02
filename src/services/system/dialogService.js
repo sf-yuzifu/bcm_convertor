@@ -9,7 +9,8 @@ const buildButtons = ({ buttonText = '关闭', actionButtonText } = {}) => {
     action: {
       text: actionButtonText,
       value: 'action',
-      visible: true
+      visible: true,
+      className: 'swal-action-button'
     }
   }
 }
