@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Button, Input } from 'antd'
+import { Button, Input, InputNumber, Space } from 'antd'
 import { ReloadOutlined, ThunderboltOutlined, UploadOutlined } from '@ant-design/icons'
 
 export default function PackageConfigPanel({
@@ -10,6 +10,7 @@ export default function PackageConfigPanel({
   builderLogs = [],
   onProjectNameChange,
   onExportPathChange,
+  onRoundedIconChange,
   onChooseProjectIcon,
   onBack,
   onSubmit
@@ -17,6 +18,7 @@ export default function PackageConfigPanel({
   const displayIcon = packageConfig.projectIconPreview || packageConfig.fetchedIcon
   const isProcessing = process === 1
   const normalizedPercent = Math.min(100, Math.max(0, Math.round(progressPercent || 0)))
+  const previewCornerRadiusPercent = Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius || 22)))
   const circleRadius = 70
   const circleLength = 2 * Math.PI * circleRadius
   const circleOffset = circleLength * (1 - normalizedPercent / 100)
@@ -61,7 +63,10 @@ export default function PackageConfigPanel({
                     />
                   </svg>
                 ) : null}
-                <div className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-2xl">
+                <div
+                  className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden"
+                  style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
+                >
                   {displayIcon ? (
                     <img src={displayIcon} alt="作品图标" className="h-[84px] w-[84px] object-cover" />
                   ) : (
@@ -104,16 +109,35 @@ export default function PackageConfigPanel({
                     disabled={isProcessing}
                   />
                 </label>
-                <div className="flex flex-col">
-                  <span>作品图标：</span>
-                  <Button
-                    className="w-fit"
-                    icon={<UploadOutlined />}
-                    onClick={onChooseProjectIcon}
-                    disabled={isProcessing}
-                  >
-                    上传图标
-                  </Button>
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex flex-col gap-2">
+                    <span>作品图标：</span>
+                    <Button
+                      className="w-fit"
+                      icon={<UploadOutlined />}
+                      onClick={onChooseProjectIcon}
+                      disabled={isProcessing}
+                    >
+                      上传图标
+                    </Button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <span>圆角大小：</span>
+                    <Space.Compact>
+                      <InputNumber
+                        min={0}
+                        max={50}
+                        step={1}
+                        value={packageConfig.roundedIconRadius}
+                        onChange={onRoundedIconChange}
+                        disabled={isProcessing}
+                        className="w-[72px]"
+                      />
+                      <Button disabled className="!cursor-default !text-[var(--app-color-text-secondary,#6b7280)]">
+                        %
+                      </Button>
+                    </Space.Compact>
+                  </div>
                 </div>
                 <label className="flex flex-col">
                   <span>导出路径：</span>

@@ -114,7 +114,50 @@ const drawSourceToCanvas = (source) => {
   return canvas
 }
 
-const convertImageBytesToPng = async (bytes, mimeType) => {
+const applyRoundedRectMask = (context, width, height, radius) => {
+  const safeRadius = Math.min(radius, width / 2, height / 2)
+  context.beginPath()
+  context.moveTo(safeRadius, 0)
+  context.lineTo(width - safeRadius, 0)
+  context.arcTo(width, 0, width, safeRadius, safeRadius)
+  context.lineTo(width, height - safeRadius)
+  context.arcTo(width, height, width - safeRadius, height, safeRadius)
+  context.lineTo(safeRadius, height)
+  context.arcTo(0, height, 0, height - safeRadius, safeRadius)
+  context.lineTo(0, safeRadius)
+  context.arcTo(0, 0, safeRadius, 0, safeRadius)
+  context.closePath()
+}
+
+const applyRoundedMask = (canvas, radiusPercent = 0) => {
+  const context = canvas.getContext('2d')
+  if (!context) {
+    throw new Error('无法创建图标转换画布')
+  }
+
+  const width = canvas.width
+  const height = canvas.height
+  const radiusRatio = Math.min(0.5, Math.max(0, Number(radiusPercent || 0) / 100))
+  const radius = Math.max(1, Math.round(Math.min(width, height) * radiusRatio))
+  const snapshot = document.createElement('canvas')
+  snapshot.width = width
+  snapshot.height = height
+  const snapshotContext = snapshot.getContext('2d')
+  if (!snapshotContext) {
+    throw new Error('无法创建图标转换画布')
+  }
+
+  snapshotContext.drawImage(canvas, 0, 0)
+  context.clearRect(0, 0, width, height)
+  context.save()
+  applyRoundedRectMask(context, width, height, radius)
+  context.clip()
+  context.drawImage(snapshot, 0, 0)
+  context.restore()
+  return canvas
+}
+
+const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
   const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
   let canvas
 
@@ -130,6 +173,10 @@ const convertImageBytesToPng = async (bytes, mimeType) => {
       const image = await loadImageElementFromBlob(sourceBlob)
       canvas = drawSourceToCanvas(image)
     }
+  }
+
+  if (options.roundedIcon) {
+    canvas = applyRoundedMask(canvas, options.roundedIconRadius)
   }
 
   const pngBlob = await new Promise((resolve, reject) => {
@@ -158,7 +205,7 @@ const getRemoteIconAssetPath = async (workspaceDir, osType) => {
   }
 }
 
-const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType) => {
+const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType, options = {}) => {
   if (!isRemoteHttpUrl(fetchedIcon)) {
     return undefined
   }
@@ -174,7 +221,7 @@ const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType) => {
 
   const bytes = new Uint8Array(await response.arrayBuffer())
   const mimeType = extractMimeType(response)
-  const pngBytes = await convertImageBytesToPng(bytes, mimeType)
+  const pngBytes = await convertImageBytesToPng(bytes, mimeType, options)
   const { assetDir, iconPath } = await getRemoteIconAssetPath(workspaceDir, osType)
 
   await mkdir(assetDir, { recursive: true })
@@ -199,7 +246,7 @@ const getLocalNormalizedIconAssetPath = async (workspaceDir, extension) => {
   }
 }
 
-const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType) => {
+const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType, options = {}) => {
   if (!localIconPath || osType !== WINDOWS) {
     return localIconPath
   }
@@ -208,11 +255,15 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
   const iconBytes = await readFile(localIconPath)
   const detectedFormat = detectImageFormat(iconBytes, localIconPath)
 
-  if (WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType) && sourceExtension === detectedFormat.extension) {
+  if (
+    !options.roundedIcon &&
+    WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType) &&
+    sourceExtension === detectedFormat.extension
+  ) {
     return localIconPath
   }
 
-  if (WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType)) {
+  if (!options.roundedIcon && WINDOWS_DIRECT_ICON_MIME_TYPES.has(detectedFormat.mimeType)) {
     const normalizedExtension =
       detectedFormat.extension || (detectedFormat.mimeType === 'image/x-icon' ? '.ico' : '.png')
     const { assetDir, iconPath } = await getLocalNormalizedIconAssetPath(workspaceDir, normalizedExtension)
@@ -222,7 +273,7 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
     return iconPath
   }
 
-  const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType)
+  const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType, options)
   const { assetDir, iconPath } = await getLocalConvertedIconAssetPath(workspaceDir)
 
   await mkdir(assetDir, { recursive: true })
@@ -231,12 +282,20 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
 }
 
 const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
+  const roundedIconRadius = Number(projectInfo.packageConfig?.roundedIconRadius || 22)
+  const roundedIcon = osType === WINDOWS && Number.isFinite(roundedIconRadius) && roundedIconRadius > 0
   const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
   if (localIconPath) {
-    return normalizeLocalProjectIconPath(workspaceDir, localIconPath, osType)
+    return normalizeLocalProjectIconPath(workspaceDir, localIconPath, osType, {
+      roundedIcon,
+      roundedIconRadius
+    })
   }
 
-  return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType)
+  return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType, {
+    roundedIcon,
+    roundedIconRadius
+  })
 }
 
 const createBuildContext = async (projectInfo, osType) => {

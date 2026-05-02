@@ -52,7 +52,8 @@ const createEmptyPackageConfig = () => ({
   projectIcon: '',
   projectIconPreview: '',
   exportPath: '',
-  fetchedIcon: ''
+  fetchedIcon: '',
+  roundedIconRadius: 22
 })
 
 const MAX_BUILDER_LOG_LINES = 400
@@ -478,6 +479,13 @@ export default function MainPanel({
     updatePackageConfig({ exportPath: event.target.value })
   }
 
+  const handleRoundedIconChange = (value) => {
+    const numericValue = Number(value)
+    updatePackageConfig({
+      roundedIconRadius: Number.isFinite(numericValue) ? Math.min(50, Math.max(0, numericValue)) : 0
+    })
+  }
+
   const handleChooseProjectIcon = async () => {
     const selectedIcon = await chooseProjectIconFile()
     if (!selectedIcon) {
@@ -614,6 +622,7 @@ export default function MainPanel({
         builderLogs={builderLogs}
         onProjectNameChange={handleProjectNameChange}
         onExportPathChange={handleExportPathChange}
+        onRoundedIconChange={handleRoundedIconChange}
         onChooseProjectIcon={handleChooseProjectIcon}
         onBack={handleBackToSearch}
         onSubmit={handleSubmitPackageConfig}

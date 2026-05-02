@@ -149,7 +149,8 @@ export const loadPackageConfigDefaults = async ({ version, status, workId, sourc
       projectIcon: offlineKitten3Icon?.path || '',
       projectIconPreview: offlineKitten3Icon?.previewUrl || '',
       exportPath: desktopDirPath,
-      fetchedIcon: resolveProjectPreview(projectInfo)
+      fetchedIcon: resolveProjectPreview(projectInfo),
+      roundedIconRadius: 22
     }
   }
 }
