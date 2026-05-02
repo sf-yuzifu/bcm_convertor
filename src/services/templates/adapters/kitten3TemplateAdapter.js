@@ -1,6 +1,6 @@
-import { BaseDirectory, writeTextFile } from '@tauri-apps/plugin-fs'
 import { join } from '@tauri-apps/api/path'
 
+import { copyPath } from '../../files/fileTransferService.js'
 import { copyTemplateToConvertHome, updatePackageJson } from '../templateWorkspaceService.js'
 
 export const prepareKitten3Template = async (projectInfo) => {
@@ -10,7 +10,5 @@ export const prepareKitten3Template = async (projectInfo) => {
     contents.name = projectInfo.name
   })
 
-  await writeTextFile(await join(home, 'resource.bcm'), JSON.stringify(projectInfo.data), {
-    dir: BaseDirectory.Home
-  })
+  await copyPath(projectInfo.path, await join(home, 'resource.bcm'))
 }

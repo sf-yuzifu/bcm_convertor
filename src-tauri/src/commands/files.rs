@@ -2,11 +2,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
+use serde_json::Value;
 
 #[derive(Serialize)]
 pub struct OfflineBcmProjectPayload {
     name: String,
-    data: serde_json::Value,
     path: String,
 }
 
@@ -182,7 +182,7 @@ pub fn read_bcm_project(path: String) -> Result<OfflineBcmProjectPayload, String
 
     let content = fs::read_to_string(&source)
         .map_err(|e| format!("读取 bcm 文件失败: {} ({})", source.display(), e))?;
-    let data: serde_json::Value = serde_json::from_str(&content)
+    let data: Value = serde_json::from_str(&content)
         .map_err(|e| format!("解析 bcm 文件失败: {} ({})", source.display(), e))?;
 
     let name = data
@@ -200,7 +200,6 @@ pub fn read_bcm_project(path: String) -> Result<OfflineBcmProjectPayload, String
 
     Ok(OfflineBcmProjectPayload {
         name,
-        data,
         path: source.display().to_string(),
     })
 }
