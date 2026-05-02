@@ -1,8 +1,9 @@
-import { appLocalDataDir, desktopDir, homeDir, join } from '@tauri-apps/api/path'
+import { appCacheDir, appLocalDataDir, desktopDir, homeDir, join } from '@tauri-apps/api/path'
 import { exists, mkdir, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 
 import { normalizeUserFacingError } from '../system/errorHandlingService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
+import { getEnv } from '../system/runtimeService.js'
 import { PRIMARY_WORKSPACE_NAME } from './pathService.js'
 
 const removeDirectoryIfExists = async (path) => {
@@ -75,6 +76,48 @@ const getBuildLogDirectory = async () => {
   return join(appDataPath, 'logs')
 }
 
+const getBuildLogContext = async () => {
+  try {
+    const { osType, homeDirPath } = await getEnv()
+    return {
+      osType,
+      workspacePath: await join(homeDirPath, PRIMARY_WORKSPACE_NAME),
+      cachePath: await join(await appCacheDir(), 'builder-downloads')
+    }
+  } catch (_) {
+    return {
+      osType: undefined,
+      workspacePath: undefined,
+      cachePath: undefined
+    }
+  }
+}
+
+const MAX_LOG_SUMMARY_LINES = 20
+
+const createLogSection = (title, lines) => `${title}\n${lines.length ? lines.join('\n') : '(空)'}\n`
+
+const collectKeyLogLines = (builderLogs = []) => {
+  const candidates = builderLogs.filter((entry) =>
+    /error|failed|denied|missing|invalid|timeout|timed out|enoent|eacces|eperm|enospc|builder|download|artifact/i.test(
+      String(entry?.line || '')
+    )
+  )
+
+  return candidates.slice(-MAX_LOG_SUMMARY_LINES).map((entry) => `[${entry.stream || 'stdout'}] ${entry.line}`)
+}
+
+const summarizeLogStats = (builderLogs = []) => {
+  const stdoutCount = builderLogs.filter((entry) => entry?.stream === 'stdout').length
+  const stderrCount = builderLogs.filter((entry) => entry?.stream === 'stderr').length
+
+  return {
+    total: builderLogs.length,
+    stdoutCount,
+    stderrCount
+  }
+}
+
 const buildLogContent = ({
   projectName,
   status,
@@ -82,46 +125,64 @@ const buildLogContent = ({
   progressPercent,
   outputPath,
   logPath,
+  logFilePath,
+  cachePath,
+  workspacePath,
+  osType,
   builderLogs,
   error
 }) => {
   const normalizedError = error ? normalizeUserFacingError(error) : null
+  const logStats = summarizeLogStats(builderLogs)
+  const keyLogLines = collectKeyLogLines(builderLogs)
 
-  const headerLines = [
+  const summaryLines = [
     'BCM Convertor Build Log',
     `项目名称: ${projectName || '未命名项目'}`,
     `构建状态: ${status === 'success' ? '成功' : '失败'}`,
     `当前阶段: ${progressText || '未知'}`,
     `当前进度: ${Number.isFinite(progressPercent) ? `${Math.round(progressPercent)}%` : '未知'}`,
+    `操作系统: ${osType || '未知'}`,
     `导出目录: ${outputPath || '未设置'}`,
+    `工作目录: ${workspacePath || '未知'}`,
+    `缓存目录: ${cachePath || '未知'}`,
     `日志目录: ${logPath || '未知'}`,
+    `日志文件: ${logFilePath || '未知'}`,
+    `日志总行数: ${logStats.total}`,
+    `stdout 行数: ${logStats.stdoutCount}`,
+    `stderr 行数: ${logStats.stderrCount}`,
     `生成时间: ${new Date().toLocaleString('zh-CN', { hour12: false })}`
   ]
 
   if (normalizedError) {
-    headerLines.push(`错误码: ${normalizedError.code || 'UNKNOWN_ERROR'}`)
-    headerLines.push(`错误阶段: ${normalizedError.stage || 'unknown'}`)
-    headerLines.push(
+    summaryLines.push(`错误码: ${normalizedError.code || 'UNKNOWN_ERROR'}`)
+    summaryLines.push(`错误阶段: ${normalizedError.stage || 'unknown'}`)
+    summaryLines.push(
       `是否可重试: ${normalizedError.retryable === true ? '是' : normalizedError.retryable === false ? '否' : '未知'}`
     )
-    headerLines.push(`错误标题: ${normalizedError.title || '未知'}`)
-    headerLines.push(`错误提示: ${normalizedError.text || '未知'}`)
+    summaryLines.push(`错误标题: ${normalizedError.title || '未知'}`)
+    summaryLines.push(`错误提示: ${normalizedError.text || '未知'}`)
     if (normalizedError.detail) {
-      headerLines.push(`错误详情: ${normalizedError.detail}`)
-    }
-    if (normalizedError.logPath) {
-      headerLines.push(`日志文件: ${normalizedError.logPath}`)
+      summaryLines.push(`错误详情: ${normalizedError.detail}`)
     }
   }
 
   const bodyLines = (builderLogs || []).map((entry) => `[${entry.stream || 'stdout'}] ${entry.line}`)
+  const sections = [
+    createLogSection('===== 构建摘要 =====', summaryLines),
+    createLogSection('===== 关键日志摘要 =====', keyLogLines),
+    createLogSection('===== 实时日志 =====', bodyLines)
+  ]
 
-  return `${headerLines.join('\n')}\n\n===== 实时日志 =====\n${bodyLines.join('\n')}\n`
+  return `${sections.join('\n')}`.trimEnd() + '\n'
 }
 
 export const writeBuildLogFile = async ({
   projectName,
   outputPath,
+  cachePath,
+  workspacePath,
+  osType,
   builderLogs,
   progressText,
   progressPercent,
@@ -130,6 +191,7 @@ export const writeBuildLogFile = async ({
 }) => {
   const targetPath = await getBuildLogDirectory()
   await mkdir(targetPath, { recursive: true })
+  const context = await getBuildLogContext()
 
   const logFilePath = await join(targetPath, `${sanitizeFileName(projectName)}-build-${createLogStamp()}.log`)
   const logContent = buildLogContent({
@@ -138,7 +200,11 @@ export const writeBuildLogFile = async ({
     progressText,
     progressPercent,
     outputPath: outputPath || (await desktopDir()),
+    cachePath: cachePath || context.cachePath,
+    workspacePath: workspacePath || context.workspacePath,
+    osType: osType || context.osType,
     logPath: targetPath,
+    logFilePath,
     builderLogs,
     error
   })
