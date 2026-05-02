@@ -30,8 +30,6 @@
     "@tailwindcss/vite": "^4.2.4",
     "@tauri-apps/cli": "^2.10.1",
     "@vitejs/plugin-react": "^4.7.0",
-    "electron": "^19.0.7",
-    "electron-builder": "^24.13.3",
     "esbuild": "^0.25.11",
     "eslint": "^10.2.1",
     "prettier": "^3.8.3",
