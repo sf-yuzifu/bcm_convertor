@@ -373,7 +373,6 @@ export default function MainPanel({
 
       if (logFilePath) {
         attachUserFacingErrorMetadata(normalizedError, { logPath: logFilePath })
-        await openBuildLogFile(logFilePath)
       }
     } catch (logError) {
       console.error('failed to persist or open build log', logError)
