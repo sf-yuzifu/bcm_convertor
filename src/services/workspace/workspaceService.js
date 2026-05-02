@@ -1,5 +1,5 @@
 import { appCacheDir, appLocalDataDir, desktopDir, homeDir, join } from '@tauri-apps/api/path'
-import { exists, mkdir, remove, writeTextFile } from '@tauri-apps/plugin-fs'
+import { exists, mkdir, readDir, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 
 import { normalizeUserFacingError } from '../system/errorHandlingService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
@@ -76,6 +76,12 @@ const getBuildLogDirectory = async () => {
   return join(appDataPath, 'logs')
 }
 
+const BUILD_LOG_POLICY = {
+  writeOnSuccess: true,
+  writeOnFailure: true,
+  maxFiles: 40
+}
+
 const getBuildLogContext = async () => {
   try {
     const { osType, homeDirPath } = await getEnv()
@@ -118,6 +124,50 @@ const summarizeLogStats = (builderLogs = []) => {
   }
 }
 
+const shouldPersistBuildLog = ({ status, builderLogs, error }) => {
+  if (status === 'error') {
+    return BUILD_LOG_POLICY.writeOnFailure && (Boolean(error) || (builderLogs || []).length > 0)
+  }
+
+  if (status === 'success') {
+    return BUILD_LOG_POLICY.writeOnSuccess && (builderLogs || []).length > 0
+  }
+
+  return Boolean(error) || (builderLogs || []).length > 0
+}
+
+const createLogStatusLabel = (status) => (status === 'success' ? 'success' : status === 'error' ? 'error' : 'unknown')
+
+const extractLogStampFromName = (fileName) => {
+  const matched = String(fileName || '').match(/-build-(\d{8}-\d{6})(?:-[a-z]+)?\.log$/i)
+  return matched?.[1] || ''
+}
+
+const sortLogEntries = (entries = []) =>
+  [...entries].sort((left, right) => {
+    const rightStamp = extractLogStampFromName(right.name)
+    const leftStamp = extractLogStampFromName(left.name)
+    if (rightStamp && leftStamp && rightStamp !== leftStamp) {
+      return rightStamp.localeCompare(leftStamp)
+    }
+
+    return String(right.name || '').localeCompare(String(left.name || ''))
+  })
+
+const pruneBuildLogs = async (directoryPath) => {
+  const entries = await readDir(directoryPath)
+  const logFiles = sortLogEntries(entries.filter((entry) => entry.isFile && String(entry.name || '').toLowerCase().endsWith('.log')))
+
+  const staleEntries = logFiles.slice(BUILD_LOG_POLICY.maxFiles)
+  await Promise.all(
+    staleEntries.map(async (entry) => {
+      if (entry.path) {
+        await remove(entry.path)
+      }
+    })
+  )
+}
+
 const buildLogContent = ({
   projectName,
   status,
@@ -151,6 +201,9 @@ const buildLogContent = ({
     `日志总行数: ${logStats.total}`,
     `stdout 行数: ${logStats.stdoutCount}`,
     `stderr 行数: ${logStats.stderrCount}`,
+    `日志写入策略: 成功${BUILD_LOG_POLICY.writeOnSuccess ? '记录' : '不记录'} / 失败${
+      BUILD_LOG_POLICY.writeOnFailure ? '记录' : '不记录'
+    } / 最多保留 ${BUILD_LOG_POLICY.maxFiles} 份`,
     `生成时间: ${new Date().toLocaleString('zh-CN', { hour12: false })}`
   ]
 
@@ -189,11 +242,17 @@ export const writeBuildLogFile = async ({
   status,
   error
 }) => {
+  if (!shouldPersistBuildLog({ status, builderLogs, error })) {
+    return null
+  }
+
   const targetPath = await getBuildLogDirectory()
   await mkdir(targetPath, { recursive: true })
   const context = await getBuildLogContext()
-
-  const logFilePath = await join(targetPath, `${sanitizeFileName(projectName)}-build-${createLogStamp()}.log`)
+  const logFilePath = await join(
+    targetPath,
+    `${sanitizeFileName(projectName)}-build-${createLogStamp()}-${createLogStatusLabel(status)}.log`
+  )
   const logContent = buildLogContent({
     projectName,
     status,
@@ -210,6 +269,7 @@ export const writeBuildLogFile = async ({
   })
 
   await writeTextFile(logFilePath, logContent)
+  await pruneBuildLogs(targetPath)
   return logFilePath
 }
 
