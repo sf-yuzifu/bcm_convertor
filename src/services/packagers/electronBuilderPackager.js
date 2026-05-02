@@ -366,6 +366,7 @@ export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {
 
   return {
     ...result,
-    outputDirectory: buildContext.exportDir
+    outputDirectory: buildContext.exportDir,
+    outputPath: exportedArtifactPath
   }
 }

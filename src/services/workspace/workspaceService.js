@@ -43,12 +43,12 @@ export const cleanupAfterConvert = async () => {
 export const revealOutputDirectory = async (outputPath) => {
   const targetPath = outputPath || (await desktopDir())
   await invokeBackendCommand(
-    'open_file',
+    'reveal_path',
     { path: targetPath },
     {
       code: 'OUTPUT_DIRECTORY_OPEN_FAILED',
-      title: '打开输出目录失败',
-      text: '已完成打包，但无法自动打开输出目录，请手动前往导出目录查看',
+      title: '打开输出位置失败',
+      text: '已完成打包，但无法自动打开并定位输出文件，请手动前往导出目录查看',
       stage: 'postprocess',
       retryable: true
     }

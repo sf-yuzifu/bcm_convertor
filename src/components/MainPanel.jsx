@@ -135,6 +135,7 @@ export default function MainPanel({
   const [packageConfig, setPackageConfig] = useState(createEmptyPackageConfig)
   const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
   const [lastOutputDirectory, setLastOutputDirectory] = useState('')
+  const [lastOutputPath, setLastOutputPath] = useState('')
   const targetPercentRef = useRef(0)
   const builderLogsRef = useRef([])
   const builderMessageRef = useRef('正在准备转换任务')
@@ -142,6 +143,7 @@ export default function MainPanel({
   const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
   const numericWorkId = Number(workId || 0)
   const activeOutputDirectory = lastOutputDirectory || packageConfig.exportPath
+  const activeOutputPath = lastOutputPath || activeOutputDirectory
 
   const resetBuilderProgress = () => {
     setBuilderMessage('正在准备转换任务')
@@ -405,6 +407,7 @@ export default function MainPanel({
     setPackageConfig(createEmptyPackageConfig())
     setLoadedProjectInfo(null)
     setLastOutputDirectory('')
+    setLastOutputPath('')
   }, [onPanelStepChange, status, version])
 
   useEffect(
@@ -539,6 +542,7 @@ export default function MainPanel({
     resetBuilderProgress()
     applyProgressPayload({ stage: 'process-files', message: '正在准备转换任务', percent: 0 })
     setLastOutputDirectory('')
+    setLastOutputPath('')
     onProcessChange(1)
 
     try {
@@ -552,6 +556,7 @@ export default function MainPanel({
 
       if (result.status === 'success') {
         setLastOutputDirectory(result.outputDirectory || packageConfig.exportPath || '')
+        setLastOutputPath(result.outputPath || result.outputDirectory || packageConfig.exportPath || '')
         await persistBuildLog({
           projectName: finalProjectInfo.name,
           outputPath: result.outputDirectory || packageConfig.exportPath,
@@ -599,16 +604,17 @@ export default function MainPanel({
     onProcessChange(0)
     resetBuilderProgress()
     setLastOutputDirectory('')
+    setLastOutputPath('')
     onPanelStepChange?.('search')
   }
 
   const handleOpenOutput = async () => {
     try {
-      await revealOutputDirectory(activeOutputDirectory)
+      await revealOutputDirectory(activeOutputPath)
     } catch (error) {
       console.error(error)
       await showErrorAlert(error, {
-        onRetryOpenOutput: async () => revealOutputDirectory(activeOutputDirectory)
+        onRetryOpenOutput: async () => revealOutputDirectory(activeOutputPath)
       })
     }
   }

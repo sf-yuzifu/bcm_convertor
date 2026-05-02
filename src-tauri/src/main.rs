@@ -20,6 +20,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::files::open_file,
+            commands::files::reveal_path,
             commands::files::read_bcm_project,
             commands::files::copy_dict,
             commands::packaging::run_electron_builder,

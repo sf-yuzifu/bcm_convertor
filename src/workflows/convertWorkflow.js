@@ -29,7 +29,12 @@ export const runConvertWorkflow = async ({ version, status, workId, projectInfo:
     const packageResult = await packageProject(projectInfo, { onProgress })
     onProgress?.({ stage: 'success', message: '转换与打包已完成', percent: 100 })
 
-    return { status: 'success', projectInfo, outputDirectory: packageResult.outputDirectory }
+    return {
+      status: 'success',
+      projectInfo,
+      outputDirectory: packageResult.outputDirectory,
+      outputPath: packageResult.outputPath
+    }
   } finally {
     await cleanupAfterConvert()
   }

@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use serde::Serialize;
 use serde_json::Value;
@@ -193,6 +194,38 @@ fn recreate_symlink(target: &Path, link: &Path) -> Result<(), String> {
 #[tauri::command]
 pub fn open_file(path: String) -> Result<(), String> {
     open::that(path).map_err(|e| e.to_string())
+}
+
+#[cfg(target_family = "windows")]
+fn reveal_path_in_system(path: &Path) -> Result<(), String> {
+    Command::new("explorer")
+        .arg(format!("/select,{}", path.display()))
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("打开资源管理器失败: {} ({})", path.display(), e))
+}
+
+#[cfg(not(target_family = "windows"))]
+fn reveal_path_in_system(path: &Path) -> Result<(), String> {
+    let target = if path.is_dir() {
+        path.to_path_buf()
+    } else {
+        path.parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| path.to_path_buf())
+    };
+
+    open::that(target).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn reveal_path(path: String) -> Result<(), String> {
+    let target = PathBuf::from(&path);
+    if !target.exists() {
+        return Err(format!("路径不存在: {}", target.display()));
+    }
+
+    reveal_path_in_system(&target)
 }
 
 #[tauri::command]
