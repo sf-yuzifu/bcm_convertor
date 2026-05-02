@@ -302,7 +302,7 @@ const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType
 }
 
 const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
-  const roundedIconRadius = Number(projectInfo.packageConfig?.roundedIconRadius || 22)
+  const roundedIconRadius = Number(projectInfo.packageConfig?.roundedIconRadius ?? 22)
   const squareIcon = osType === WINDOWS
   const roundedIcon = osType === WINDOWS && Number.isFinite(roundedIconRadius) && roundedIconRadius > 0
   const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)

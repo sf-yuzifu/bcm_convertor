@@ -18,7 +18,7 @@ export default function PackageConfigPanel({
   const displayIcon = packageConfig.projectIconPreview || packageConfig.fetchedIconPreview || packageConfig.fetchedIcon
   const isProcessing = process === 1
   const normalizedPercent = Math.min(100, Math.max(0, Math.round(progressPercent || 0)))
-  const previewCornerRadiusPercent = Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius || 22)))
+  const previewCornerRadiusPercent = Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius ?? 22)))
   const circleRadius = 70
   const circleLength = 2 * Math.PI * circleRadius
   const circleOffset = circleLength * (1 - normalizedPercent / 100)
