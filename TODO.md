@@ -15,8 +15,14 @@
 - [ ] 如后续新增功能明显推高维护成本，再补主流程信息架构图，重点覆盖搜索、配置、进度、错误提示和完成页切换
 - [x] 确认 Node 与打包工具链策略：发布版继续内置 Node 与 electron-builder，开发态保留系统 node 兜底，并精简根目录重复依赖
 - [x] 整理 Windows 打包链路手工验收清单，覆盖正常作品、资源较大作品、异常输入三类场景，发版前确认产物生成、导出复制、输出打开和日志落盘都稳定；见 `docs/windows-release-checklist.md`
+- [ ] 梳理并调整 Linux 端的 Tauri 配置，确认 bundle targets、窗口参数和平台差异策略
+- [ ] 为 Linux 降级窗口效果，评估透明、无边框、阴影和自定义标题栏在不同桌面环境下的兼容性
+- [ ] 补齐 Linux 所需的内置 Node 与 electron-builder 工具链资源，确认 `linux-x64` 运行时随包发布
+- [ ] 验证 Linux 下的转换与打包主链路，重点确认 AppImage 生成、产物复制和打开输出目录流程
+- [ ] 整理 Linux 构建前置依赖与环境文档，包括 WebKitGTK、appindicator、librsvg、patchelf 等
 
 ## P2
 
 - [ ] 补充 Windows 发布与使用说明，记录产物位置、缓存行为、常见问题和处理方式
 - [x] 模板文件优化时处理大体积 bcm 文本的内存峰值问题，优先改为路径直拷或后端读写，避免前端整段 parse/stringify
+- [ ] 补一份 Linux 发版验收清单，覆盖正常流程、异常输入、日志落盘和缓存复用场景
