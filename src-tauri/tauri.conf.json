@@ -7,14 +7,25 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
     "resources": ["./convert", "./builder"],
     "icon": ["icons/linux.svg", "icons/mac.icns", "icons/win.ico", "icons/bcm_convertor.png"],
     "copyright": "小鱼yuzifu",
     "publisher": "小鱼yuzifu",
     "shortDescription": "编程猫格式工厂",
     "longDescription": "将自己在kitten3/4上的作品快速制作成独立应用程序",
-    "category": "DeveloperTool"
+    "category": "DeveloperTool",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": false,
+        "compression": "lzma",
+        "installerIcon": "icons/win.ico",
+        "headerImage": "icons/nsis-header.bmp",
+        "sidebarImage": "icons/nsis-sidebar.bmp"
+      }
+    }
   },
   "productName": "编程猫格式工厂",
   "mainBinaryName": "编程猫格式工厂",
