@@ -12,23 +12,37 @@
   <meta name="360-fullscreen" content="true" />
 
   <link href="./player__668f85603183214a49c3.css" rel="stylesheet">
+  <style>
+    /* 隐藏自定义标题栏，使用系统默认标题栏 */
+    .header--Q0wIl {
+      display: none !important;
+    }
+    /* 重置html, body margin和padding，防止留白 */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+    /* 确保root容器占满全屏 */
+    #root {
+      width: 100% !important;
+      height: 100% !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+    /* 确保canvas容器占满全屏 */
+    #root > div {
+      height: 100% !important;
+    }
+  </style>
 </head>
 
 <body>
   <div id="root"></div>
   <script type="text/javascript" src="./player.3fb825e04b6c3ba91243.js"></script>
-  <script>
-    const { ipcRenderer } = require("electron");
-    document.getElementsByClassName("close--3qdNf")[0].onclick = function(){
-      ipcRenderer.send("close");
-    }
-    document.getElementsByClassName("minimize--1FX3q")[0].onclick = function(){
-      ipcRenderer.send("min");
-    }
-    document.getElementsByClassName("maximize--1QBWq")[0].onclick = function(){
-      ipcRenderer.send("max");
-    }
-  </script>
 </body>
 
 </html>

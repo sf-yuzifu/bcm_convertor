@@ -12,6 +12,8 @@ use serde_json::Value;
 pub struct OfflineBcmProjectPayload {
     name: String,
     path: String,
+    width: i32,
+    height: i32,
 }
 
 #[cfg(target_family = "windows")]
@@ -271,9 +273,24 @@ pub fn read_bcm_project(path: String) -> Result<OfflineBcmProjectPayload, String
         })
         .unwrap_or_else(|| "未命名作品".to_string());
 
+    // 读取作品尺寸
+    let width = data
+        .get("width")
+        .and_then(|value| value.as_i64())
+        .map(|value| value as i32)
+        .unwrap_or(562);
+
+    let height = data
+        .get("height")
+        .and_then(|value| value.as_i64())
+        .map(|value| value as i32)
+        .unwrap_or(900);
+
     Ok(OfflineBcmProjectPayload {
         name,
         path: source.display().to_string(),
+        width,
+        height,
     })
 }
 
