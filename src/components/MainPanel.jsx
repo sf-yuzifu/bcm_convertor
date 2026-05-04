@@ -598,7 +598,12 @@ export default function MainPanel({
       return
     }
 
-    await openPackageConfigPanel()
+    try {
+      await openPackageConfigPanel()
+    } catch (error) {
+      console.error(error)
+      await showErrorAlert(error)
+    }
   }
 
   const handleContinueConvert = () => {

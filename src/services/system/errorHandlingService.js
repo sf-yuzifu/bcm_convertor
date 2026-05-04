@@ -602,11 +602,26 @@ export const normalizeUserFacingError = (error, fallback = {}) => {
     })
   }
 
-  if (message.includes('meta status=404')) {
+  if (message.includes('meta status=404') || message.includes('meta status=422')) {
+    const errorPayload = extractEmbeddedJsonPayload(message)
+    const errorMessage = errorPayload?.error_message || ''
+
+    if (errorMessage.includes('未发布') || errorMessage.includes('未公开')) {
+      return createUserFacingError({
+        code: 'WORK_NOT_PUBLISHED',
+        title: '作品未发布',
+        text: '该作品尚未发布，请发布后再试',
+        detail: message,
+        stage: fallback.stage || 'load-project',
+        retryable: true,
+        logPath: fallback.logPath
+      })
+    }
+
     return createUserFacingError({
       code: 'WORK_NOT_FOUND',
       title: getErrorDefinition('WORK_NOT_FOUND')?.title,
-      text: getErrorDefinition('WORK_NOT_FOUND')?.text,
+      text: errorMessage || getErrorDefinition('WORK_NOT_FOUND')?.text,
       detail: message,
       stage: fallback.stage || getErrorDefinition('WORK_NOT_FOUND')?.stage,
       retryable: getErrorDefinition('WORK_NOT_FOUND')?.retryable,
@@ -692,7 +707,7 @@ export const getErrorAlertContent = (error) => {
 
   return {
     error: normalizedError,
-    title: normalizedError.title,
+    title: normalizedError.title || '操作失败',
     text: buildAlertText(normalizedError)
   }
 }
