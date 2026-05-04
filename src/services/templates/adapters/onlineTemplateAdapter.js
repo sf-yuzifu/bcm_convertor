@@ -59,4 +59,10 @@ export const prepareOnlineTemplate = async (projectInfo, version = 'kitten4') =>
     .replace('__ONLINE_WINDOW_HEIGHT__', String(windowHeight))
 
   await writeTextFile(await join(home, 'index.js'), contents, { dir: BaseDirectory.Home })
+
+  if (isKittenN) {
+    let preloadContents = await readTextFile(await join(home, 'preload.js'), { dir: BaseDirectory.Home })
+    preloadContents = preloadContents.replace('__PLAYER_URL__', playerUrl).replace('__APP_NAME__', projectInfo.name)
+    await writeTextFile(await join(home, 'preload.js'), preloadContents, { dir: BaseDirectory.Home })
+  }
 }
