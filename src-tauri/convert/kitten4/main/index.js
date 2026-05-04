@@ -10,6 +10,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
+    title: app.name,
     useContentSize: true,
     center: true,
     show: false,
@@ -26,6 +27,11 @@ const createWindow = () => {
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools()
   }
+
+  mainWindow.on('page-title-updated', (event) => {
+    event.preventDefault()
+    mainWindow.setTitle(app.name)
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
