@@ -199,7 +199,7 @@ pub fn open_file(path: String) -> Result<(), String> {
 #[cfg(target_family = "windows")]
 fn reveal_path_in_system(path: &Path) -> Result<(), String> {
     Command::new("explorer")
-        .arg(format!("/select,{}", path.display()))
+        .arg(format!("/select,\"{}\"", path.display()))
         .spawn()
         .map(|_| ())
         .map_err(|e| format!("打开资源管理器失败: {} ({})", path.display(), e))
