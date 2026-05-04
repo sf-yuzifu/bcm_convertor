@@ -27,6 +27,12 @@ fn codemao_client() -> reqwest::Client {
         .unwrap()
 }
 
+fn parse_json_with_unbounded_depth(text: &str) -> Result<serde_json::Value, String> {
+    let mut deserializer = serde_json::Deserializer::from_str(text);
+    deserializer.disable_recursion_limit();
+    serde_json::Value::deserialize(&mut deserializer).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
     let client = codemao_client();
@@ -92,9 +98,10 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
         .await
         .map_err(|e| e.to_string())?;
     let data_status = data_res.status();
-    let data_json: serde_json::Value = data_res.json().await.map_err(|e| e.to_string())?;
+    let data_text = data_res.text().await.map_err(|e| e.to_string())?;
+    let data_json = parse_json_with_unbounded_depth(&data_text)?;
     if !data_status.is_success() {
-        return Err(format!("data status={} body={}", data_status, data_json));
+        return Err(format!("data status={} body={}", data_status, data_text));
     }
 
     Ok(OnlineInfo {
