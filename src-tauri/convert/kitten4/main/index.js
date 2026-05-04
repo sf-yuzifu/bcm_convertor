@@ -1,1 +1,56 @@
-(()=>{"use strict";var e={607:function(e,o,n){var t=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(o,"__esModule",{value:!0});const r=t(n(17)),i=n(298);let a=null;function l(){a=new i.BrowserWindow({webPreferences:{preload:r.default.join(__dirname,"preload.js"),webSecurity:!1,nodeIntegration:!0},minHeight:600,minWidth:960,icon:r.default.join(__dirname,"./assets/logo.png"),show:!1}),a.maximize(),a.loadFile(r.default.join(__dirname,"/../renderer/index.html")),i.Menu.setApplicationMenu(null),i.app.isPackaged,a.on("closed",(()=>{a=null})),a.once("ready-to-show",(()=>{a&&(a.focus(),a.show())}))}i.app.on("ready",l),i.app.on("activate",(()=>{null===a&&l()})),i.app.on("window-all-closed",(()=>{i.app.quit()}))},298:e=>{e.exports=require("electron")},17:e=>{e.exports=require("path")}},o={};!function n(t){var r=o[t];if(void 0!==r)return r.exports;var i=o[t]={exports:{}};return e[t].call(i.exports,i,i.exports,n),i.exports}(607)})();
+const path = require('path')
+const { app, BrowserWindow, Menu } = require('electron')
+
+const WINDOW_WIDTH = __KITTEN4_WINDOW_WIDTH__
+const WINDOW_HEIGHT = __KITTEN4_WINDOW_HEIGHT__
+
+let mainWindow = null
+
+const createWindow = () => {
+  mainWindow = new BrowserWindow({
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+    useContentSize: true,
+    center: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
+      nodeIntegration: true
+    }
+  })
+
+  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'))
+  Menu.setApplicationMenu(null)
+
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools()
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    if (!mainWindow) {
+      return
+    }
+
+    mainWindow.focus()
+    mainWindow.show()
+  })
+}
+
+app.on('ready', createWindow)
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow()
+  }
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})

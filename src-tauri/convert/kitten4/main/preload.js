@@ -1,28 +1,23 @@
-;(() => {
+﻿;(() => {
   'use strict'
-  var A = {
-      298: (A) => {
-        A.exports = require('electron')
-      },
-      344: (A) => {
-        A.exports = JSON.parse('thisisaplacewhichshouldbereplace')
-      }
-    },
-    c = {}
-  function j(n) {
-    var R = c[n]
-    if (void 0 !== R) return R.exports
-    var i = (c[n] = { exports: {} })
-    return A[n](i, i.exports, j), i.exports
-  }
-  ;(() => {
-    const { contextBridge: A } = j(298)
-    let c
-    try {
-      c = j(344)
-    } catch {
-      console.log('加载作品失败, 将加载默认作品'), (c = '')
+
+  const { contextBridge } = require('electron')
+
+  const PROJECT_DATA_BASE64 = '__KITTEN4_PROJECT_DATA_BASE64__'
+  const isTemplatePlaceholder = PROJECT_DATA_BASE64 === '__KITTEN4_PROJECT_DATA_BASE64__'
+
+  let projectData = ''
+  try {
+    if (!isTemplatePlaceholder && PROJECT_DATA_BASE64) {
+      const projectJsonText = Buffer.from(PROJECT_DATA_BASE64, 'base64').toString('utf8')
+      projectData = JSON.parse(projectJsonText)
     }
-    A.exposeInMainWorld('kitten4_player', { bcmc_json: c && JSON.stringify(c) })
-  })()
+  } catch {
+    console.log('加载作品失败，将加载默认作品')
+    projectData = ''
+  }
+
+  contextBridge.exposeInMainWorld('kitten4_player', {
+    bcmc_json: projectData ? JSON.stringify(projectData) : ''
+  })
 })()
