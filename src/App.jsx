@@ -34,6 +34,9 @@ export default function App() {
   const handleStatusChange = (nextStatus) => {
     if (!process) {
       setStatus(nextStatus)
+      if (nextStatus === 'offline' && version === 'kittenN') {
+        setVersion('kitten4')
+      }
     }
   }
 

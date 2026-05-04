@@ -10,5 +10,5 @@ export const loadProjectInfo = async ({ version, status, workId, sourceFilePath 
     return loadOfflineKitten3Project()
   }
 
-  return loadOnlineProject(workId)
+  return loadOnlineProject(workId, version)
 }

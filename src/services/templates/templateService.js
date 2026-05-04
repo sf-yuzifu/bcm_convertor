@@ -4,7 +4,7 @@ import { prepareOnlineTemplate } from './adapters/onlineTemplateAdapter.js'
 
 export const prepareTemplateWorkspace = async ({ version, status, projectInfo }) => {
   if (status === 'online') {
-    return prepareOnlineTemplate(projectInfo)
+    return prepareOnlineTemplate(projectInfo, version)
   }
 
   if (version === 'kitten3') {

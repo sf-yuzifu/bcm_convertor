@@ -24,7 +24,8 @@ fn main() {
             commands::files::read_bcm_project,
             commands::files::copy_dict,
             commands::packaging::run_electron_builder,
-            commands::network::fetch_online_info
+            commands::network::fetch_online_info,
+            commands::network::fetch_kitten_n_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -141,6 +141,7 @@ export default function MainPanel({
   const builderMessageRef = useRef('正在准备转换任务')
   const builderPercentRef = useRef(0)
   const isOfflineKitten3 = status === 'offline' && version === 'kitten3'
+  const isOnlineKittenN = status === 'online' && version === 'kittenN'
   const numericWorkId = Number(workId || 0)
   const activeOutputDirectory = lastOutputDirectory || packageConfig.exportPath
   const activeOutputPath = lastOutputPath || activeOutputDirectory
@@ -431,7 +432,7 @@ export default function MainPanel({
     return status === 'offline' && version === 'kitten3'
       ? '选择 kitten3 作品文件进行转换'
       : `将 ${version} 作品 ID 输入这里进行转换`
-  }, [builderMessage, panelStep, process, status, version])
+  }, [builderMessage, isOnlineKittenN, panelStep, process, status, version])
 
   const showInput = !isOfflineKitten3 && panelStep === 'search'
 
