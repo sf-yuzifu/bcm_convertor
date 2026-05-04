@@ -2,6 +2,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[cfg(target_family = "windows")]
+use std::os::windows::process::CommandExt;
+
 use serde::Serialize;
 use serde_json::Value;
 
@@ -198,8 +201,9 @@ pub fn open_file(path: String) -> Result<(), String> {
 
 #[cfg(target_family = "windows")]
 fn reveal_path_in_system(path: &Path) -> Result<(), String> {
+    let path_str = path.to_string_lossy();
     Command::new("explorer")
-        .arg(format!("/select,\"{}\"", path.display()))
+        .raw_arg(format!("/select,\"{}\"", path_str))
         .spawn()
         .map(|_| ())
         .map_err(|e| format!("打开资源管理器失败: {} ({})", path.display(), e))
