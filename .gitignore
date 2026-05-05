@@ -146,3 +146,6 @@ package-lock.json
 .DS_Store
 
 .tmp-electron-builder-test
+
+# Android build tools test output
+src-tauri/builder/android/test/

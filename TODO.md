@@ -46,12 +46,13 @@
 - [x] 添加默认图标资源（ic_launcher.png，使用 kitten3_player_icon.png）
 - [x] 编译并导出壳 APK 模板（base.apk，约 4.5MB）
 
-### Phase 2: 工具链集成
+### Phase 2: 工具链集成 ✅
 
-- [ ] 下载并内置 Apktool（约 15MB）
-- [ ] 配置 apktool 工作目录结构
-- [ ] 准备调试签名密钥（debug.keystore）
-- [ ] 添加 Java 环境检测（或使用内置 JRE）
+- [x] 下载并内置 Apktool 2.9.3（约 23MB）
+- [x] 配置 apktool 工作目录结构（src-tauri/builder/android/）
+- [x] 准备调试签名密钥（debug.keystore）
+- [x] 创建 apksigner 包装脚本
+- [x] 验证工具链完整流程（反编译 → 重打包 → 签名）
 
 ### Phase 3: 打包服务实现
 
