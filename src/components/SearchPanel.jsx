@@ -14,7 +14,8 @@ export default function SearchPanel({
   onOpenOutput,
   onContinue,
   buttonIcon,
-  buttonText
+  buttonText,
+  isSubmitting
 }) {
   if (process === 2) {
     return (
@@ -64,7 +65,7 @@ export default function SearchPanel({
           type="primary"
           htmlType="button"
           icon={buttonIcon}
-          loading={process === 1}
+          loading={process === 1 || isSubmitting}
           className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out ${
             showInput ? '!w-10 !px-0' : '!w-[112px] !px-4'
           }`}

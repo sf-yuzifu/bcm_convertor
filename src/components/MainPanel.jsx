@@ -136,6 +136,7 @@ export default function MainPanel({
   const [loadedProjectInfo, setLoadedProjectInfo] = useState(null)
   const [lastOutputDirectory, setLastOutputDirectory] = useState('')
   const [lastOutputPath, setLastOutputPath] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const targetPercentRef = useRef(0)
   const builderLogsRef = useRef([])
   const builderMessageRef = useRef('正在准备转换任务')
@@ -585,7 +586,7 @@ export default function MainPanel({
   }
 
   const convert = async () => {
-    if (process === 1) {
+    if (process === 1 || isSubmitting) {
       return
     }
 
@@ -598,11 +599,14 @@ export default function MainPanel({
       return
     }
 
+    setIsSubmitting(true)
     try {
       await openPackageConfigPanel()
     } catch (error) {
       console.error(error)
       await showErrorAlert(error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -660,6 +664,7 @@ export default function MainPanel({
       onContinue={handleContinueConvert}
       buttonIcon={buttonIcon}
       buttonText={buttonText}
+      isSubmitting={isSubmitting}
     />
   )
 }
