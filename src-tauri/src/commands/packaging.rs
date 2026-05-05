@@ -1366,3 +1366,584 @@ pub async fn run_electron_builder(
         stderr,
     })
 }
+
+// Android APK Packaging
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct AndroidBuildContext {
+    workspace_dir: String,
+    output_dir: String,
+    #[allow(dead_code)]
+    export_dir: String,
+    #[allow(dead_code)]
+    product_name: String,
+    artifact_base_name: String,
+    package_name: String,
+    app_name: String,
+    version_code: i32,
+    version_name: String,
+    #[allow(dead_code)]
+    author: String,
+    #[allow(dead_code)]
+    icon_path: Option<String>,
+    work_type: String,
+    work_id: String,
+    asset_entries: Vec<String>,
+    work_files_dir: String,
+}
+
+fn run_apktool_command(
+    app: &AppHandle,
+    apktool_path: &Path,
+    args: &[&str],
+    working_dir: &Path,
+) -> Result<BuilderCommandOutput, String> {
+    let mut command = Command::new("java");
+    command
+        .arg("-jar")
+        .arg(apktool_path)
+        .args(args)
+        .current_dir(working_dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    emit_builder_log(
+        app,
+        OutputStream::Stdout,
+        &format!(
+            "[android-runner] 执行: java -jar {} {}",
+            apktool_path.display(),
+            args.join(" ")
+        ),
+    );
+
+    let mut child = command.spawn().map_err(|e| e.to_string())?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "无法获取 apktool 标准输出".to_string())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "无法获取 apktool 错误输出".to_string())?;
+
+    let (sender, receiver) = mpsc::channel();
+    let stdout_handle = spawn_output_reader(stdout, OutputStream::Stdout, sender.clone());
+    let stderr_handle = spawn_output_reader(stderr, OutputStream::Stderr, sender);
+
+    let mut stdout_text = String::new();
+    let mut stderr_text = String::new();
+    let mut tracker = BuilderStatusTracker::default();
+
+    for message in receiver {
+        emit_builder_log(app, message.stream, &message.line);
+
+        match message.stream {
+            OutputStream::Stdout => push_output(&mut stdout_text, &message.line),
+            OutputStream::Stderr => push_output(&mut stderr_text, &message.line),
+        }
+
+        // Parse Android-specific progress
+        if let Some(progress) = parse_android_progress(&message.line) {
+            emit_builder_status_payload(app, &mut tracker, progress);
+        }
+    }
+
+    let status = child.wait().map_err(|e| e.to_string())?;
+    let _ = stdout_handle.join();
+    let _ = stderr_handle.join();
+
+    Ok(BuilderCommandOutput {
+        status_code: status.code(),
+        stdout: stdout_text,
+        stderr: stderr_text,
+    })
+}
+
+fn parse_android_progress(line: &str) -> Option<BuilderStatusPayload> {
+    let trimmed = line.trim();
+    let lower = trimmed.to_lowercase();
+
+    if lower.contains("using apktool") {
+        return Some(BuilderStatusPayload {
+            stage: "decompile".to_string(),
+            message: "正在初始化 Apktool".to_string(),
+            percent: Some(5.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("loading resource table") {
+        return Some(BuilderStatusPayload {
+            stage: "decompile".to_string(),
+            message: "正在加载资源表".to_string(),
+            percent: Some(10.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("decoding") && lower.contains("resources") {
+        return Some(BuilderStatusPayload {
+            stage: "decompile".to_string(),
+            message: "正在解码资源文件".to_string(),
+            percent: Some(20.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("decoding") && lower.contains("manifest") {
+        return Some(BuilderStatusPayload {
+            stage: "decompile".to_string(),
+            message: "正在解码清单文件".to_string(),
+            percent: Some(30.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("copying assets") || lower.contains("copying libs") {
+        return Some(BuilderStatusPayload {
+            stage: "decompile".to_string(),
+            message: "正在复制资源文件".to_string(),
+            percent: Some(40.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("checking whether sources has changed") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "正在检查源代码变更".to_string(),
+            percent: Some(50.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("smaling") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "正在编译 Smali 代码".to_string(),
+            percent: Some(55.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building resources") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "正在构建资源文件".to_string(),
+            percent: Some(60.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("building apk file") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "正在构建 APK 文件".to_string(),
+            percent: Some(70.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    if lower.contains("built apk") {
+        return Some(BuilderStatusPayload {
+            stage: "build".to_string(),
+            message: "APK 构建完成".to_string(),
+            percent: Some(75.0),
+            detail: Some(trimmed.to_string()),
+        });
+    }
+
+    None
+}
+
+fn find_jarsigner() -> Result<PathBuf, String> {
+    // First check JAVA_HOME
+    if let Ok(java_home) = std::env::var("JAVA_HOME") {
+        let jarsigner_path = PathBuf::from(&java_home).join("bin").join("jarsigner.exe");
+        if jarsigner_path.exists() {
+            return Ok(jarsigner_path);
+        }
+        let jarsigner_path = PathBuf::from(&java_home).join("bin").join("jarsigner");
+        if jarsigner_path.exists() {
+            return Ok(jarsigner_path);
+        }
+    }
+    
+    // Check common JDK locations on Windows
+    #[cfg(target_os = "windows")]
+    {
+        let program_files = std::env::var("ProgramFiles").unwrap_or_else(|_| "C:\\Program Files".to_string());
+        let program_files_x86 = std::env::var("ProgramFiles(x86)").unwrap_or_else(|_| "C:\\Program Files (x86)".to_string());
+        
+        for base in [&program_files, &program_files_x86] {
+            let java_path = PathBuf::from(base).join("Java");
+            if let Ok(entries) = fs::read_dir(&java_path) {
+                for entry in entries.flatten() {
+                    let jdk_path = entry.path();
+                    let jarsigner = jdk_path.join("bin").join("jarsigner.exe");
+                    if jarsigner.exists() {
+                        return Ok(jarsigner);
+                    }
+                }
+            }
+            
+            // Check Eclipse Adoptium / Temurin
+            let eclipse_path = PathBuf::from(base).join("Eclipse Adoptium");
+            if let Ok(entries) = fs::read_dir(&eclipse_path) {
+                for entry in entries.flatten() {
+                    let jdk_path = entry.path();
+                    let jarsigner = jdk_path.join("bin").join("jarsigner.exe");
+                    if jarsigner.exists() {
+                        return Ok(jarsigner);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Try to find in PATH
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, just try "jarsigner" which might work if it's in PATH
+        return Ok(PathBuf::from("jarsigner.exe"));
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        return Ok(PathBuf::from("jarsigner"));
+    }
+}
+
+fn run_jarsigner_command(
+    app: &AppHandle,
+    keystore_path: &Path,
+    apk_path: &Path,
+) -> Result<BuilderCommandOutput, String> {
+    let jarsigner_path = find_jarsigner()?;
+    let mut command = Command::new(&jarsigner_path);
+    command
+        .arg("-verbose")
+        .arg("-sigalg")
+        .arg("SHA256withRSA")
+        .arg("-digestalg")
+        .arg("SHA-256")
+        .arg("-keystore")
+        .arg(keystore_path)
+        .arg("-storepass")
+        .arg("android")
+        .arg("-keypass")
+        .arg("android")
+        .arg(apk_path)
+        .arg("androiddebugkey")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    emit_builder_log(
+        app,
+        OutputStream::Stdout,
+        &format!("[android-runner] 正在签名 APK: {}", apk_path.display()),
+    );
+
+    let output = command.output().map_err(|e| e.to_string())?;
+
+    Ok(BuilderCommandOutput {
+        status_code: if output.status.success() { Some(0) } else { Some(1) },
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    })
+}
+
+fn modify_android_manifest(
+    manifest_path: &Path,
+    package_name: &str,
+    app_name: &str,
+    version_code: i32,
+    version_name: &str,
+) -> Result<(), String> {
+    let content = fs::read_to_string(manifest_path).map_err(|e| e.to_string())?;
+
+    // Replace package name
+    let modified = content
+        .replace(
+            r#"package="moe.yuzifu.bcmshell""#,
+            &format!(r#"package="{}""#, package_name),
+        )
+        .replace(
+            r#"android:versionCode="1""#,
+            &format!(r#"android:versionCode="{}""#, version_code),
+        )
+        .replace(
+            r#"android:versionName="1.0.0""#,
+            &format!(r#"android:versionName="{}""#, version_name),
+        );
+
+    fs::write(manifest_path, modified).map_err(|e| e.to_string())?;
+
+    // Update strings.xml for app name
+    let strings_path = manifest_path
+        .parent()
+        .unwrap()
+        .join("res")
+        .join("values")
+        .join("strings.xml");
+
+    if strings_path.exists() {
+        let strings_content = fs::read_to_string(&strings_path).map_err(|e| e.to_string())?;
+        let modified_strings = strings_content.replace(
+            "<string name=\"app_name\">BCM Shell</string>",
+            &format!("<string name=\"app_name\">{}</string>", app_name),
+        );
+        fs::write(&strings_path, modified_strings).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), String> {
+    fs::create_dir_all(dst).map_err(|e| e.to_string())?;
+    
+    for entry in fs::read_dir(src).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path).map_err(|e| {
+                format!("Failed to copy {} to {}: {}", src_path.display(), dst_path.display(), e)
+            })?;
+        }
+    }
+    
+    Ok(())
+}
+
+fn copy_work_files(
+    asset_entries: &[String],
+    work_files_dir: &Path,
+    assets_dir: &Path,
+) -> Result<(), String> {
+    // Copy asset entries from work_files_dir to assets_dir
+    for entry in asset_entries {
+        let src_path = work_files_dir.join(entry);
+        let dst_path = assets_dir.join(entry);
+        
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else if src_path.is_file() {
+            if let Some(parent) = dst_path.parent() {
+                fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            }
+            fs::copy(&src_path, &dst_path).map_err(|e| {
+                format!("Failed to copy {} to {}: {}", src_path.display(), dst_path.display(), e)
+            })?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn run_android_packaging(
+    app: AppHandle,
+    context_path: String,
+) -> Result<BuilderExecutionResult, String> {
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let android_builder_dir = resource_dir.join("builder").join("android");
+    let source_apktool_path = android_builder_dir.join("apktool.jar");
+    let source_base_apk_path = resource_dir.join("convert").join("android").join("base.apk");
+    let source_keystore_path = android_builder_dir.join("debug.keystore");
+
+    if !source_apktool_path.exists() {
+        return Err(format!(
+            "找不到 apktool: {}",
+            source_apktool_path.display()
+        ));
+    }
+
+    if !source_base_apk_path.exists() {
+        return Err(format!(
+            "找不到基础 APK 模板: {}",
+            source_base_apk_path.display()
+        ));
+    }
+
+    // Read build context
+    let context_content = fs::read_to_string(&context_path).map_err(|e| e.to_string())?;
+    let context: AndroidBuildContext =
+        serde_json::from_str(&context_content).map_err(|e| e.to_string())?;
+
+    let workspace_dir = PathBuf::from(&context.workspace_dir);
+    let output_dir = PathBuf::from(&context.output_dir);
+    let tools_dir = workspace_dir.join("android-tools");
+    let decompiled_dir = output_dir.join("decompiled");
+    let unsigned_apk_path = output_dir.join(format!("{}-unsigned.apk", context.artifact_base_name));
+    let signed_apk_path = output_dir.join(format!("{}.apk", context.artifact_base_name));
+
+    fs::create_dir_all(&output_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&tools_dir).map_err(|e| e.to_string())?;
+
+    // Copy tools to workspace to avoid UNC path issues
+    let apktool_path = tools_dir.join("apktool.jar");
+    let base_apk_path = tools_dir.join("base.apk");
+    let keystore_path = tools_dir.join("debug.keystore");
+    
+    fs::copy(&source_apktool_path, &apktool_path).map_err(|e| format!("复制 apktool 失败: {}", e))?;
+    fs::copy(&source_base_apk_path, &base_apk_path).map_err(|e| format!("复制 base.apk 失败: {}", e))?;
+    if source_keystore_path.exists() {
+        fs::copy(&source_keystore_path, &keystore_path).map_err(|e| format!("复制 keystore 失败: {}", e))?;
+    }
+
+    let mut tracker = BuilderStatusTracker::default();
+
+    // Step 1: Decompile base APK
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "decompile",
+        "正在反编译壳 APK",
+        Some(10.0),
+        None,
+    );
+
+    if decompiled_dir.exists() {
+        fs::remove_dir_all(&decompiled_dir).map_err(|e| e.to_string())?;
+    }
+
+    let decompile_output = run_apktool_command(
+        &app,
+        &apktool_path,
+        &[
+            "d",
+            &base_apk_path.display().to_string(),
+            "-o",
+            &decompiled_dir.display().to_string(),
+            "-f",
+        ],
+        &workspace_dir,
+    )?;
+
+    if decompile_output.status_code.unwrap_or_default() != 0 {
+        return Err(format!(
+            "反编译失败: {}",
+            decompile_output.stderr
+        ));
+    }
+
+    // Step 2: Modify AndroidManifest.xml
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "configure",
+        "正在修改应用配置",
+        Some(40.0),
+        None,
+    );
+
+    let manifest_path = decompiled_dir.join("AndroidManifest.xml");
+    modify_android_manifest(
+        &manifest_path,
+        &context.package_name,
+        &context.app_name,
+        context.version_code,
+        &context.version_name,
+    )?;
+
+    // Step 3: Copy work files
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "assets",
+        "正在复制作品资源",
+        Some(50.0),
+        None,
+    );
+
+    let assets_dir = decompiled_dir.join("assets");
+    let work_files_dir = PathBuf::from(&context.work_files_dir);
+    copy_work_files(&context.asset_entries, &work_files_dir, &assets_dir)?;
+
+    // Step 4: Rebuild APK
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "build",
+        "正在重打包 APK",
+        Some(60.0),
+        None,
+    );
+
+    let build_output = run_apktool_command(
+        &app,
+        &apktool_path,
+        &[
+            "b",
+            &decompiled_dir.display().to_string(),
+            "-o",
+            &unsigned_apk_path.display().to_string(),
+        ],
+        &workspace_dir,
+    )?;
+
+    if build_output.status_code.unwrap_or_default() != 0 {
+        return Err(format!(
+            "重打包失败: {}",
+            build_output.stderr
+        ));
+    }
+
+    // Step 5: Sign APK
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "sign",
+        "正在签名 APK",
+        Some(85.0),
+        None,
+    );
+
+    // Copy unsigned to signed path first
+    fs::copy(&unsigned_apk_path, &signed_apk_path).map_err(|e| e.to_string())?;
+
+    let sign_output = run_jarsigner_command(&app, &keystore_path, &signed_apk_path)?;
+
+    if sign_output.status_code.unwrap_or_default() != 0 {
+        return Err(format!(
+            "签名失败: {}",
+            sign_output.stderr
+        ));
+    }
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&decompiled_dir);
+    let _ = fs::remove_file(&unsigned_apk_path);
+
+    emit_builder_status(
+        &app,
+        &mut tracker,
+        "success",
+        "APK 打包完成",
+        Some(100.0),
+        None,
+    );
+
+    Ok(BuilderExecutionResult {
+        artifact_path: signed_apk_path.display().to_string(),
+        stdout: build_output.stdout,
+        stderr: build_output.stderr,
+    })
+}

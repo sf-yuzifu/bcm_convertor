@@ -12,6 +12,10 @@ export default function PackageConfigPanel({
   onExportPathChange,
   onRoundedIconChange,
   onChooseProjectIcon,
+  onTargetPlatformChange,
+  onPackageNameChange,
+  onVersionCodeChange,
+  onVersionNameChange,
   onBack,
   onSubmit
 }) {
@@ -158,6 +162,63 @@ export default function PackageConfigPanel({
                     disabled={isProcessing}
                   />
                 </label>
+                <div className="flex items-center justify-between">
+                  <span>目标平台：</span>
+                  <div className="flex gap-2">
+                    <Button
+                      type={packageConfig.targetPlatform === 'windows' ? 'primary' : 'default'}
+                      size="small"
+                      onClick={() => onTargetPlatformChange?.('windows')}
+                      disabled={isProcessing}
+                    >
+                      Windows
+                    </Button>
+                    <Button
+                      type={packageConfig.targetPlatform === 'android' ? 'primary' : 'default'}
+                      size="small"
+                      onClick={() => onTargetPlatformChange?.('android')}
+                      disabled={isProcessing}
+                    >
+                      Android APK
+                    </Button>
+                  </div>
+                </div>
+                {packageConfig.targetPlatform === 'android' ? (
+                  <div className="flex flex-col gap-2">
+                    <label className="flex flex-col">
+                      <span>包名：</span>
+                      <Input
+                        value={packageConfig.packageName}
+                        placeholder="如：moe.yuzifu.myapp"
+                        onChange={onPackageNameChange}
+                        disabled={isProcessing}
+                      />
+                    </label>
+                    <div className="flex items-start justify-between gap-4">
+                      <label className="flex flex-col flex-1">
+                        <span>版本号：</span>
+                        <InputNumber
+                          min={1}
+                          max={999999}
+                          step={1}
+                          value={packageConfig.versionCode}
+                          onChange={onVersionCodeChange}
+                          disabled={isProcessing}
+                          className="w-full"
+                        />
+                      </label>
+                      <label className="flex flex-col flex-1">
+                        <span>版本名称：</span>
+                        <Input
+                          value={packageConfig.versionName}
+                          placeholder="如：1.0.0"
+                          onChange={onVersionNameChange}
+                          disabled={isProcessing}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>

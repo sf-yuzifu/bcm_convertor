@@ -2,7 +2,9 @@ package moe.yzf.bcm.shell;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -15,9 +17,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "BCMShell";
     private WebView webView;
     private ProgressBar progressBar;
 
@@ -35,11 +40,17 @@ public class MainActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        
+
+        // Set custom User-Agent (append format-factory identifier)
+        String defaultUserAgent = settings.getUserAgentString();
+        settings.setUserAgentString(defaultUserAgent + " kitten4-format-factory");
+
         // Enable debugging for development
         WebView.setWebContentsDebuggingEnabled(true);
 
@@ -66,10 +77,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                Log.d(TAG, "Page finished loading: " + url);
                 progressBar.setVisibility(View.GONE);
                 
                 // Auto-click play button for kitten4
                 autoClickPlayButton();
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e(TAG, "WebView error: " + errorCode + " - " + description + " - " + failingUrl);
             }
         });
 
@@ -81,6 +99,14 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.VISIBLE);
                 }
             }
+
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d(TAG, "Console [" + consoleMessage.messageLevel() + "] " + 
+                      consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + 
+                      " - " + consoleMessage.message());
+                return true;
+            }
         });
 
         // Load the work from assets
@@ -88,9 +114,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadWork() {
-        // Try to load work from assets/works/index.html
-        // This will be replaced with actual work files during packaging
-        webView.loadUrl("file:///android_asset/works/index.html");
+        // Try different player entry points
+        // kitten3: kitten3/player.html
+        // kitten4: kitten4/renderer/index.html
+        // online: player.html (online loader)
+        
+        String targetUrl = null;
+        
+        // First try kitten3
+        try {
+            getAssets().open("kitten3/player.html");
+            targetUrl = "file:///android_asset/kitten3/player.html";
+            Log.d(TAG, "Loading kitten3 player");
+        } catch (IOException e) {
+            // kitten3 not found, try kitten4
+        }
+        
+        // Try kitten4
+        if (targetUrl == null) {
+            try {
+                getAssets().open("kitten4/renderer/index.html");
+                targetUrl = "file:///android_asset/kitten4/renderer/index.html";
+                Log.d(TAG, "Loading kitten4 player");
+            } catch (IOException e) {
+                // kitten4 not found, try online
+            }
+        }
+        
+        // Fallback to online loader
+        if (targetUrl == null) {
+            targetUrl = "file:///android_asset/player.html";
+            Log.d(TAG, "Loading online player");
+        }
+        
+        Log.d(TAG, "Loading URL: " + targetUrl);
+        webView.loadUrl(targetUrl);
     }
 
     private WebResourceResponse handleAssetRequest(String url) {
@@ -98,14 +156,29 @@ public class MainActivity extends AppCompatActivity {
             // Extract the path after "file:///android_asset/"
             String path = url.substring("file:///android_asset/".length());
             
+            Log.d(TAG, "Handling asset request: " + path);
+            
             // Try to open the asset
             InputStream inputStream = getAssets().open(path);
             
             // Determine MIME type based on file extension
             String mimeType = getMimeType(path);
             
-            return new WebResourceResponse(mimeType, "UTF-8", inputStream);
+            Log.d(TAG, "Serving asset: " + path + " as " + mimeType);
+            
+            // Create response with CORS headers to allow local file access
+            WebResourceResponse response = new WebResourceResponse(mimeType, "UTF-8", inputStream);
+            
+            // Add CORS headers to allow cross-origin requests from file:// URLs
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Access-Control-Allow-Origin", "*");
+            headers.put("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            headers.put("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            response.setResponseHeaders(headers);
+            
+            return response;
         } catch (IOException e) {
+            Log.e(TAG, "Asset not found: " + url + " - " + e.getMessage());
             // Asset not found, let WebView handle it
             return null;
         }

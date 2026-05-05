@@ -54,35 +54,33 @@
 - [x] 创建 apksigner 包装脚本
 - [x] 验证工具链完整流程（反编译 → 重打包 → 签名）
 
-### Phase 3: 打包服务实现
+### Phase 3: 打包服务实现 ✅
 
-- [ ] 创建 `src/services/packagers/androidPackager.js`
-- [ ] 实现 APK 反编译功能（调用 apktool d）
-- [ ] 实现资源替换逻辑：
-  - [ ] 修改 AndroidManifest.xml（包名、应用名、版本号）
-  - [ ] 替换 res/mipmap-\* 图标资源
-  - [ ] 修改 res/values/strings.xml（作者等信息）
-  - [ ] 复制作品资源到 assets/works/ 目录
-- [ ] 实现 APK 重打包（调用 apktool b）
-- [ ] 实现 APK 签名（使用 apksigner 或 jarsigner）
-- [ ] 添加 Rust 后端命令 `run_android_packaging`
+- [x] 创建 `src/services/packagers/androidPackager.js`
+- [x] 实现 APK 反编译功能（调用 apktool d）
+- [x] 实现资源替换逻辑：
+  - [x] 修改 AndroidManifest.xml（包名、应用名、版本号）
+  - [ ] 替换 res/mipmap-\* 图标资源（待实现）
+  - [x] 修改 res/values/strings.xml（应用名）
+  - [x] 复制作品资源到 assets/ 目录 ✅
+- [x] 实现 APK 重打包（调用 apktool b）
+- [x] 实现 APK 签名（使用 jarsigner）
+- [x] 添加 Rust 后端命令 `run_android_packaging`
 
-### Phase 4: 前端集成
+### Phase 4: 前端集成 ✅
 
-- [ ] 在版本选择器中添加 "Android APK" 选项
-- [ ] 添加 APK 打包配置面板：
-  - [ ] 包名输入（反向域名格式，如 moe.yuzifu.myapp）
-  - [ ] 应用名称输入
-  - [ ] 版本号设置（versionCode + versionName）
-  - [ ] 图标选择（支持自适应图标）
-  - [ ] 作者信息
-- [ ] 适配进度显示，支持 Android 打包阶段：
-  - [ ] 反编译壳 APK
-  - [ ] 修改配置信息
-  - [ ] 复制作品资源
-  - [ ] 重打包 APK
-  - [ ] 签名 APK
-- [ ] 添加 Android 平台错误码和错误处理
+- [x] 添加目标平台选择开关（Windows / Android APK）
+- [x] 添加 APK 打包配置面板：
+  - [x] 包名输入（反向域名格式，如 moe.yuzifu.myapp）
+  - [x] 版本号设置（versionCode + versionName）
+- [x] 适配进度显示，支持 Android 打包阶段：
+  - [x] 反编译壳 APK
+  - [x] 修改配置信息
+  - [x] 复制作品资源
+  - [x] 重打包 APK
+  - [x] 签名 APK
+- [ ] 添加 Android 平台错误码和错误处理（复用现有错误处理）
+- [ ] 图标资源替换（待实现）
 
 ### Phase 5: 测试与优化
 

@@ -24,6 +24,7 @@ fn main() {
             commands::files::read_bcm_project,
             commands::files::copy_dict,
             commands::packaging::run_electron_builder,
+            commands::packaging::run_android_packaging,
             commands::network::fetch_online_info,
             commands::network::fetch_kitten_n_info
         ])

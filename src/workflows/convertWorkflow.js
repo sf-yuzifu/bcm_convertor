@@ -26,7 +26,7 @@ export const runConvertWorkflow = async ({ version, status, workId, projectInfo:
     onProgress?.({ stage: 'process-files', message: '正在处理项目文件', percent: 7 })
     await prepareTemplateWorkspace({ version, status, projectInfo })
     onProgress?.({ stage: 'process-files', message: '项目文件处理完成，准备打包', percent: 10 })
-    const packageResult = await packageProject(projectInfo, { onProgress })
+    const packageResult = await packageProject(projectInfo, { onProgress, status, version })
     onProgress?.({ stage: 'success', message: '转换与打包已完成', percent: 100 })
 
     return {

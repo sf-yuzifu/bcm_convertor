@@ -149,3 +149,9 @@ package-lock.json
 
 # Android build tools test output
 src-tauri/builder/android/test/
+
+# Android Gradle cache
+src-tauri/convert/android/shell/.gradle/
+
+# Android local properties (contains SDK path)
+src-tauri/convert/android/shell/local.properties
