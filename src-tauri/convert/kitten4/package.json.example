@@ -1,9 +1,8 @@
 {
   "name": "",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "main/index.js",
   "author": "编程猫",
-  "license": "UNLICENSED",
   "private": true
 }
