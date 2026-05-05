@@ -33,6 +33,37 @@ const createWindow = () => {
     mainWindow.setTitle(app.name)
   })
 
+  
+  // 页面加载完成后自动点击播放按钮
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.executeJavaScript(`
+      (function() {
+        const clickPlayButton = () => {
+          const playBtn = document.querySelector('.CUI-player-cover-play-btn')
+          if (playBtn) {
+            playBtn.click()
+            console.log('[AutoPlay] Play button clicked')
+            return true
+          }
+          return false
+        }
+        
+        // 立即尝试点击
+        if (!clickPlayButton()) {
+          // 如果按钮还没加载，等待后重试
+          const interval = setInterval(() => {
+            if (clickPlayButton()) {
+              clearInterval(interval)
+            }
+          }, 500)
+          
+          // 10秒后停止尝试
+          setTimeout(() => clearInterval(interval), 10000)
+        }
+      })()
+    `).catch(err => console.error('[AutoPlay] Error:', err))
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
