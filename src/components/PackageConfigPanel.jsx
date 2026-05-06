@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Button, Input, InputNumber, Space } from 'antd'
+import { Button, Input, InputNumber, Segmented, Space } from 'antd'
 import { ReloadOutlined, ThunderboltOutlined, UploadOutlined } from '@ant-design/icons'
 
 export default function PackageConfigPanel({
@@ -18,9 +18,12 @@ export default function PackageConfigPanel({
 }) {
   const displayIcon = packageConfig.projectIconPreview || packageConfig.fetchedIconPreview || packageConfig.fetchedIcon
   const isProcessing = process === 1
+  const isAndroid = packageConfig.targetPlatform === 'android'
   const normalizedPercent = Math.min(100, Math.max(0, Math.round(progressPercent || 0)))
-  const previewCornerRadiusPercent = Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius ?? 22)))
-  const circleRadius = 70
+  const previewCornerRadiusPercent = isAndroid
+    ? 0
+    : Math.min(50, Math.max(0, Number(packageConfig.roundedIconRadius ?? 22)))
+  const circleRadius = 80
   const circleLength = 2 * Math.PI * circleRadius
   const circleOffset = circleLength * (1 - normalizedPercent / 100)
   const logContainerRef = useRef(null)
@@ -36,23 +39,23 @@ export default function PackageConfigPanel({
   return (
     <div className="flex h-full w-full items-center justify-center px-6">
       <div className="w-full h-full flex flex-col justify-between">
-        <div className="flex justify-between mt-12 gap-6">
-          <div className="w-[198px] shrink-0">
-            <div className="flex h-[198px] w-[198px] items-center justify-center rounded-xl border border-[var(--app-color-border-muted)]">
-              <div className="relative flex h-[168px] w-[168px] items-center justify-center">
+        <div className="flex justify-between mt-9 gap-6">
+          <div className="w-[222px] shrink-0">
+            <div className="flex h-[222px] w-[222px] items-center justify-center rounded-xl border border-[var(--app-color-border-muted)]">
+              <div className="relative flex h-[192px] w-[192px] items-center justify-center">
                 {isProcessing ? (
-                  <svg viewBox="0 0 168 168" className="-rotate-90 absolute inset-0 h-full w-full" aria-hidden="true">
+                  <svg viewBox="0 0 192 192" className="-rotate-90 absolute inset-0 h-full w-full" aria-hidden="true">
                     <circle
-                      cx="84"
-                      cy="84"
+                      cx="96"
+                      cy="96"
                       r={circleRadius}
                       fill="none"
                       stroke="var(--app-color-ring-track)"
                       strokeWidth="6"
                     />
                     <circle
-                      cx="84"
-                      cy="84"
+                      cx="96"
+                      cy="96"
                       r={circleRadius}
                       fill="none"
                       stroke="var(--app-color-primary)"
@@ -65,21 +68,21 @@ export default function PackageConfigPanel({
                   </svg>
                 ) : null}
                 <div
-                  className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden"
+                  className="flex h-[96px] w-[96px] items-center justify-center overflow-hidden"
                   style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
                 >
                   {displayIcon ? (
                     <img
                       src={displayIcon}
                       alt="作品图标"
-                      className="h-[84px] w-[84px] object-cover"
+                      className="h-[96px] w-[96px] object-cover"
                       style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
                     />
                   ) : (
                     <img
                       src="/icn_upload.png"
                       alt="默认图标"
-                      className="w-[84px] object-contain opacity-90"
+                      className="w-[96px] object-contain opacity-90"
                       style={{ borderRadius: `${previewCornerRadiusPercent}%` }}
                     />
                   )}
@@ -89,7 +92,7 @@ export default function PackageConfigPanel({
           </div>
           <div className="w-[320px]">
             {isProcessing ? (
-              <div className="flex h-[198px] flex-col overflow-hidden rounded-xl bg-[#fff] border border-[var(--app-color-border-muted)]">
+              <div className="flex h-[222px] flex-col overflow-hidden rounded-xl bg-[#fff] border border-[var(--app-color-border-muted)]">
                 <div className="px-3 py-2 text-[13px] font-medium text-[#000]">构建日志</div>
                 <div
                   ref={logContainerRef}
@@ -110,7 +113,7 @@ export default function PackageConfigPanel({
                 </div>
               </div>
             ) : (
-              <div className="flex h-[198px] flex-col justify-between">
+              <div className="flex h-[222px] flex-col justify-between">
                 <label className="flex flex-col">
                   <span>作品名称：</span>
                   <Input
@@ -121,7 +124,7 @@ export default function PackageConfigPanel({
                   />
                 </label>
                 <div className="flex items-start justify-between gap-6">
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col">
                     <span>作品图标：</span>
                     <Button
                       className="w-fit"
@@ -132,16 +135,16 @@ export default function PackageConfigPanel({
                       上传图标
                     </Button>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <span>圆角大小：</span>
+                  <div className="flex flex-col">
+                    <span className={isAndroid ? 'text-[var(--app-color-text-disabled,#9ca3af)]' : ''}>圆角大小：</span>
                     <Space.Compact>
                       <InputNumber
                         min={0}
                         max={50}
                         step={1}
-                        value={packageConfig.roundedIconRadius}
-                        onChange={onRoundedIconChange}
-                        disabled={isProcessing}
+                        value={isAndroid ? 0 : packageConfig.roundedIconRadius}
+                        onChange={isAndroid ? undefined : onRoundedIconChange}
+                        disabled={isProcessing || isAndroid}
                         className="w-[72px]"
                       />
                       <Button disabled className="!cursor-default !text-[var(--app-color-text-secondary,#6b7280)]">
@@ -161,24 +164,15 @@ export default function PackageConfigPanel({
                 </label>
                 <div className="flex items-center justify-between">
                   <span>目标平台：</span>
-                  <div className="flex gap-2">
-                    <Button
-                      type={packageConfig.targetPlatform === 'windows' ? 'primary' : 'default'}
-                      size="small"
-                      onClick={() => onTargetPlatformChange?.('windows')}
-                      disabled={isProcessing}
-                    >
-                      Windows
-                    </Button>
-                    <Button
-                      type={packageConfig.targetPlatform === 'android' ? 'primary' : 'default'}
-                      size="small"
-                      onClick={() => onTargetPlatformChange?.('android')}
-                      disabled={isProcessing}
-                    >
-                      Android APK
-                    </Button>
-                  </div>
+                  <Segmented
+                    value={packageConfig.targetPlatform}
+                    onChange={onTargetPlatformChange}
+                    disabled={isProcessing}
+                    options={[
+                      { label: 'Windows EXE', value: 'windows' },
+                      { label: 'Android APK', value: 'android' }
+                    ]}
+                  />
                 </div>
               </div>
             )}
