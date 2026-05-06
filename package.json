@@ -24,6 +24,7 @@
     "@tauri-apps/plugin-os": "^2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "antd": "^6.3.6",
+    "pinyin": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sweetalert": "^2.1.2"

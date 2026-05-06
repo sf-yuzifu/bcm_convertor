@@ -1656,19 +1656,17 @@ fn modify_android_manifest(
 ) -> Result<(), String> {
     let content = fs::read_to_string(manifest_path).map_err(|e| e.to_string())?;
 
-    // Replace package name
     let modified = content
         .replace(
-            r#"package="moe.yuzifu.bcmshell""#,
+            r#"package="moe.yzf.bcm.shell""#,
             &format!(r#"package="{}""#, package_name),
         )
         .replace(
-            r#"android:versionCode="1""#,
-            &format!(r#"android:versionCode="{}""#, version_code),
-        )
-        .replace(
-            r#"android:versionName="1.0.0""#,
-            &format!(r#"android:versionName="{}""#, version_name),
+            "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"",
+            &format!(
+                "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"{}\"\n    android:versionName=\"{}\"",
+                version_code, version_name
+            ),
         );
 
     fs::write(manifest_path, modified).map_err(|e| e.to_string())?;

@@ -298,15 +298,24 @@ const ensureReleaseKeystore = () => {
     keytoolBinary,
     [
       '-genkeypair',
-      '-alias', RELEASE_KEY_ALIAS,
-      '-keyalg', 'RSA',
-      '-keysize', '2048',
-      '-validity', '10950',
-      '-keystore', releaseKeystorePath,
-      '-storetype', 'PKCS12',
-      '-storepass', RELEASE_KEYSTORE_PASS,
-      '-keypass', RELEASE_KEYSTORE_PASS,
-      '-dname', dname
+      '-alias',
+      RELEASE_KEY_ALIAS,
+      '-keyalg',
+      'RSA',
+      '-keysize',
+      '2048',
+      '-validity',
+      '10950',
+      '-keystore',
+      releaseKeystorePath,
+      '-storetype',
+      'PKCS12',
+      '-storepass',
+      RELEASE_KEYSTORE_PASS,
+      '-keypass',
+      RELEASE_KEYSTORE_PASS,
+      '-dname',
+      dname
     ],
     { stdio: 'inherit' }
   )

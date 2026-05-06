@@ -1,6 +1,7 @@
 import { basename, join } from '@tauri-apps/api/path'
 import { mkdir, readFile, readTextFile, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { type } from '@tauri-apps/plugin-os'
+import pinyin from 'pinyin'
 
 import { copyPath } from '../files/fileTransferService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
@@ -25,13 +26,32 @@ const sanitizeArtifactName = (value) => {
   return sanitized.slice(0, 120) || 'bcm-project'
 }
 
-const sanitizePackageName = (value) => {
-  const normalized = String(value || '')
+const pinyinify = (value) => {
+  const result = pinyin(String(value || ''), { style: pinyin.STYLE_NORMAL })
+  return Array.isArray(result) ? result.flat().join('') : result
+}
+
+const generatePackageName = (projectName) => {
+  const pinyinName = pinyinify(projectName)
+  const sanitized = String(pinyinName || '')
     .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '')
     .replace(/^-+|-+$/g, '')
 
-  return normalized || 'bcm.project'
+  return sanitized ? `moe.yzf.${sanitized}` : `moe.yzf.work${Date.now().toString(36)}`
+}
+
+const generateVersionCode = () => Math.floor(Date.now() / 1000)
+
+const generateVersionName = () => {
+  const now = new Date()
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0')
+  ].join('.')
 }
 
 const normalizeOptionalPath = (value) => {
@@ -163,12 +183,10 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
   const artifactBaseName = sanitizeArtifactName(projectInfo.name)
   const exportDir = projectInfo.packageConfig?.exportPath?.trim() || desktopDirPath
 
-  const packageName =
-    projectInfo.packageConfig?.packageName?.trim() || `moe.yuzifu.${sanitizePackageName(projectInfo.name)}`
-  const appName = projectInfo.packageConfig?.appName?.trim() || projectInfo.name
-  const versionCode = projectInfo.packageConfig?.versionCode || 1
-  const versionName = projectInfo.packageConfig?.versionName || '1.0.0'
-  const author = projectInfo.packageConfig?.author?.trim() || 'Unknown'
+  const packageName = generatePackageName(projectInfo.name)
+  const appName = projectInfo.name
+  const versionCode = generateVersionCode()
+  const versionName = generateVersionName()
 
   const iconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
 
@@ -187,7 +205,7 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
     app_name: appName,
     version_code: versionCode,
     version_name: versionName,
-    author,
+    author: 'BCM Convertor',
     icon_path: iconPath,
     work_type: status === 'online' ? 'online' : version,
     work_id: String(projectInfo.id || projectInfo.workId || ''),

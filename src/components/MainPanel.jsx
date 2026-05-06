@@ -55,10 +55,7 @@ const createEmptyPackageConfig = () => ({
   fetchedIcon: '',
   fetchedIconPreview: '',
   roundedIconRadius: 22,
-  targetPlatform: 'windows',
-  packageName: '',
-  versionCode: 1,
-  versionName: '1.0.0'
+  targetPlatform: 'windows'
 })
 
 const MAX_BUILDER_LOG_LINES = 400
@@ -503,21 +500,6 @@ export default function MainPanel({
     updatePackageConfig({ targetPlatform: platform })
   }
 
-  const handlePackageNameChange = (event) => {
-    updatePackageConfig({ packageName: event.target.value })
-  }
-
-  const handleVersionCodeChange = (value) => {
-    const numericValue = Number(value)
-    updatePackageConfig({
-      versionCode: Number.isFinite(numericValue) ? Math.min(999999, Math.max(1, numericValue)) : 1
-    })
-  }
-
-  const handleVersionNameChange = (event) => {
-    updatePackageConfig({ versionName: event.target.value })
-  }
-
   const handleChooseProjectIcon = async () => {
     const selectedIcon = await chooseProjectIconFile()
     if (!selectedIcon) {
@@ -668,9 +650,6 @@ export default function MainPanel({
         onRoundedIconChange={handleRoundedIconChange}
         onChooseProjectIcon={handleChooseProjectIcon}
         onTargetPlatformChange={handleTargetPlatformChange}
-        onPackageNameChange={handlePackageNameChange}
-        onVersionCodeChange={handleVersionCodeChange}
-        onVersionNameChange={handleVersionNameChange}
         onBack={handleBackToSearch}
         onSubmit={handleSubmitPackageConfig}
       />
