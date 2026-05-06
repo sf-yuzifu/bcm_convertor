@@ -1393,13 +1393,43 @@ struct AndroidBuildContext {
     work_files_dir: String,
 }
 
+#[cfg(target_os = "windows")]
+fn get_java_binary_name() -> &'static str {
+    "java.exe"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_java_binary_name() -> &'static str {
+    "java"
+}
+
+fn find_bundled_java(resource_dir: &Path) -> Result<PathBuf, String> {
+    let java_name = get_java_binary_name();
+    let jre_java = resource_dir
+        .join("builder")
+        .join("android")
+        .join("jre")
+        .join("bin")
+        .join(java_name);
+
+    if jre_java.exists() {
+        return Ok(jre_java);
+    }
+
+    Err(format!(
+        "找不到内置 JRE，请运行 yarn prepare:android 下载。\n期望路径: {}",
+        jre_java.display()
+    ))
+}
+
 fn run_apktool_command(
     app: &AppHandle,
+    java_path: &Path,
     apktool_path: &Path,
     args: &[&str],
     working_dir: &Path,
 ) -> Result<BuilderCommandOutput, String> {
-    let mut command = Command::new("java");
+    let mut command = Command::new(java_path);
     command
         .arg("-jar")
         .arg(apktool_path)
@@ -1418,7 +1448,8 @@ fn run_apktool_command(
         app,
         OutputStream::Stdout,
         &format!(
-            "[android-runner] 执行: java -jar {} {}",
+            "[android-runner] 执行: {} -jar {} {}",
+            java_path.display(),
             apktool_path.display(),
             args.join(" ")
         ),
@@ -1564,84 +1595,30 @@ fn parse_android_progress(line: &str) -> Option<BuilderStatusPayload> {
     None
 }
 
-fn find_jarsigner() -> Result<PathBuf, String> {
-    // First check JAVA_HOME
-    if let Ok(java_home) = std::env::var("JAVA_HOME") {
-        let jarsigner_path = PathBuf::from(&java_home).join("bin").join("jarsigner.exe");
-        if jarsigner_path.exists() {
-            return Ok(jarsigner_path);
-        }
-        let jarsigner_path = PathBuf::from(&java_home).join("bin").join("jarsigner");
-        if jarsigner_path.exists() {
-            return Ok(jarsigner_path);
-        }
-    }
-    
-    // Check common JDK locations on Windows
-    #[cfg(target_os = "windows")]
-    {
-        let program_files = std::env::var("ProgramFiles").unwrap_or_else(|_| "C:\\Program Files".to_string());
-        let program_files_x86 = std::env::var("ProgramFiles(x86)").unwrap_or_else(|_| "C:\\Program Files (x86)".to_string());
-        
-        for base in [&program_files, &program_files_x86] {
-            let java_path = PathBuf::from(base).join("Java");
-            if let Ok(entries) = fs::read_dir(&java_path) {
-                for entry in entries.flatten() {
-                    let jdk_path = entry.path();
-                    let jarsigner = jdk_path.join("bin").join("jarsigner.exe");
-                    if jarsigner.exists() {
-                        return Ok(jarsigner);
-                    }
-                }
-            }
-            
-            // Check Eclipse Adoptium / Temurin
-            let eclipse_path = PathBuf::from(base).join("Eclipse Adoptium");
-            if let Ok(entries) = fs::read_dir(&eclipse_path) {
-                for entry in entries.flatten() {
-                    let jdk_path = entry.path();
-                    let jarsigner = jdk_path.join("bin").join("jarsigner.exe");
-                    if jarsigner.exists() {
-                        return Ok(jarsigner);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Try to find in PATH
-    #[cfg(target_os = "windows")]
-    {
-        // On Windows, just try "jarsigner" which might work if it's in PATH
-        return Ok(PathBuf::from("jarsigner.exe"));
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        return Ok(PathBuf::from("jarsigner"));
-    }
-}
-
-fn run_jarsigner_command(
+fn run_apksigner_command(
     app: &AppHandle,
+    java_path: &Path,
+    apksigner_path: &Path,
     keystore_path: &Path,
-    apk_path: &Path,
+    unsigned_apk_path: &Path,
+    signed_apk_path: &Path,
 ) -> Result<BuilderCommandOutput, String> {
-    let jarsigner_path = find_jarsigner()?;
-    let mut command = Command::new(&jarsigner_path);
+    let mut command = Command::new(java_path);
     command
-        .arg("-verbose")
-        .arg("-sigalg")
-        .arg("SHA256withRSA")
-        .arg("-digestalg")
-        .arg("SHA-256")
-        .arg("-keystore")
+        .arg("-jar")
+        .arg(apksigner_path)
+        .arg("sign")
+        .arg("--ks")
         .arg(keystore_path)
-        .arg("-storepass")
-        .arg("android")
-        .arg("-keypass")
-        .arg("android")
-        .arg(apk_path)
-        .arg("androiddebugkey")
+        .arg("--ks-pass")
+        .arg("pass:bcmconvertor")
+        .arg("--ks-key-alias")
+        .arg("bcmkey")
+        .arg("--key-pass")
+        .arg("pass:bcmconvertor")
+        .arg("--out")
+        .arg(signed_apk_path)
+        .arg(unsigned_apk_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
@@ -1654,7 +1631,11 @@ fn run_jarsigner_command(
     emit_builder_log(
         app,
         OutputStream::Stdout,
-        &format!("[android-runner] 正在签名 APK: {}", apk_path.display()),
+        &format!(
+            "[android-runner] 正在签名 APK: {} -> {}",
+            unsigned_apk_path.display(),
+            signed_apk_path.display()
+        ),
     );
 
     let output = command.output().map_err(|e| e.to_string())?;
@@ -1766,7 +1747,8 @@ pub async fn run_android_packaging(
     let android_builder_dir = resource_dir.join("builder").join("android");
     let source_apktool_path = android_builder_dir.join("apktool.jar");
     let source_base_apk_path = resource_dir.join("convert").join("android").join("base.apk");
-    let source_keystore_path = android_builder_dir.join("debug.keystore");
+    let source_keystore_path = android_builder_dir.join("release.keystore");
+    let source_apksigner_path = android_builder_dir.join("apksigner.jar");
 
     if !source_apktool_path.exists() {
         return Err(format!(
@@ -1781,6 +1763,22 @@ pub async fn run_android_packaging(
             source_base_apk_path.display()
         ));
     }
+
+    if !source_apksigner_path.exists() {
+        return Err(format!(
+            "找不到 apksigner: {}\n请将 apksigner.jar (来自 Android SDK build-tools) 放入此目录",
+            source_apksigner_path.display()
+        ));
+    }
+
+    if !source_keystore_path.exists() {
+        return Err(format!(
+            "找不到 release keystore: {}\n请运行 yarn prepare:android 自动生成",
+            source_keystore_path.display()
+        ));
+    }
+
+    let java_path = find_bundled_java(&resource_dir)?;
 
     // Read build context
     let context_content = fs::read_to_string(&context_path).map_err(|e| e.to_string())?;
@@ -1799,10 +1797,12 @@ pub async fn run_android_packaging(
 
     // Copy tools to workspace to avoid UNC path issues
     let apktool_path = tools_dir.join("apktool.jar");
+    let apksigner_path = tools_dir.join("apksigner.jar");
     let base_apk_path = tools_dir.join("base.apk");
-    let keystore_path = tools_dir.join("debug.keystore");
+    let keystore_path = tools_dir.join("release.keystore");
     
     fs::copy(&source_apktool_path, &apktool_path).map_err(|e| format!("复制 apktool 失败: {}", e))?;
+    fs::copy(&source_apksigner_path, &apksigner_path).map_err(|e| format!("复制 apksigner 失败: {}", e))?;
     fs::copy(&source_base_apk_path, &base_apk_path).map_err(|e| format!("复制 base.apk 失败: {}", e))?;
     if source_keystore_path.exists() {
         fs::copy(&source_keystore_path, &keystore_path).map_err(|e| format!("复制 keystore 失败: {}", e))?;
@@ -1826,6 +1826,7 @@ pub async fn run_android_packaging(
 
     let decompile_output = run_apktool_command(
         &app,
+        &java_path,
         &apktool_path,
         &[
             "d",
@@ -1889,6 +1890,7 @@ pub async fn run_android_packaging(
 
     let build_output = run_apktool_command(
         &app,
+        &java_path,
         &apktool_path,
         &[
             "b",
@@ -1916,10 +1918,14 @@ pub async fn run_android_packaging(
         None,
     );
 
-    // Copy unsigned to signed path first
-    fs::copy(&unsigned_apk_path, &signed_apk_path).map_err(|e| e.to_string())?;
-
-    let sign_output = run_jarsigner_command(&app, &keystore_path, &signed_apk_path)?;
+    let sign_output = run_apksigner_command(
+        &app,
+        &java_path,
+        &apksigner_path,
+        &keystore_path,
+        &unsigned_apk_path,
+        &signed_apk_path,
+    )?;
 
     if sign_output.status_code.unwrap_or_default() != 0 {
         return Err(format!(

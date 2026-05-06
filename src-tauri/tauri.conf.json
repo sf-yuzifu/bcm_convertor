@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "yarn prepare:builder && yarn dev",
-    "beforeBuildCommand": "yarn prepare:builder && yarn build",
+    "beforeDevCommand": "yarn prepare:android && yarn prepare:builder && yarn dev",
+    "beforeBuildCommand": "yarn prepare:android && yarn prepare:builder && yarn build",
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420"
   },

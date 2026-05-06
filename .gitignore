@@ -155,3 +155,9 @@ src-tauri/convert/android/shell/.gradle/
 
 # Android local properties (contains SDK path)
 src-tauri/convert/android/shell/local.properties
+
+# Bundled Android JRE (downloaded by prepare-android.mjs)
+src-tauri/builder/android/jre/
+
+# Android keystores (auto-generated, never commit)
+src-tauri/builder/android/*.keystore

@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "prepare:builder": "node ./src-tauri/builder/scripts/prepare-builder.mjs",
+    "prepare:android": "node ./src-tauri/builder/scripts/prepare-android.mjs",
+    "prepare:all": "yarn prepare:android && yarn prepare:builder",
     "dev": "vite",
     "build": "vite build",
     "format": "prettier . --write --ignore-unknown",
