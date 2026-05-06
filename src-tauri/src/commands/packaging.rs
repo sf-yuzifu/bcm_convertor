@@ -1385,7 +1385,6 @@ struct AndroidBuildContext {
     version_name: String,
     #[allow(dead_code)]
     author: String,
-    #[allow(dead_code)]
     icon_path: Option<String>,
     work_type: String,
     work_id: String,
@@ -1875,6 +1874,38 @@ pub async fn run_android_packaging(
     let assets_dir = decompiled_dir.join("assets");
     let work_files_dir = PathBuf::from(&context.work_files_dir);
     copy_work_files(&context.asset_entries, &work_files_dir, &assets_dir)?;
+
+    // Step 3.5: Replace app icon in mipmap directories
+    if let Some(ref icon_rel_path) = context.icon_path {
+        emit_builder_status(
+            &app,
+            &mut tracker,
+            "assets",
+            "正在更新应用图标",
+            Some(55.0),
+            None,
+        );
+
+        let icon_path = work_files_dir.join(icon_rel_path);
+        if icon_path.exists() {
+            let res_dir = decompiled_dir.join("res");
+            let densities = [
+                ("mipmap-mdpi"),
+                ("mipmap-hdpi"),
+                ("mipmap-xhdpi"),
+                ("mipmap-xxhdpi"),
+                ("mipmap-xxxhdpi"),
+            ];
+
+            for density in densities {
+                let dest = res_dir.join(density).join("ic_launcher.png");
+                if let Some(parent) = dest.parent() {
+                    let _ = fs::create_dir_all(parent);
+                }
+                let _ = fs::copy(&icon_path, &dest);
+            }
+        }
+    }
 
     // Step 4: Rebuild APK
     emit_builder_status(

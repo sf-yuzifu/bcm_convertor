@@ -343,6 +343,8 @@ const createBuildContext = async (projectInfo, osType) => {
   }
 }
 
+export { convertImageBytesToPng, isRemoteHttpUrl }
+
 export const packageWithElectronBuilder = async (projectInfo, { onProgress } = {}) => {
   const osType = await type()
   const buildContext = await createBuildContext(projectInfo, osType)

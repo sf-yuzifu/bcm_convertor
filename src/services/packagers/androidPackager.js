@@ -1,5 +1,6 @@
 import { basename, join } from '@tauri-apps/api/path'
 import { mkdir, readFile, readTextFile, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { fetch } from '@tauri-apps/plugin-http'
 import { type } from '@tauri-apps/plugin-os'
 import pinyin from 'pinyin'
 
@@ -7,6 +8,8 @@ import { copyPath } from '../files/fileTransferService.js'
 import { invokeBackendCommand } from '../system/backendCommandService.js'
 import { getEnv } from '../system/runtimeService.js'
 import { getConvertHome } from '../workspace/pathService.js'
+import { detectImageFormat } from '../packageConfig/packageConfigService.js'
+import { convertImageBytesToPng, isRemoteHttpUrl } from './electronBuilderPackager.js'
 
 const ANDROID_CONTEXT_FILE_NAME = '.bcm-android-builder-context.json'
 
@@ -64,6 +67,39 @@ const generateVersionName = () => {
 const normalizeOptionalPath = (value) => {
   const normalized = String(value || '').trim()
   return normalized || undefined
+}
+
+const processAndroidIcon = async (projectInfo, workFilesDir) => {
+  const iconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
+  const fetchedIcon = projectInfo.packageConfig?.fetchedIcon
+
+  try {
+    if (iconPath) {
+      const iconBytes = await readFile(iconPath)
+      const detectedFormat = detectImageFormat(iconBytes, iconPath)
+      const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType, { squareIcon: true })
+      const destPath = await join(workFilesDir, 'android-icon.png')
+      await writeFile(destPath, pngBytes)
+      return 'android-icon.png'
+    }
+
+    if (isRemoteHttpUrl(fetchedIcon)) {
+      const response = await fetch(fetchedIcon, { method: 'GET' })
+      if (!response.ok) {
+        throw new Error(`下载封面图失败: ${response.status}`)
+      }
+      const bytes = new Uint8Array(await response.arrayBuffer())
+      const { mimeType } = detectImageFormat(bytes, fetchedIcon)
+      const pngBytes = await convertImageBytesToPng(bytes, mimeType, { squareIcon: true })
+      const destPath = await join(workFilesDir, 'android-icon.png')
+      await writeFile(destPath, pngBytes)
+      return 'android-icon.png'
+    }
+  } catch (error) {
+    console.warn('处理 Android 图标失败，将使用默认图标:', error)
+  }
+
+  return undefined
 }
 
 const prepareWorkFiles = async (projectInfo, workDir, resourceDir, status, version) => {
@@ -195,11 +231,10 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
   const versionCode = generateVersionCode()
   const versionName = generateVersionName()
 
-  const iconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
-
   // Prepare work files
   const workFilesDir = await join(workspaceDir, 'android-work-files')
   await mkdir(workFilesDir, { recursive: true })
+  const iconPath = await processAndroidIcon(projectInfo, workFilesDir)
   const assetEntries = await prepareWorkFiles(projectInfo, workFilesDir, resourceDirPath, status, version)
 
   return {
