@@ -247,15 +247,21 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
         .ok_or_else(|| "missing name".to_string())?
         .to_string();
 
-    let works_preview = match client.get(works_url).send().await {
+    let (works_preview, author_nickname) = match client.get(works_url).send().await {
         Ok(response) if response.status().is_success() => {
             let works_json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-            ["preview", "screenshot_cover_url", "cover_url", "cover", "thumbnail"]
+            let preview = ["preview", "screenshot_cover_url", "cover_url", "cover", "thumbnail"]
                 .iter()
                 .find_map(|key| works_json.get(key).and_then(|v| v.as_str()))
-                .map(str::to_string)
+                .map(str::to_string);
+            let author = works_json
+                .get("user_info")
+                .and_then(|u| u.get("nickname"))
+                .and_then(|v| v.as_str())
+                .map(str::to_string);
+            (preview, author)
         }
-        Ok(_) | Err(_) => None,
+        Ok(_) | Err(_) => (None, None),
     };
 
     let preview = works_preview.or_else(|| {
@@ -287,9 +293,15 @@ pub async fn fetch_online_info(workid: u64) -> Result<OnlineInfo, String> {
         .map_err(|e| e.to_string())?;
     let data_status = data_res.status();
     let data_text = data_res.text().await.map_err(|e| e.to_string())?;
-    let data_json = parse_json_with_unbounded_depth(&data_text)?;
+    let mut data_json = parse_json_with_unbounded_depth(&data_text)?;
     if !data_status.is_success() {
         return Err(format!("data status={} body={}", data_status, data_text));
+    }
+
+    if let Some(author) = author_nickname {
+        if let Some(obj) = data_json.as_object_mut() {
+            obj.insert("author_nickname".to_string(), serde_json::Value::String(author));
+        }
     }
 
     Ok(OnlineInfo {
