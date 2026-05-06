@@ -27,31 +27,38 @@ const sanitizeArtifactName = (value) => {
 }
 
 const pinyinify = (value) => {
-  const result = pinyin(String(value || ''), { style: pinyin.STYLE_NORMAL })
-  return Array.isArray(result) ? result.flat().join('') : result
+  const str = String(value || '')
+  if (!str.trim()) return ''
+  const result = pinyin(str, { style: pinyin.STYLE_NORMAL })
+  return Array.isArray(result) ? result.flat().join('') : str
 }
 
-const generatePackageName = (projectName) => {
-  const pinyinName = pinyinify(projectName)
-  const sanitized = String(pinyinName || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '')
-    .replace(/^-+|-+$/g, '')
+const generatePackageName = (projectInfo) => {
+  const authorName = projectInfo.data?.author_nickname || projectInfo.data?.user_info?.nickname || 'bcm'
+  const pinyinAuthor = pinyinify(authorName)
+  const safeAuthor =
+    String(pinyinAuthor || 'bcm')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '')
+      .replace(/^-+|-+$/g, '') || 'bcm'
 
-  return sanitized ? `moe.yzf.${sanitized}` : `moe.yzf.work${Date.now().toString(36)}`
+  const pinyinProject = pinyinify(projectInfo.name)
+  const safeProject =
+    String(pinyinProject || 'work')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '')
+      .replace(/^-+|-+$/g, '') || 'work'
+
+  return `com.${safeAuthor}.${safeProject}`
 }
 
 const generateVersionCode = () => Math.floor(Date.now() / 1000)
 
 const generateVersionName = () => {
   const now = new Date()
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-    String(now.getHours()).padStart(2, '0'),
-    String(now.getMinutes()).padStart(2, '0')
-  ].join('.')
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join(
+    '-'
+  )
 }
 
 const normalizeOptionalPath = (value) => {
@@ -183,7 +190,7 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
   const artifactBaseName = sanitizeArtifactName(projectInfo.name)
   const exportDir = projectInfo.packageConfig?.exportPath?.trim() || desktopDirPath
 
-  const packageName = generatePackageName(projectInfo.name)
+  const packageName = generatePackageName(projectInfo)
   const appName = projectInfo.name
   const versionCode = generateVersionCode()
   const versionName = generateVersionName()
