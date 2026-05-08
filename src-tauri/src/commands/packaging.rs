@@ -933,11 +933,6 @@ async fn ensure_node_runtime(app: &AppHandle, resource_dir: &Path) -> Result<Pat
         }
     }
 
-    // Try system PATH
-    if Command::new(get_node_binary_name()).arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
-        return Ok(PathBuf::from(get_node_binary_name()));
-    }
-
     // Download
     download_and_extract_node(app, &node_path).await?;
     if !node_path.exists() {
@@ -948,13 +943,7 @@ async fn ensure_node_runtime(app: &AppHandle, resource_dir: &Path) -> Result<Pat
 }
 
 fn resolve_node_sync(resource_dir: &Path) -> Result<PathBuf, String> {
-    for candidate in resource_node_candidates(resource_dir) {
-        if candidate.exists() { return Ok(candidate); }
-    }
-    if Command::new(get_node_binary_name()).arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
-        return Ok(PathBuf::from(get_node_binary_name()));
-    }
-    // Try app data runtime dir (cached by earlier download)
+    // App data cache (downloaded by earlier async ensure_node_runtime)
     #[cfg(target_os = "windows")]
     {
         if let Ok(app_data) = std::env::var("LOCALAPPDATA") {
@@ -974,7 +963,13 @@ fn resolve_node_sync(resource_dir: &Path) -> Result<PathBuf, String> {
             if cached.exists() { return Ok(cached); }
         }
     }
-    Err("找不到 Node.js 运行时".to_string())
+
+    // Fallback: bundled resource dir (dev mode)
+    for candidate in resource_node_candidates(resource_dir) {
+        if candidate.exists() { return Ok(candidate); }
+    }
+
+    Err("找不到 Node.js 运行时，请重新启动应用重试".to_string())
 }
 
 fn run_builder_process(
