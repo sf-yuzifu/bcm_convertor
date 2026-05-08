@@ -1510,11 +1510,12 @@ fn generate_keystore(java_path: &Path, dest: &Path) -> Result<(), String> {
     let password = "bcmconvertor";
     let dname = "CN=BCM Convertor";
 
-    let status = Command::new(
+    let mut command = Command::new(
         java_path.parent()
             .unwrap()
             .join(if cfg!(target_os = "windows") { "keytool.exe" } else { "keytool" })
-    )
+    );
+    command
     .args([
         "-genkeypair",
         "-alias", alias,
@@ -1528,7 +1529,15 @@ fn generate_keystore(java_path: &Path, dest: &Path) -> Result<(), String> {
         "-dname", dname,
     ])
     .stdout(Stdio::null())
-    .stderr(Stdio::null())
+    .stderr(Stdio::null());
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let status = command
     .status()
     .map_err(|e| e.to_string())?;
 
