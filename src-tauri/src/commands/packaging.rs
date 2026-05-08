@@ -1547,23 +1547,15 @@ fn generate_keystore(java_path: &Path, dest: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn ensure_keystore(app: &AppHandle, java_path: &Path) -> Result<PathBuf, String> {
+fn ensure_keystore(app: &AppHandle, java_path: &Path, package_name: &str) -> Result<PathBuf, String> {
     let runtime_dir = get_app_runtime_dir(app)?;
-    let keystore_path = runtime_dir.join("release.keystore");
+    let keystore_name = format!("release.{}.keystore", package_name);
+    let keystore_path = runtime_dir.join(&keystore_name);
 
     if keystore_path.exists() {
         return Ok(keystore_path);
     }
 
-    // Try resource dir
-    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
-    let resource_keystore = resource_dir.join("builder").join("android").join("release.keystore");
-    if resource_keystore.exists() {
-        fs::copy(&resource_keystore, &keystore_path).map_err(|e| e.to_string())?;
-        return Ok(keystore_path);
-    }
-
-    // Generate new
     generate_keystore(java_path, &keystore_path)?;
     if !keystore_path.exists() {
         return Err("签名密钥生成失败".to_string());
@@ -2140,19 +2132,13 @@ pub async fn run_android_packaging(
     }
 
     let java_path = ensure_java_runtime(&app, &resource_dir).await?;
-    let source_keystore_path = ensure_keystore(&app, &java_path)?;
-
-    if !source_keystore_path.exists() {
-        return Err(format!(
-            "找不到 release keystore: {}\n请运行 yarn prepare:android 自动生成",
-            source_keystore_path.display()
-        ));
-    }
 
     // Read build context
     let context_content = fs::read_to_string(&context_path).map_err(|e| e.to_string())?;
     let context: AndroidBuildContext =
         serde_json::from_str(&context_content).map_err(|e| e.to_string())?;
+
+    let source_keystore_path = ensure_keystore(&app, &java_path, &context.package_name)?;
 
     let workspace_dir = PathBuf::from(&context.workspace_dir);
     let output_dir = PathBuf::from(&context.output_dir);
