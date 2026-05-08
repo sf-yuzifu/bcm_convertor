@@ -4,14 +4,9 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { pipeline } from 'node:stream/promises'
-import { randomUUID } from 'node:crypto'
 
 const ADOPTIUM_API_BASE = 'https://api.adoptium.net/v3/binary/latest'
-const RELEASE_KEYSTORE_PASS = 'bcmconvertor'
-const RELEASE_KEY_ALIAS = 'bcmkey'
-
 const TUNA_MIRROR = 'https://mirrors.tuna.tsinghua.edu.cn/Adoptium'
-const GITHUB_MIRROR = process.env.BCM_GITHUB_MIRROR || ''
 
 const rewriteDownloadUrl = (url) => {
   const temurinMatch = url.match(
@@ -19,15 +14,8 @@ const rewriteDownloadUrl = (url) => {
   )
   if (temurinMatch) {
     const [, major, filename] = temurinMatch
-    const rewritten = `${TUNA_MIRROR}/${major}/jre/${temurinMatch[3]}/${temurinMatch[4]}/${filename}`
-    process.stdout.write(`[bcm-android] 使用清华 TUNA 镜像下载 JRE\n`)
-    return rewritten
+    return `${TUNA_MIRROR}/${major}/jre/${temurinMatch[3]}/${temurinMatch[4]}/${filename}`
   }
-
-  if (GITHUB_MIRROR && url.includes('github.com') && !url.startsWith(GITHUB_MIRROR)) {
-    return GITHUB_MIRROR + url
-  }
-
   return url
 }
 
@@ -35,26 +23,19 @@ const scriptDir = dirname(fileURLToPath(import.meta.url))
 const androidBuilderDir = resolve(scriptDir, '..', '..', 'builder', 'android')
 const jreDir = join(androidBuilderDir, 'jre')
 const apksignerPath = join(androidBuilderDir, 'apksigner.jar')
-const releaseKeystorePath = join(androidBuilderDir, 'release.keystore')
 
 const getPlatformRelease = () => {
   if (process.platform === 'win32' && process.arch === 'x64') {
     return { platform: 'windows', arch: 'x64', ext: '.zip' }
   }
-
   if (process.platform === 'linux' && process.arch === 'x64') {
     return { platform: 'linux', arch: 'x64', ext: '.tar.gz' }
   }
-
   throw new Error(`不支持的操作系统: ${process.platform}/${process.arch}`)
 }
 
 const getJavaBinaryName = () => {
-  if (process.platform === 'win32') {
-    return 'java.exe'
-  }
-
-  return 'java'
+  return process.platform === 'win32' ? 'java.exe' : 'java'
 }
 
 const buildJreDownloadUrl = () => {
@@ -68,13 +49,7 @@ const getJreArchivePath = () => {
 }
 
 const getJavaBinaryPath = () => {
-  const javaBinary = getJavaBinaryName()
-  return join(jreDir, 'bin', javaBinary)
-}
-
-const getKeytoolBinaryPath = () => {
-  const keytoolBinary = process.platform === 'win32' ? 'keytool.exe' : 'keytool'
-  return join(jreDir, 'bin', keytoolBinary)
+  return join(jreDir, 'bin', getJavaBinaryName())
 }
 
 const isJreReady = () => existsSync(getJavaBinaryPath())
@@ -99,16 +74,13 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
             reject(new Error(`下载 ${label} 失败，重定向缺少 Location 头`))
             return
           }
-
           if (response.statusCode !== 200) {
             reject(new Error(`下载 ${label} 失败，HTTP 状态码: ${response.statusCode}`))
             return
           }
-
           resolvePromise({ redirected: false, response })
         }
       )
-
       request.on('error', reject)
       request.setTimeout(300000, () => {
         request.destroy()
@@ -125,7 +97,6 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
 
       await new Promise((resolveStream, rejectStream) => {
         const fileStream = createWriteStream(tempPath)
-
         response.on('data', (chunk) => {
           downloadedSize += chunk.length
           const now = Date.now()
@@ -137,10 +108,8 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
             lastLogTime = now
           }
         })
-
         response.on('error', rejectStream)
         fileStream.on('error', rejectStream)
-
         pipeline(response, fileStream)
           .then(() => resolveStream())
           .catch(rejectStream)
@@ -148,10 +117,7 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
 
       try {
         rmSync(destPath, { force: true })
-      } catch {
-        // ignore
-      }
-
+      } catch {}
       renameSync(tempPath, destPath)
       process.stdout.write('\n')
       return
@@ -163,43 +129,9 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
   throw new Error(`下载 ${label} 失败，重定向次数超过上限`)
 }
 
-const extractJreArchive = (archivePath) => {
-  const { ext } = getPlatformRelease()
-
-  if (ext === '.zip') {
-    process.stdout.write('[bcm-android] 正在解压 JRE ...\n')
-    const result = spawnSync(
-      'powershell',
-      ['-NoProfile', '-Command', `Expand-Archive -Path '${archivePath}' -DestinationPath '${jreDir}' -Force`],
-      { stdio: 'inherit' }
-    )
-
-    if (result.error || result.status !== 0) {
-      throw new Error(`解压 JRE 失败: ${result.error?.message || '退出码 ' + result.status}`)
-    }
-
-    flattenJreDirectory()
-    return
-  }
-
-  if (ext === '.tar.gz') {
-    const result = spawnSync('tar', ['-xzf', archivePath, '-C', jreDir], { stdio: 'inherit' })
-
-    if (result.error || result.status !== 0) {
-      throw new Error(`解压 JRE 失败: ${result.error?.message || '退出码 ' + result.status}`)
-    }
-
-    flattenJreDirectory()
-    return
-  }
-
-  throw new Error(`不支持的压缩格式: ${ext}`)
-}
-
 const flattenJreDirectory = () => {
   try {
     const entries = readdirSync(jreDir)
-
     const nestedDirs = entries.filter((entry) => {
       const fullPath = join(jreDir, entry)
       try {
@@ -212,21 +144,16 @@ const flattenJreDirectory = () => {
     if (nestedDirs.length === 1) {
       const nestedPath = join(jreDir, nestedDirs[0])
       const tempPath = join(jreDir, '_temp_jre_')
-
       renameSync(nestedPath, tempPath)
-
       const nestedEntries = readdirSync(tempPath)
       for (const entry of nestedEntries) {
         const src = join(tempPath, entry)
         const dst = join(jreDir, entry)
         try {
           rmSync(dst, { recursive: true, force: true })
-        } catch {
-          // ignore
-        }
+        } catch {}
         renameSync(src, dst)
       }
-
       rmSync(tempPath, { recursive: true, force: true })
     }
   } catch (error) {
@@ -237,21 +164,17 @@ const flattenJreDirectory = () => {
 const cleanupJreArchive = () => {
   const archivePath = getJreArchivePath()
   try {
-    if (existsSync(archivePath)) {
-      rmSync(archivePath, { force: true })
-    }
-  } catch {
-    // ignore
-  }
+    if (existsSync(archivePath)) rmSync(archivePath, { force: true })
+  } catch {}
 }
 
 const ensureJre = async () => {
   if (isJreReady()) {
-    process.stdout.write('[bcm-android] 内置 JRE 已就绪，跳过下载\n')
-    return true
+    process.stdout.write('[bcm-android] 开发用 JRE 已就绪，跳过下载\n')
+    return
   }
 
-  process.stdout.write('[bcm-android] 正在准备内置 JRE ...\n')
+  process.stdout.write('[bcm-android] 正在准备开发用 JRE（仅 dev 模式需要）...\n')
 
   const url = buildJreDownloadUrl()
   const archivePath = getJreArchivePath()
@@ -272,63 +195,40 @@ const ensureJre = async () => {
 
   if (isJreReady()) {
     const javaBinary = getJavaBinaryPath()
-    process.stdout.write(`[bcm-android] 内置 JRE 准备完成: ${javaBinary}\n`)
-    return true
+    process.stdout.write(`[bcm-android] 开发用 JRE 准备完成: ${javaBinary}\n`)
+    return
   }
 
   throw new Error('JRE 解压后未找到 java 可执行文件')
 }
 
-const ensureReleaseKeystore = () => {
-  if (existsSync(releaseKeystorePath)) {
-    process.stdout.write('[bcm-android] release.keystore 已就绪，跳过生成\n')
+const extractJreArchive = (archivePath) => {
+  const { ext } = getPlatformRelease()
+
+  if (ext === '.zip') {
+    process.stdout.write('[bcm-android] 正在解压 JRE ...\n')
+    const result = spawnSync(
+      'powershell',
+      ['-NoProfile', '-Command', `Expand-Archive -Path '${archivePath}' -DestinationPath '${jreDir}' -Force`],
+      { stdio: 'inherit' }
+    )
+    if (result.error || result.status !== 0) {
+      throw new Error(`解压 JRE 失败: ${result.error?.message || '退出码 ' + result.status}`)
+    }
+    flattenJreDirectory()
     return
   }
 
-  if (!isJreReady()) {
-    throw new Error('JRE 尚未就绪，无法生成 keystore')
+  if (ext === '.tar.gz') {
+    const result = spawnSync('tar', ['-xzf', archivePath, '-C', jreDir], { stdio: 'inherit' })
+    if (result.error || result.status !== 0) {
+      throw new Error(`解压 JRE 失败: ${result.error?.message || '退出码 ' + result.status}`)
+    }
+    flattenJreDirectory()
+    return
   }
 
-  process.stdout.write('[bcm-android] 正在生成 release keystore ...\n')
-
-  const keytoolBinary = getKeytoolBinaryPath()
-  const dname = `CN=BCM Convertor ${randomUUID().slice(0, 8)}`
-
-  const result = spawnSync(
-    keytoolBinary,
-    [
-      '-genkeypair',
-      '-alias',
-      RELEASE_KEY_ALIAS,
-      '-keyalg',
-      'RSA',
-      '-keysize',
-      '2048',
-      '-validity',
-      '10950',
-      '-keystore',
-      releaseKeystorePath,
-      '-storetype',
-      'PKCS12',
-      '-storepass',
-      RELEASE_KEYSTORE_PASS,
-      '-keypass',
-      RELEASE_KEYSTORE_PASS,
-      '-dname',
-      dname
-    ],
-    { stdio: 'inherit' }
-  )
-
-  if (result.error || result.status !== 0) {
-    throw new Error(`生成 release keystore 失败: ${result.error?.message || '退出码 ' + result.status}`)
-  }
-
-  if (!existsSync(releaseKeystorePath)) {
-    throw new Error('release keystore 生成后未找到文件')
-  }
-
-  process.stdout.write('[bcm-android] release.keystore 生成完成\n')
+  throw new Error(`不支持的压缩格式: ${ext}`)
 }
 
 const main = async () => {
@@ -336,13 +236,6 @@ const main = async () => {
     await ensureJre()
   } catch (error) {
     process.stdout.write(`[bcm-android] JRE 准备失败: ${error.message}\n`)
-    process.exit(1)
-  }
-
-  try {
-    ensureReleaseKeystore()
-  } catch (error) {
-    process.stdout.write(`[bcm-android] keystore 准备失败: ${error.message}\n`)
     process.exit(1)
   }
 

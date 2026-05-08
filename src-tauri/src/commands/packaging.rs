@@ -1,17 +1,20 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::mpsc;
+use std::sync::{LazyLock, mpsc};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager};
+use regex::Regex;
 
 const RESULT_MARKER: &str = "__BCM_BUILDER_RESULT__=";
 const PROGRESS_MARKER: &str = "__BCM_BUILDER_PROGRESS__=";
 const BUILDER_STATUS_EVENT: &str = "builder-status";
 const BUILDER_LOG_EVENT: &str = "builder-log";
+
+const NODE_VERSION: &str = "20.18.0";
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -812,67 +815,177 @@ fn spawn_output_reader<R: Read + Send + 'static>(
     })
 }
 
-#[cfg(target_os = "windows")]
-fn bundled_node_candidates(resource_dir: &Path) -> Vec<PathBuf> {
-    vec![resource_dir
-        .join("builder")
-        .join("runtimes")
-        .join("windows-x64")
-        .join("node.exe")]
+fn get_node_binary_name() -> &'static str {
+    #[cfg(target_os = "windows")]
+    { "node.exe" }
+    #[cfg(not(target_os = "windows"))]
+    { "node" }
 }
 
-#[cfg(target_os = "linux")]
-fn bundled_node_candidates(resource_dir: &Path) -> Vec<PathBuf> {
-    vec![resource_dir
-        .join("builder")
-        .join("runtimes")
-        .join("linux-x64")
-        .join("node")]
+fn get_app_runtime_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app.path().app_local_data_dir().map_err(|e| e.to_string())?.join("runtimes");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
 }
 
-#[cfg(target_os = "macos")]
-fn bundled_node_candidates(resource_dir: &Path) -> Vec<PathBuf> {
-    vec![
-        resource_dir
-            .join("builder")
-            .join("runtimes")
-            .join("macos-arm64")
-            .join("node"),
-        resource_dir
-            .join("builder")
-            .join("runtimes")
-            .join("macos-x64")
-            .join("node"),
-    ]
+fn resource_node_candidates(resource_dir: &Path) -> Vec<PathBuf> {
+    let node_bin = get_node_binary_name();
+    #[cfg(target_os = "windows")]
+    { vec![resource_dir.join("builder").join("runtimes").join("windows-x64").join(node_bin)] }
+    #[cfg(target_os = "linux")]
+    { vec![resource_dir.join("builder").join("runtimes").join("linux-x64").join(node_bin)] }
+    #[cfg(target_os = "macos")]
+    { vec![
+        resource_dir.join("builder").join("runtimes").join("macos-arm64").join(node_bin),
+        resource_dir.join("builder").join("runtimes").join("macos-x64").join(node_bin),
+    ]}
 }
 
-fn resolve_bundled_node_command(resource_dir: &Path) -> Option<PathBuf> {
-    bundled_node_candidates(resource_dir)
-        .into_iter()
-        .find(|candidate| candidate.exists())
+fn app_data_node_path(runtime_dir: &Path) -> PathBuf {
+    runtime_dir.join(get_node_binary_name())
 }
 
-fn resolve_node_command(resource_dir: &Path) -> Result<PathBuf, String> {
-    if let Some(bundled_node) = resolve_bundled_node_command(resource_dir) {
-        return Ok(bundled_node);
+async fn download_and_extract_node(app: &AppHandle, dest: &Path) -> Result<(), String> {
+    let arch = if cfg!(target_arch = "x86_64") { "x64" } else if cfg!(target_arch = "aarch64") { "arm64" } else { "x64" };
+    let platform = if cfg!(target_os = "windows") { "win" } else if cfg!(target_os = "linux") { "linux" } else { "darwin" };
+    let ext = if cfg!(target_os = "windows") { "zip" } else { "tar.gz" };
+
+    let url = format!(
+        "https://npmmirror.com/mirrors/node/v{}/node-v{}-{}-{}.{}",
+        NODE_VERSION, NODE_VERSION, platform, arch, ext
+    );
+
+    emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] 正在下载 Node.js {} ...", NODE_VERSION));
+    emit_builder_status(app, &mut BuilderStatusTracker::default(), "download", "正在下载 Node.js 运行时", Some(0.0), None);
+
+    let response = reqwest::get(&url).await.map_err(|e| format!("下载 Node.js 失败: {}", e))?;
+    let total = response.content_length().unwrap_or(0);
+    let bytes = response.bytes().await.map_err(|e| format!("读取 Node.js 失败: {}", e))?;
+
+    if total > 0 && bytes.len() < 1024 * 1024 {
+        return Err(format!("下载的 Node.js 文件异常: {} 字节", bytes.len()));
     }
 
-    if cfg!(debug_assertions) {
-        return Ok(PathBuf::from("node"));
+    emit_builder_status(app, &mut BuilderStatusTracker::default(), "download", "正在解压 Node.js 运行时", Some(80.0), None);
+
+    let node_bin = get_node_binary_name();
+    if ext == "zip" {
+        let cursor = Cursor::new(bytes.as_ref());
+        let mut archive = zip::ZipArchive::new(cursor).map_err(|e| format!("解压 Node.js 失败: {}", e))?;
+        for i in 0..archive.len() {
+            let mut entry = archive.by_index(i).map_err(|e| format!("读取压缩条目失败: {}", e))?;
+            let name = entry.name().to_string();
+            if name.ends_with(&format!("/{}", node_bin)) || name == node_bin {
+                if let Some(parent) = dest.parent() {
+                    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                let mut out = File::create(dest).map_err(|e| e.to_string())?;
+                std::io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
+                return Ok(());
+            }
+        }
+        Err("压缩包中未找到 node 可执行文件".to_string())
+    } else {
+        // tar.gz for Linux/macOS: extract with system tar, then copy node binary
+        let tmp = dest.parent().unwrap().join(".node-tmp");
+        fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+        let archive_path = tmp.join(format!("node.{}", ext));
+        fs::write(&archive_path, &bytes).map_err(|e| e.to_string())?;
+
+        let status = Command::new("tar")
+            .args(["-xzf", &archive_path.display().to_string(), "-C", &tmp.display().to_string()])
+            .status().map_err(|e| e.to_string())?;
+        if !status.success() { return Err("解压 Node.js 失败".to_string()); }
+
+        // Find node binary in extracted directory
+        for entry in fs::read_dir(&tmp).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            if entry.path().is_dir() {
+                let candidate = entry.path().join("bin").join(node_bin);
+                if candidate.exists() {
+                    fs::copy(&candidate, dest).map_err(|e| e.to_string())?;
+                    let _ = fs::remove_dir_all(&tmp);
+                    return Ok(());
+                }
+            }
+        }
+        let _ = fs::remove_dir_all(&tmp);
+        Err("压缩包中未找到 node 可执行文件".to_string())
+    }
+}
+
+async fn ensure_node_runtime(app: &AppHandle, resource_dir: &Path) -> Result<PathBuf, String> {
+    let runtime_dir = get_app_runtime_dir(app)?;
+    let node_path = app_data_node_path(&runtime_dir);
+
+    if node_path.exists() {
+        return Ok(node_path);
     }
 
-    Err("找不到内置 Node.js 运行时，请确认 builder/runtimes 已正确随应用发布".to_string())
+    // Try copy from bundled resource dir (dev mode)
+    for candidate in resource_node_candidates(resource_dir) {
+        if candidate.exists() {
+            if let Some(parent) = node_path.parent() {
+                fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            }
+            fs::copy(&candidate, &node_path).map_err(|e| e.to_string())?;
+            return Ok(node_path);
+        }
+    }
+
+    // Try system PATH
+    if Command::new(get_node_binary_name()).arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+        return Ok(PathBuf::from(get_node_binary_name()));
+    }
+
+    // Download
+    download_and_extract_node(app, &node_path).await?;
+    if !node_path.exists() {
+        return Err("Node.js 运行时下载失败".to_string());
+    }
+
+    Ok(node_path)
+}
+
+fn resolve_node_sync(resource_dir: &Path) -> Result<PathBuf, String> {
+    for candidate in resource_node_candidates(resource_dir) {
+        if candidate.exists() { return Ok(candidate); }
+    }
+    if Command::new(get_node_binary_name()).arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+        return Ok(PathBuf::from(get_node_binary_name()));
+    }
+    // Try app data runtime dir (cached by earlier download)
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(app_data) = std::env::var("LOCALAPPDATA") {
+            let cached = PathBuf::from(app_data).join("bcm-convertor").join("runtimes").join(get_node_binary_name());
+            if cached.exists() { return Ok(cached); }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        if let Ok(home) = std::env::var("HOME") {
+            let base = if cfg!(target_os = "macos") {
+                PathBuf::from(home).join("Library").join("Application Support")
+            } else {
+                PathBuf::from(home).join(".local").join("share")
+            };
+            let cached = base.join("bcm-convertor").join("runtimes").join(get_node_binary_name());
+            if cached.exists() { return Ok(cached); }
+        }
+    }
+    Err("找不到 Node.js 运行时".to_string())
 }
 
 fn run_builder_process(
     app: AppHandle,
+    node_command: &Path,
     resource_dir: &Path,
     working_dir: &Path,
     context_path: &str,
     cache_root: &Path,
 ) -> Result<BuilderCommandOutput, String> {
     let script_path = resource_dir.join("builder").join("scripts").join("build.mjs");
-    let node_command = resolve_node_command(resource_dir)?;
     let mut command = Command::new(node_command);
 
     command
@@ -976,6 +1089,7 @@ fn append_log_line(path: &Path, line: &str) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 fn run_builder_process_to_log_files(
+    node_command: &Path,
     resource_dir: &Path,
     working_dir: &Path,
     context_path: &str,
@@ -984,7 +1098,6 @@ fn run_builder_process_to_log_files(
     stderr_path: &Path,
 ) -> Result<BuilderCommandOutput, String> {
     let script_path = resource_dir.join("builder").join("scripts").join("build.mjs");
-    let node_command = resolve_node_command(resource_dir)?;
 
     if let Some(parent) = stdout_path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -1082,6 +1195,7 @@ pub fn try_handle_elevated_builder_cli() {
     let result_path = PathBuf::from(&args.result_path);
 
     let result = run_builder_process_to_log_files(
+        &resolve_node_sync(Path::new(&args.resource_dir)).unwrap_or_else(|_| PathBuf::from(get_node_binary_name())),
         Path::new(&args.resource_dir),
         Path::new(&args.working_dir),
         &args.context_path,
@@ -1272,14 +1386,18 @@ pub async fn run_electron_builder(
         None,
     );
 
+    let node_command = ensure_node_runtime(&app, &resource_dir).await?;
+
     let app_for_task = app.clone();
     let resource_dir_for_task = resource_dir.clone();
     let working_dir_for_task = working_dir.to_path_buf();
     let context_path_for_task = context_path.clone();
     let cache_root_for_task = cache_root.clone();
+    let node_command_for_task = node_command.clone();
     let output = tauri::async_runtime::spawn_blocking(move || {
         run_builder_process(
             app_for_task,
+            &node_command_for_task,
             &resource_dir_for_task,
             &working_dir_for_task,
             &context_path_for_task,
@@ -1392,6 +1510,63 @@ struct AndroidBuildContext {
     work_files_dir: String,
 }
 
+fn generate_keystore(java_path: &Path, dest: &Path) -> Result<(), String> {
+    let alias = "bcmkey";
+    let password = "bcmconvertor";
+    let dname = "CN=BCM Convertor";
+
+    let status = Command::new(
+        java_path.parent()
+            .unwrap()
+            .join(if cfg!(target_os = "windows") { "keytool.exe" } else { "keytool" })
+    )
+    .args([
+        "-genkeypair",
+        "-alias", alias,
+        "-keyalg", "RSA",
+        "-keysize", "2048",
+        "-validity", "10950",
+        "-keystore", &dest.display().to_string(),
+        "-storetype", "PKCS12",
+        "-storepass", password,
+        "-keypass", password,
+        "-dname", dname,
+    ])
+    .stdout(Stdio::null())
+    .stderr(Stdio::null())
+    .status()
+    .map_err(|e| e.to_string())?;
+
+    if !status.success() {
+        return Err("生成签名密钥失败".to_string());
+    }
+    Ok(())
+}
+
+fn ensure_keystore(app: &AppHandle, java_path: &Path) -> Result<PathBuf, String> {
+    let runtime_dir = get_app_runtime_dir(app)?;
+    let keystore_path = runtime_dir.join("release.keystore");
+
+    if keystore_path.exists() {
+        return Ok(keystore_path);
+    }
+
+    // Try resource dir
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let resource_keystore = resource_dir.join("builder").join("android").join("release.keystore");
+    if resource_keystore.exists() {
+        fs::copy(&resource_keystore, &keystore_path).map_err(|e| e.to_string())?;
+        return Ok(keystore_path);
+    }
+
+    // Generate new
+    generate_keystore(java_path, &keystore_path)?;
+    if !keystore_path.exists() {
+        return Err("签名密钥生成失败".to_string());
+    }
+    Ok(keystore_path)
+}
+
 #[cfg(target_os = "windows")]
 fn get_java_binary_name() -> &'static str {
     "java.exe"
@@ -1402,23 +1577,216 @@ fn get_java_binary_name() -> &'static str {
     "java"
 }
 
-fn find_bundled_java(resource_dir: &Path) -> Result<PathBuf, String> {
+fn app_data_java_path(runtime_dir: &Path) -> PathBuf {
     let java_name = get_java_binary_name();
-    let jre_java = resource_dir
+    runtime_dir.join("jre").join("bin").join(java_name)
+}
+
+fn resource_java_path(resource_dir: &Path) -> PathBuf {
+    let java_name = get_java_binary_name();
+    resource_dir
         .join("builder")
         .join("android")
         .join("jre")
         .join("bin")
-        .join(java_name);
+        .join(java_name)
+}
 
-    if jre_java.exists() {
-        return Ok(jre_java);
+static TEMURIN_URL_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"github\.com/adoptium/temurin(\d+)-binaries/releases/download/[^/]+/(OpenJDK\d+U-jre_(x64|aarch64)_(windows|linux|mac)_hotspot_\S+\.(zip|tar\.gz))"
+    ).expect("TEMURIN_URL_RE should compile")
+});
+
+fn build_tuna_jre_url(github_url: &str) -> Option<String> {
+    let caps = TEMURIN_URL_RE.captures(github_url)?;
+    let major = caps.get(1)?.as_str();
+    let filename = caps.get(2)?.as_str();
+    let arch = caps.get(3)?.as_str();
+    let os = caps.get(4)?.as_str();
+
+    Some(format!(
+        "https://mirrors.tuna.tsinghua.edu.cn/Adoptium/{}/jre/{}/{}/{}",
+        major, arch, os, filename
+    ))
+}
+
+async fn resolve_jre_download_urls(app: &AppHandle) -> Result<(Option<String>, String), String> {
+    let arch = if cfg!(target_arch = "x86_64") { "x64" } else if cfg!(target_arch = "aarch64") { "aarch64" } else { "x64" };
+    let platform = if cfg!(target_os = "windows") { "windows" } else if cfg!(target_os = "linux") { "linux" } else { "mac" };
+
+    let api_url = format!(
+        "https://api.adoptium.net/v3/binary/latest/21/ga/{}/{}/jre/hotspot/normal/eclipse",
+        platform, arch
+    );
+
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .user_agent("bcm-convertor/2.0")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client.get(&api_url).send().await.map_err(|e| format!("查询 JRE 版本失败: {}", e))?;
+    let location = response.headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .ok_or_else(|| "JRE API 未返回下载地址".to_string())?;
+
+    let github_url = location.to_string();
+    emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] Adoptium 重定向至: {}", github_url));
+
+    let tuna_url = build_tuna_jre_url(&github_url);
+    emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] TUNA 镜像地址: {}", tuna_url.as_deref().unwrap_or("(无法构造)")));
+
+    Ok((tuna_url, github_url))
+}
+
+async fn download_jre_bytes(app: &AppHandle, url: &str) -> Result<Vec<u8>, String> {
+    let client = reqwest::Client::builder()
+        .user_agent("bcm-convertor/2.0")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = match client.get(url).send().await {
+        Ok(r) => r,
+        Err(e) => { emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] 下载失败: {}", e)); return Err(e.to_string()); }
+    };
+
+    let status = response.status();
+    let total = response.content_length().unwrap_or(0);
+
+    if !status.is_success() {
+        emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] 下载返回 {}，尝试下一个源...", status));
+        return Err(format!("HTTP {}", status.as_u16()));
     }
 
-    Err(format!(
-        "找不到内置 JRE，请运行 yarn prepare:android 下载。\n期望路径: {}",
-        jre_java.display()
-    ))
+    if total > 0 && total < 10 * 1024 * 1024 {
+        return Err(format!("JRE 文件异常小: {} 字节", total));
+    }
+
+    response.bytes().await.map_err(|e| e.to_string()).map(|b| b.to_vec())
+}
+
+async fn download_and_extract_jre(app: &AppHandle, dest_dir: &Path) -> Result<(), String> {
+    let ext = if cfg!(target_os = "windows") { "zip" } else { "tar.gz" };
+
+    let (tuna_url, github_url) = resolve_jre_download_urls(app).await?;
+
+    let mut sources: Vec<(&str, String)> = Vec::new();
+    if let Some(ref tuna) = tuna_url {
+        sources.push(("清华 TUNA 镜像", tuna.clone()));
+    }
+    sources.push(("GitHub Releases", github_url));
+
+    let mut bytes = None;
+    let mut used_source = "";
+
+    for (label, url) in &sources {
+        emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] 尝试从 {} 下载 JRE ...", label));
+        emit_builder_status(app, &mut BuilderStatusTracker::default(), "download", "正在下载 JRE 运行时", Some(0.0), None);
+
+        match download_jre_bytes(app, url).await {
+            Ok(b) if b.len() > 10 * 1024 * 1024 => {
+                bytes = Some(b);
+                used_source = label;
+                break;
+            }
+            Ok(b) => {
+                emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] {} 返回文件过小 ({} 字节)，切换源...", label, b.len()));
+            }
+            Err(e) => {
+                emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] {} 不可用: {}", label, e));
+            }
+        }
+    }
+
+    let data = bytes.ok_or("所有 JRE 下载源均不可用".to_string())?;
+    emit_builder_log(app, OutputStream::Stdout, &format!("[runtime] 已从 {} 下载 JRE ({} MB)", used_source, data.len() / 1024 / 1024));
+
+    emit_builder_status(app, &mut BuilderStatusTracker::default(), "download", "正在解压 JRE 运行时", Some(80.0), None);
+
+    if ext == "zip" {
+        let cursor = Cursor::new(&data[..]);
+        let mut archive = zip::ZipArchive::new(cursor).map_err(|e| format!("解压 JRE 失败: {}", e))?;
+
+        let parent = dest_dir.parent().ok_or("无法确定 JRE 安装目录")?;
+        let extract_dir = parent.join(".jre-extract");
+        if extract_dir.exists() { let _ = fs::remove_dir_all(&extract_dir); }
+        fs::create_dir_all(&extract_dir).map_err(|e| e.to_string())?;
+
+        for i in 0..archive.len() {
+            let mut entry = archive.by_index(i).map_err(|e| format!("读取压缩条目失败: {}", e))?;
+            let name = entry.name().to_string();
+            // Strip the top-level directory (e.g., "jdk-21.0.5+11-jre/")
+            let stripped = if let Some(pos) = name.find('/') {
+                &name[pos + 1..]
+            } else {
+                &name
+            };
+            if stripped.is_empty() { continue; }
+            let out_path = extract_dir.join(stripped);
+            if entry.is_dir() {
+                fs::create_dir_all(&out_path).map_err(|e| e.to_string())?;
+            } else {
+                if let Some(parent) = out_path.parent() {
+                    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                let mut out = File::create(&out_path).map_err(|e| e.to_string())?;
+                std::io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
+            }
+        }
+
+        // Move to final location
+        if dest_dir.exists() { let _ = fs::remove_dir_all(dest_dir); }
+        fs::rename(&extract_dir, dest_dir).map_err(|e| e.to_string())?;
+    } else {
+        let parent = dest_dir.parent().ok_or("无法确定 JRE 安装目录")?;
+        let tmp = parent.join(".jre-tmp");
+        if tmp.exists() { let _ = fs::remove_dir_all(&tmp); }
+        fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+        let archive_path = tmp.join(format!("jre.{}", ext));
+        fs::write(&archive_path, &data).map_err(|e| e.to_string())?;
+
+        let status = Command::new("tar")
+            .args(["-xzf", &archive_path.display().to_string(), "-C", &tmp.display().to_string(), "--strip-components=1"])
+            .status().map_err(|e| e.to_string())?;
+        if !status.success() { return Err("解压 JRE 失败".to_string()); }
+
+        if dest_dir.exists() { let _ = fs::remove_dir_all(dest_dir); }
+        fs::rename(&tmp, dest_dir).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+async fn ensure_java_runtime(app: &AppHandle, resource_dir: &Path) -> Result<PathBuf, String> {
+    let runtime_dir = get_app_runtime_dir(app)?;
+    let java_path = app_data_java_path(&runtime_dir);
+
+    if java_path.exists() {
+        return Ok(java_path);
+    }
+
+    // Try resource dir (dev mode)
+    let resource_java = resource_java_path(resource_dir);
+    if resource_java.exists() {
+        let dest_dir = runtime_dir.join("jre");
+        if dest_dir.exists() { let _ = fs::remove_dir_all(&dest_dir); }
+        copy_dir_recursive(
+            &resource_java.parent().unwrap().parent().unwrap(),
+            &dest_dir,
+        )?;
+        return Ok(java_path);
+    }
+
+    // Download
+    let dest_dir = runtime_dir.join("jre");
+    download_and_extract_jre(app, &dest_dir).await?;
+    if !java_path.exists() {
+        return Err("JRE 运行时下载失败".to_string());
+    }
+
+    Ok(java_path)
 }
 
 fn run_apktool_command(
@@ -1744,7 +2112,6 @@ pub async fn run_android_packaging(
     let android_builder_dir = resource_dir.join("builder").join("android");
     let source_apktool_path = android_builder_dir.join("apktool.jar");
     let source_base_apk_path = resource_dir.join("convert").join("android").join("base.apk");
-    let source_keystore_path = android_builder_dir.join("release.keystore");
     let source_apksigner_path = android_builder_dir.join("apksigner.jar");
 
     if !source_apktool_path.exists() {
@@ -1768,14 +2135,15 @@ pub async fn run_android_packaging(
         ));
     }
 
+    let java_path = ensure_java_runtime(&app, &resource_dir).await?;
+    let source_keystore_path = ensure_keystore(&app, &java_path)?;
+
     if !source_keystore_path.exists() {
         return Err(format!(
             "找不到 release keystore: {}\n请运行 yarn prepare:android 自动生成",
             source_keystore_path.display()
         ));
     }
-
-    let java_path = find_bundled_java(&resource_dir)?;
 
     // Read build context
     let context_content = fs::read_to_string(&context_path).map_err(|e| e.to_string())?;

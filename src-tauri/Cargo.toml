@@ -18,11 +18,13 @@ tauri = { version = "2", features = ["macos-private-api"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["unbounded_depth"] }
 reqwest = { version = "0.11", features = ["json"] }
+regex = "1.11"
 tokio = { version = "1", features = ["full"] }
 open = "5"
 sha2 = "0.10"
 aes-gcm = "0.10"
 base64 = "0.22"
+zip = "2.2"
 tauri-plugin-os = "2"
 tauri-plugin-http = { version = "2", features = ["unsafe-headers"] }
 tauri-plugin-dialog = "2"

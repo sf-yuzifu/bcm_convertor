@@ -1,14 +1,24 @@
 {
   "build": {
     "beforeDevCommand": "yarn prepare:android && yarn prepare:builder && yarn dev",
-    "beforeBuildCommand": "yarn prepare:android && yarn prepare:builder && yarn build",
+    "beforeBuildCommand": "yarn prepare:builder && yarn build",
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420"
   },
   "bundle": {
     "active": true,
     "targets": "nsis",
-    "resources": ["./convert", "./builder"],
+    "resources": [
+      "./convert/android/base.apk",
+      "./convert/android/shell/app/src/main/assets/online_loader.html",
+      "./convert/kitten3/**/*",
+      "./convert/kitten4/**/*",
+      "./convert/online/**/*",
+      "./builder/scripts/**/*",
+      "./builder/android/apktool.jar",
+      "./builder/android/apksigner.jar",
+      "./builder/toolchain/**/*"
+    ],
     "icon": ["icons/linux.svg", "icons/mac.icns", "icons/win.ico", "icons/bcm_convertor.png"],
     "copyright": "小鱼yuzifu",
     "publisher": "小鱼yuzifu",

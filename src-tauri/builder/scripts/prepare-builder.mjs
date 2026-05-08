@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -9,40 +9,7 @@ const toolchainDir = join(builderDir, 'toolchain')
 const toolchainMarker = join(toolchainDir, 'node_modules', 'electron-builder', 'out', 'index.js')
 const electronModuleDir = join(toolchainDir, 'node_modules', 'electron')
 const appBuilderBinDir = join(toolchainDir, 'node_modules', 'app-builder-bin')
-const runtimesDir = join(builderDir, 'runtimes')
 const npmCommand = process.platform === 'win32' ? 'npm' : 'npm'
-
-const getBundledRuntimeTarget = () => {
-  if (process.platform === 'win32' && process.arch === 'x64') {
-    return {
-      runtimeDir: join(builderDir, 'runtimes', 'windows-x64'),
-      binaryName: 'node.exe'
-    }
-  }
-
-  if (process.platform === 'linux' && process.arch === 'x64') {
-    return {
-      runtimeDir: join(builderDir, 'runtimes', 'linux-x64'),
-      binaryName: 'node'
-    }
-  }
-
-  if (process.platform === 'darwin' && process.arch === 'arm64') {
-    return {
-      runtimeDir: join(builderDir, 'runtimes', 'macos-arm64'),
-      binaryName: 'node'
-    }
-  }
-
-  if (process.platform === 'darwin' && process.arch === 'x64') {
-    return {
-      runtimeDir: join(builderDir, 'runtimes', 'macos-x64'),
-      binaryName: 'node'
-    }
-  }
-
-  return null
-}
 
 const hasRequiredAppBuilderBin = () => {
   if (!existsSync(appBuilderBinDir)) {
@@ -66,29 +33,6 @@ const hasRequiredAppBuilderBin = () => {
   }
 
   return true
-}
-
-const ensureBundledNodeRuntime = () => {
-  const runtimeTarget = getBundledRuntimeTarget()
-
-  if (!runtimeTarget) {
-    return
-  }
-
-  const sourceNodePath = resolve(process.execPath)
-  const targetNodePath = join(runtimeTarget.runtimeDir, runtimeTarget.binaryName)
-
-  mkdirSync(runtimeTarget.runtimeDir, { recursive: true })
-
-  if (existsSync(targetNodePath)) {
-    const sourceStat = statSync(sourceNodePath)
-    const targetStat = statSync(targetNodePath)
-    if (sourceStat.size === targetStat.size) {
-      return
-    }
-  }
-
-  copyFileSync(sourceNodePath, targetNodePath)
 }
 
 const ensureBundledToolchain = () => {
@@ -162,35 +106,12 @@ const pruneAppBuilderBin = () => {
   }
 }
 
-const pruneBundledRuntimes = () => {
-  const runtimeTarget = getBundledRuntimeTarget()
-
-  if (!runtimeTarget || !existsSync(runtimesDir)) {
-    return
-  }
-
-  const runtimeDirs = [
-    join(runtimesDir, 'windows-x64'),
-    join(runtimesDir, 'linux-x64'),
-    join(runtimesDir, 'macos-arm64'),
-    join(runtimesDir, 'macos-x64')
-  ]
-
-  for (const runtimeDir of runtimeDirs) {
-    if (resolve(runtimeDir) !== resolve(runtimeTarget.runtimeDir)) {
-      removeIfExists(runtimeDir)
-    }
-  }
-}
-
 const pruneBundledToolchain = () => {
   removeIfExists(electronModuleDir)
   pruneAppBuilderBin()
-  pruneBundledRuntimes()
 }
 
 const main = () => {
-  ensureBundledNodeRuntime()
   ensureBundledToolchain()
   pruneBundledToolchain()
 }
