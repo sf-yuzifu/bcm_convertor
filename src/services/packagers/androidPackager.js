@@ -219,6 +219,29 @@ const prepareWorkFiles = async (projectInfo, workDir, resourceDir, status, versi
   return []
 }
 
+const resolveProjectSize = (projectInfo, status, version) => {
+  if (status === 'offline' && version === 'kitten3') {
+    return { width: projectInfo.width, height: projectInfo.height }
+  }
+
+  const data = projectInfo.data || {}
+  const isKittenN = version === 'kittenN'
+
+  if (isKittenN) {
+    const stageSize = data.stageSize || {}
+    return {
+      width: stageSize.width ?? data.width,
+      height: stageSize.height ?? data.height
+    }
+  }
+
+  const size = data.size || {}
+  return {
+    width: size.width ?? data.width,
+    height: size.height ?? data.height
+  }
+}
+
 const createAndroidBuildContext = async (projectInfo, status, version) => {
   const { home: workspaceDir } = await getConvertHome()
   const { desktopDirPath, resourceDirPath } = await getEnv()
@@ -237,6 +260,9 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
   const iconPath = await processAndroidIcon(projectInfo, workFilesDir)
   const assetEntries = await prepareWorkFiles(projectInfo, workFilesDir, resourceDirPath, status, version)
 
+  const projectSize = resolveProjectSize(projectInfo, status, version)
+  console.log('projectSize', projectSize)
+
   return {
     workspace_dir: workspaceDir,
     output_dir: await join(workspaceDir, 'android-dist'),
@@ -252,7 +278,9 @@ const createAndroidBuildContext = async (projectInfo, status, version) => {
     work_type: status === 'online' ? 'online' : version,
     work_id: String(projectInfo.id || projectInfo.workId || ''),
     asset_entries: assetEntries,
-    work_files_dir: workFilesDir
+    work_files_dir: workFilesDir,
+    width: typeof projectSize.width === 'number' ? projectSize.width : null,
+    height: typeof projectSize.height === 'number' ? projectSize.height : null
   }
 }
 

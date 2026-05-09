@@ -1503,6 +1503,8 @@ struct AndroidBuildContext {
     work_id: String,
     asset_entries: Vec<String>,
     work_files_dir: String,
+    width: Option<i32>,
+    height: Option<i32>,
 }
 
 fn generate_keystore(java_path: &Path, dest: &Path) -> Result<(), String> {
@@ -2016,21 +2018,53 @@ fn modify_android_manifest(
     app_name: &str,
     version_code: i32,
     version_name: &str,
+    width: Option<i32>,
+    height: Option<i32>,
 ) -> Result<(), String> {
     let content = fs::read_to_string(manifest_path).map_err(|e| e.to_string())?;
+
+    let orientation = match (width, height) {
+        (Some(w), Some(h)) if w > h => "landscape",
+        _ => "portrait",
+    };
+
+    let manifest_tag_re = Regex::new(r#"<manifest\s+xmlns:android="http://schemas.android.com/apk/res/android""#)
+        .expect("manifest tag regex");
+    let activity_tag_re = Regex::new(r#"(?s)(<activity\b)([^>]*?)(/?>)"#)
+        .expect("activity tag regex");
+    let has_orientation = content.contains("android:screenOrientation");
 
     let modified = content
         .replace(
             r#"package="moe.yzf.bcm.shell""#,
             &format!(r#"package="{}""#, package_name),
-        )
-        .replace(
-            "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"",
-            &format!(
-                "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:versionCode=\"{}\"\n    android:versionName=\"{}\"",
-                version_code, version_name
-            ),
         );
+
+    let modified = manifest_tag_re.replace(
+        &modified,
+        format!(
+            r#"<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="{}"
+    android:versionName="{}""#,
+            version_code, version_name
+        ),
+    ).to_string();
+
+    let modified = if !has_orientation {
+        activity_tag_re.replace(&modified, |caps: &regex::Captures| {
+            let open = &caps[1];
+            let attrs = &caps[2];
+            let close = &caps[3];
+            if attrs.contains("android:exported") {
+                format!(r#"{}{}    android:screenOrientation="{}"
+    {}"#, open, attrs, orientation, close)
+            } else {
+                format!("{}{}{}", open, attrs, close)
+            }
+        }).to_string()
+    } else {
+        modified
+    };
 
     fs::write(manifest_path, modified).map_err(|e| e.to_string())?;
 
@@ -2217,6 +2251,8 @@ pub async fn run_android_packaging(
         &context.app_name,
         context.version_code,
         &context.version_name,
+        context.width,
+        context.height,
     )?;
 
     // Step 3: Copy work files
