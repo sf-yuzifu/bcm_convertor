@@ -1975,6 +1975,8 @@ fn run_apksigner_command(
         .arg("sign")
         .arg("--ks")
         .arg(keystore_path)
+        .arg("--ks-type")
+        .arg("PKCS12")
         .arg("--ks-pass")
         .arg("pass:bcmconvertor")
         .arg("--ks-key-alias")
@@ -2034,10 +2036,10 @@ fn modify_android_manifest(
         .expect("activity tag regex");
     let has_orientation = content.contains("android:screenOrientation");
 
-    let modified = content
+    let modified = content.replace("moe.yzf.bcm.shell", package_name)
         .replace(
-            r#"package="moe.yzf.bcm.shell""#,
-            &format!(r#"package="{}""#, package_name),
+            &format!("android:name=\"{}.MainActivity\"", package_name),
+            "android:name=\"moe.yzf.bcm.shell.MainActivity\"",
         );
 
     let modified = manifest_tag_re.replace(
@@ -2067,6 +2069,22 @@ fn modify_android_manifest(
     };
 
     fs::write(manifest_path, modified).map_err(|e| e.to_string())?;
+
+    let apktool_yml_path = manifest_path
+        .parent()
+        .unwrap()
+        .join("apktool.yml");
+    if apktool_yml_path.exists() {
+        let yml_content = fs::read_to_string(&apktool_yml_path).map_err(|e| e.to_string())?;
+        let yml_package_re = Regex::new(r"(?m)^\s*renameManifestPackage:\s*\S*")
+            .expect("apktool yml package regex");
+        let modified_yml = if yml_package_re.is_match(&yml_content) {
+            yml_package_re.replace(&yml_content, format!("  renameManifestPackage: {}", package_name)).to_string()
+        } else {
+            format!("{}\n  renameManifestPackage: {}", yml_content.trim_end(), package_name)
+        };
+        fs::write(&apktool_yml_path, modified_yml).map_err(|e| e.to_string())?;
+    }
 
     // Update strings.xml for app name
     let strings_path = manifest_path
@@ -2174,6 +2192,15 @@ pub async fn run_android_packaging(
 
     let source_keystore_path = ensure_keystore(&app, &java_path, &context.package_name)?;
 
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!(
+            "[android-runner] 签名密钥: source_keystore={}, package_name={}",
+            source_keystore_path.display(), context.package_name
+        ),
+    );
+
     let workspace_dir = PathBuf::from(&context.workspace_dir);
     let output_dir = PathBuf::from(&context.output_dir);
     let tools_dir = workspace_dir.join("android-tools");
@@ -2184,12 +2211,15 @@ pub async fn run_android_packaging(
     fs::create_dir_all(&output_dir).map_err(|e| e.to_string())?;
     fs::create_dir_all(&tools_dir).map_err(|e| e.to_string())?;
 
-    // Copy tools to workspace to avoid UNC path issues
     let apktool_path = tools_dir.join("apktool.jar");
     let apksigner_path = tools_dir.join("apksigner.jar");
     let base_apk_path = tools_dir.join("base.apk");
     let keystore_path = tools_dir.join("release.keystore");
-    
+
+    let _ = fs::remove_file(&unsigned_apk_path);
+    let _ = fs::remove_file(&signed_apk_path);
+    let _ = fs::remove_file(&keystore_path);
+
     fs::copy(&source_apktool_path, &apktool_path).map_err(|e| format!("复制 apktool 失败: {}", e))?;
     fs::copy(&source_apksigner_path, &apksigner_path).map_err(|e| format!("复制 apksigner 失败: {}", e))?;
     fs::copy(&source_base_apk_path, &base_apk_path).map_err(|e| format!("复制 base.apk 失败: {}", e))?;
@@ -2254,6 +2284,19 @@ pub async fn run_android_packaging(
         context.width,
         context.height,
     )?;
+
+    if let Ok(manifest_content) = fs::read_to_string(&manifest_path) {
+        let has_correct_package = manifest_content.contains(&format!("package=\"{}\"", context.package_name));
+        let has_orientation = manifest_content.contains("android:screenOrientation");
+        emit_builder_log(
+            &app,
+            OutputStream::Stdout,
+            &format!(
+                "[android-runner] Manifest 验证: package=\"{}\"={}, screenOrientation={}",
+                context.package_name, has_correct_package, has_orientation
+            ),
+        );
+    }
 
     // Step 3: Copy work files
     emit_builder_status(
@@ -2341,6 +2384,15 @@ pub async fn run_android_packaging(
         None,
     );
 
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!(
+            "[android-runner] 签名配置: keystore={}, 包名={}, 输出={}",
+            keystore_path.display(), context.package_name, signed_apk_path.display()
+        ),
+    );
+
     let sign_output = run_apksigner_command(
         &app,
         &java_path,
@@ -2349,6 +2401,14 @@ pub async fn run_android_packaging(
         &unsigned_apk_path,
         &signed_apk_path,
     )?;
+
+    emit_builder_log(
+        &app,
+        OutputStream::Stdout,
+        &format!("[android-runner] apksigner exit={:?} stdout={} stderr={}",
+            sign_output.status_code, sign_output.stdout.trim(), sign_output.stderr.trim()
+        ),
+    );
 
     if sign_output.status_code.unwrap_or_default() != 0 {
         return Err(format!(
