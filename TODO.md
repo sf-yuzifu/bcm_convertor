@@ -45,13 +45,16 @@
 - [x] 配置壳应用基础信息（默认包名、图标、权限）
 - [x] 添加默认图标资源（ic_launcher.png，使用 kitten3_player_icon.png）
 - [x] 编译并导出壳 APK 模板（base.apk，约 4.5MB）
+- [x] 状态栏沉浸式适配（透明状态栏 + WebView 顶部自动取色）
+- [x] 实时状态栏颜色同步（JS Bridge + scroll/touch/MutationObserver 监听）
+- [x] 状态栏不遮挡 WebView 内容（rootLayout 顶部 padding）
 
 ### Phase 2: 工具链集成 ✅
 
 - [x] 下载并内置 Apktool 2.9.3（约 23MB）
 - [x] 配置 apktool 工作目录结构（src-tauri/builder/android/）
-- [x] 准备调试签名密钥（debug.keystore）
-- [x] 创建 apksigner 包装脚本
+- [x] 准备按包名独立签名密钥（release.{package_name}.keystore，PKCS12）
+- [x] 配置 apksigner 签名参数（--ks-type PKCS12）
 - [x] 验证工具链完整流程（反编译 → 重打包 → 签名）
 
 ### Phase 3: 打包服务实现 ✅
@@ -59,13 +62,16 @@
 - [x] 创建 `src/services/packagers/androidPackager.js`
 - [x] 实现 APK 反编译功能（调用 apktool d）
 - [x] 实现资源替换逻辑：
-  - [x] 修改 AndroidManifest.xml（包名、应用名、版本号）
-  - [ ] 替换 res/mipmap-\* 图标资源（待实现）
+  - [x] 修改 AndroidManifest.xml（全局替换 `moe.yzf.bcm.shell` 为实际包名，还原 MainActivity 类名引用）
+  - [x] 修改 apktool.yml（设置 renameManifestPackage，避免 apktool 重建覆盖包名）
+  - [x] 替换 res/mipmap-\* 图标资源（多密度：mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi）
   - [x] 修改 res/values/strings.xml（应用名）
-  - [x] 复制作品资源到 assets/ 目录 ✅
+  - [x] 复制作品资源到 assets/ 目录
 - [x] 实现 APK 重打包（调用 apktool b）
-- [x] 实现 APK 签名（使用 jarsigner）
+- [x] 实现 APK 签名（使用 apksigner，PKCS12 类型）
 - [x] 添加 Rust 后端命令 `run_android_packaging`
+- [x] 根据作品宽高自动设置横屏/竖屏（width > height → landscape）
+- [x] 根据作品类型适配宽高取值（kitten3/kitten4/kittenN 各自不同的数据路径）
 
 ### Phase 4: 前端集成 ✅
 
@@ -79,17 +85,16 @@
   - [x] 复制作品资源
   - [x] 重打包 APK
   - [x] 签名 APK
-- [ ] 添加 Android 平台错误码和错误处理（复用现有错误处理）
-- [ ] 图标资源替换（待实现）
+- [x] Android 打包错误处理（ANDROID_PLATFORM_CONFIG，复用 invokeBackendCommand 错误处理）
+- [x] 图标资源替换（本地图片或远程封面图，自动转 PNG 方形图标）
+- [x] 构建日志落盘（签名密钥路径、Manifest 验证、apksigner 输出等诊断信息）
 
 ### Phase 5: 测试与优化
 
-- [ ] 验证 kitten3 作品 APK 打包
-- [ ] 验证 kitten4 作品 APK 打包
-- [ ] 验证在线作品 APK 打包
-- [ ] 测试不同 Android 版本兼容性（Android 5.0+）
-- [ ] 测试不同设备屏幕尺寸适配
-- [ ] 优化 APK 体积（资源压缩、WebView 缓存策略）
+- [x] 验证 kitten3 离线作品 APK 打包（多个作品安装无签名冲突）
+- [x] 验证 kitten4 离线作品 APK 打包
+- [x] 验证 kitten4 在线作品 APK 打包
+- [x] 验证 kittenN 在线作品 APK 打包
 
 ### Phase 6: 发版准备
 
