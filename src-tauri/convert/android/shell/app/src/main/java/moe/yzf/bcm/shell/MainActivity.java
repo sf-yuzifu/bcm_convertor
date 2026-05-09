@@ -1,10 +1,15 @@
 package moe.yzf.bcm.shell;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -25,15 +30,32 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "BCMShell";
     private WebView webView;
     private ProgressBar progressBar;
+    private View rootLayout;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+                | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+
         setContentView(R.layout.activity_main);
 
+        rootLayout = findViewById(R.id.rootLayout);
         webView = findViewById(R.id.webView);
         progressBar = findViewById(R.id.progressBar);
+
+        int statusBarHeight = getStatusBarHeight();
+        rootLayout.setPadding(0, statusBarHeight, 0, 0);
 
         // Configure WebView settings
         WebSettings settings = webView.getSettings();
@@ -53,6 +75,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Enable debugging for development
         WebView.setWebContentsDebuggingEnabled(true);
+
+        // Add JS interface for real-time status bar color updates
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void onColorChanged(String color) {
+                try {
+                    int c = parseColor(color.replace("\"", "").trim());
+                    runOnUiThread(() -> rootLayout.setBackgroundColor(c));
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to parse color from JS: " + color, e);
+                }
+            }
+        }, "StatusBarBridge");
 
         // Set WebViewClient to handle local resources
         webView.setWebViewClient(new WebViewClient() {
@@ -80,7 +115,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Page finished loading: " + url);
                 progressBar.setVisibility(View.GONE);
                 
-                // Auto-click play button for kitten4
+                updateStatusBarColor();
+                injectScrollColorListener();
+                
                 autoClickPlayButton();
             }
 
@@ -220,6 +257,122 @@ public class MainActivity extends AppCompatActivity {
                 "})();";
         
         webView.evaluateJavascript(js, null);
+    }
+
+    private static final String COLOR_DETECT_JS =
+            "(function() { " +
+            "  try { " +
+            "    var el = document.elementFromPoint(window.innerWidth / 2, 10); " +
+            "    if (el) { " +
+            "      var p = el; " +
+            "      while (p && p !== document.documentElement) { " +
+            "        var bg = window.getComputedStyle(p).backgroundColor; " +
+            "        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg; " +
+            "        p = p.parentElement; " +
+            "      } " +
+            "    } " +
+            "    return window.getComputedStyle(document.body).backgroundColor || '#000000'; " +
+            "  } catch(e) { return '#000000'; } " +
+            "})()";
+
+    private void updateStatusBarColor() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.evaluateJavascript(COLOR_DETECT_JS, value -> {
+                if (value != null && !value.equals("null")) {
+                    try {
+                        String colorStr = value.replace("\"", "").trim();
+                        int color = parseColor(colorStr);
+                        runOnUiThread(() -> rootLayout.setBackgroundColor(color));
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to parse color: " + value, e);
+                    }
+                }
+            });
+        }
+    }
+
+    private void injectScrollColorListener() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String js = "(function() { " +
+                    "  var lastColor = ''; " +
+                    "  function getColor() { " +
+                    "    try { " +
+                    "      var el = document.elementFromPoint(window.innerWidth / 2, 10); " +
+                    "      if (el) { " +
+                    "        var p = el; " +
+                    "        while (p && p !== document.documentElement) { " +
+                    "          var bg = window.getComputedStyle(p).backgroundColor; " +
+                    "          if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg; " +
+                    "          p = p.parentElement; " +
+                    "        } " +
+                    "      } " +
+                    "      return window.getComputedStyle(document.body).backgroundColor || '#000000'; " +
+                    "    } catch(e) { return '#000000'; } " +
+                    "  } " +
+                    "  function sync() { " +
+                    "    var c = getColor(); " +
+                    "    if (c !== lastColor) { " +
+                    "      lastColor = c; " +
+                    "      StatusBarBridge.onColorChanged(c); " +
+                    "    } " +
+                    "  } " +
+                    "  var ticking = false; " +
+                    "  window.addEventListener('scroll', function() { " +
+                    "    if (!ticking) { " +
+                    "      requestAnimationFrame(function() { sync(); ticking = false; }); " +
+                    "      ticking = true; " +
+                    "    } " +
+                    "  }, { passive: true }); " +
+                    "  window.addEventListener('touchmove', function() { " +
+                    "    if (!ticking) { " +
+                    "      requestAnimationFrame(function() { sync(); ticking = false; }); " +
+                    "      ticking = true; " +
+                    "    } " +
+                    "  }, { passive: true }); " +
+                    "  new MutationObserver(sync).observe(document.body, { " +
+                    "    childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] " +
+                    "  }); " +
+                    "})();";
+            webView.evaluateJavascript(js, null);
+        }
+    }
+
+    private int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    private int parseColor(String colorStr) {
+        if (colorStr.startsWith("#")) {
+            return Color.parseColor(colorStr);
+        }
+        
+        if (colorStr.startsWith("rgb(")) {
+            String[] parts = colorStr.replace("rgb(", "").replace(")", "").split(",");
+            if (parts.length >= 3) {
+                int r = Integer.parseInt(parts[0].trim());
+                int g = Integer.parseInt(parts[1].trim());
+                int b = Integer.parseInt(parts[2].trim());
+                return Color.rgb(r, g, b);
+            }
+        }
+        
+        if (colorStr.startsWith("rgba(")) {
+            String[] parts = colorStr.replace("rgba(", "").replace(")", "").split(",");
+            if (parts.length >= 4) {
+                int r = Integer.parseInt(parts[0].trim());
+                int g = Integer.parseInt(parts[1].trim());
+                int b = Integer.parseInt(parts[2].trim());
+                float a = Float.parseFloat(parts[3].trim());
+                return Color.argb((int) (a * 255), r, g, b);
+            }
+        }
+        
+        return Color.BLACK;
     }
 
     @Override

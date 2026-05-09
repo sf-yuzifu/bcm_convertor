@@ -29,7 +29,7 @@ shell/
 
 1. **编译壳 APK**
    ```bash
-   ./gradlew assembleRelease
+   $env:ANDROID_HOME = "$env:USERPROFILE\AppData\Local\Android\Sdk"; $env:PATH = "$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"; .\gradlew.bat assembleRelease
    ```
    输出: `app/build/outputs/apk/release/app-release-unsigned.apk`
 
