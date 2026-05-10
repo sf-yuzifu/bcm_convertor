@@ -55,8 +55,17 @@ const createEmptyPackageConfig = () => ({
   fetchedIcon: '',
   fetchedIconPreview: '',
   roundedIconRadius: 22,
-  targetPlatform: 'windows'
+  targetPlatform: detectCurrentPlatform()
 })
+
+function detectCurrentPlatform() {
+  try {
+    const p = navigator.platform || ''
+    if (p.startsWith('Mac')) return 'macos'
+    if (p.startsWith('Linux')) return 'linux'
+  } catch {}
+  return 'windows'
+}
 
 const MAX_BUILDER_LOG_LINES = 400
 const BCM_FILE_PATTERN = /\.bcm$/i

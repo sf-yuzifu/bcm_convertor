@@ -2,6 +2,28 @@ import { useEffect, useRef } from 'react'
 import { Button, Input, InputNumber, Segmented, Space } from 'antd'
 import { ReloadOutlined, ThunderboltOutlined, UploadOutlined } from '@ant-design/icons'
 
+const TAURI_PLATFORM_OPTIONS = [
+  { label: 'Windows EXE', value: 'windows' },
+  { label: 'macOS App', value: 'macos' },
+  { label: 'Linux AppImage', value: 'linux' },
+  { label: 'Android APK', value: 'android' }
+]
+
+const detectPlatform = () => {
+  try {
+    const p = navigator.platform || ''
+    if (p.startsWith('Mac')) return 'macos'
+    if (p.startsWith('Linux')) return 'linux'
+  } catch {}
+  return 'windows'
+}
+
+const currentPlatform = detectPlatform()
+const platformOptions = [
+  TAURI_PLATFORM_OPTIONS.find((opt) => opt.value === currentPlatform),
+  TAURI_PLATFORM_OPTIONS.find((opt) => opt.value === 'android')
+].filter(Boolean)
+
 export default function PackageConfigPanel({
   packageConfig,
   process,
@@ -168,10 +190,7 @@ export default function PackageConfigPanel({
                     value={packageConfig.targetPlatform}
                     onChange={onTargetPlatformChange}
                     disabled={isProcessing}
-                    options={[
-                      { label: 'Windows EXE', value: 'windows' },
-                      { label: 'Android APK', value: 'android' }
-                    ]}
+                    options={platformOptions}
                   />
                 </div>
               </div>
