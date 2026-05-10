@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
@@ -474,7 +474,30 @@ const buildApp = async (context) => {
   emitLog('electron-builder 执行完成')
   emitLog(`输出产物: ${JSON.stringify(results, null, 2)}`)
 
-  const artifactPath = results.find((entry) => !entry.endsWith('.blockmap')) || results[0]
+  let artifactPath = results.find((entry) => !entry.endsWith('.blockmap')) || results[0]
+
+  if (!artifactPath && context.platform === 'macos' && context.target === 'dir') {
+    const macOutputDir = join(context.outputDir, 'mac-arm64')
+    if (existsSync(macOutputDir)) {
+      const entries = readdirSync(macOutputDir)
+      const appEntry = entries.find((entry) => entry.endsWith('.app'))
+      if (appEntry) {
+        artifactPath = join(macOutputDir, appEntry)
+        emitLog(`从 dir 输出中定位到 .app 包: ${artifactPath}`)
+      }
+    }
+    if (!artifactPath) {
+      const macOutputDir2 = join(context.outputDir, 'mac')
+      if (existsSync(macOutputDir2)) {
+        const entries = readdirSync(macOutputDir2)
+        const appEntry = entries.find((entry) => entry.endsWith('.app'))
+        if (appEntry) {
+          artifactPath = join(macOutputDir2, appEntry)
+          emitLog(`从 dir 输出中定位到 .app 包: ${artifactPath}`)
+        }
+      }
+    }
+  }
 
   if (!artifactPath) {
     throw new Error('electron-builder 没有生成可用产物')

@@ -31,6 +31,7 @@
         "$HOME/convert_tmp/linux/AppDir/usr/bin/resources/*",
         "$HOME/convert_tmp",
         "$HOME/convert_tmp/**",
+        "$HOME/convert_tmp/.*",
         "$HOME/convert_tmp2",
         "$HOME/convert_tmp2/**",
         "$RESOURCE/convert",
