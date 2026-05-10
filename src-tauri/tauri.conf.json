@@ -57,11 +57,7 @@
         "titleBarStyle": "Overlay",
         "acceptFirstMouse": true,
         "label": "bcm_convertor",
-        "useHttpsScheme": true,
-        "transparent": true,
-        "windowEffects": {
-          "effects": ["acrylic", "blur"]
-        }
+        "useHttpsScheme": true
       }
     ],
     "security": {
