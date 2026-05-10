@@ -44,7 +44,7 @@
   "plugins": {},
   "app": {
     "withGlobalTauri": true,
-    "macOSPrivateApi": true,
+    "macOSPrivateApi": false,
     "windows": [
       {
         "fullscreen": false,
