@@ -173,6 +173,24 @@ const applyRoundedMask = (canvas, radiusPercent = 0) => {
   return canvas
 }
 
+const applyMacIconInset = (canvas) => {
+  const INSET_RATIO = 0.1
+  const sourceSize = canvas.width
+  const innerSize = Math.round(sourceSize * (1 - 2 * INSET_RATIO))
+  const offset = Math.round((sourceSize - innerSize) / 2)
+
+  const outputCanvas = document.createElement('canvas')
+  outputCanvas.width = sourceSize
+  outputCanvas.height = sourceSize
+  const context = outputCanvas.getContext('2d')
+  if (!context) {
+    throw new Error('无法创建图标转换画布')
+  }
+
+  context.drawImage(canvas, offset, offset, innerSize, innerSize)
+  return outputCanvas
+}
+
 const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
   const sourceBlob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
   let canvas
@@ -199,6 +217,10 @@ const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
     canvas = applyRoundedMask(canvas, options.roundedIconRadius)
   }
 
+  if (options.macInset) {
+    canvas = applyMacIconInset(canvas)
+  }
+
   const pngBlob = await new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -216,9 +238,9 @@ const convertImageBytesToPng = async (bytes, mimeType, options = {}) => {
   return blobToUint8Array(pngBlob)
 }
 
-const getRemoteIconAssetPath = async (workspaceDir, osType) => {
+const getRemoteIconAssetPath = async (workspaceDir) => {
   const assetDir = await join(workspaceDir, '.builder-assets')
-  const fileName = osType === MACOS ? 'remote-project-icon.icns' : 'remote-project-icon.png'
+  const fileName = 'remote-project-icon.png'
   return {
     assetDir,
     iconPath: await join(assetDir, fileName)
@@ -230,10 +252,6 @@ const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType, options = 
     return undefined
   }
 
-  if (osType === MACOS) {
-    return undefined
-  }
-
   const response = await fetch(fetchedIcon, { method: 'GET' })
   if (!response.ok) {
     throw new Error(`下载远程封面图失败: ${response.status} ${response.statusText}`)
@@ -242,7 +260,7 @@ const downloadFetchedIcon = async (workspaceDir, fetchedIcon, osType, options = 
   const bytes = new Uint8Array(await response.arrayBuffer())
   const { mimeType } = detectImageFormat(bytes, fetchedIcon)
   const pngBytes = await convertImageBytesToPng(bytes, mimeType, options)
-  const { assetDir, iconPath } = await getRemoteIconAssetPath(workspaceDir, osType)
+  const { assetDir, iconPath } = await getRemoteIconAssetPath(workspaceDir)
 
   await mkdir(assetDir, { recursive: true })
   await writeFile(iconPath, pngBytes)
@@ -267,57 +285,80 @@ const getLocalNormalizedIconAssetPath = async (workspaceDir, extension) => {
 }
 
 const normalizeLocalProjectIconPath = async (workspaceDir, localIconPath, osType, options = {}) => {
-  if (!localIconPath || osType !== WINDOWS) {
+  if (!localIconPath) {
     return localIconPath
   }
 
-  const sourceExtension = getFileExtension(localIconPath)
-  const iconBytes = await readFile(localIconPath)
-  const detectedFormat = detectImageFormat(iconBytes, localIconPath)
+  if (osType === WINDOWS) {
+    const sourceExtension = getFileExtension(localIconPath)
+    const iconBytes = await readFile(localIconPath)
+    const detectedFormat = detectImageFormat(iconBytes, localIconPath)
 
-  if (
-    !options.roundedIcon &&
-    detectedFormat.mimeType === 'image/x-icon' &&
-    sourceExtension === detectedFormat.extension
-  ) {
-    return localIconPath
-  }
+    if (
+      !options.roundedIcon &&
+      detectedFormat.mimeType === 'image/x-icon' &&
+      sourceExtension === detectedFormat.extension
+    ) {
+      return localIconPath
+    }
 
-  if (!options.roundedIcon && detectedFormat.mimeType === 'image/x-icon') {
-    const normalizedExtension =
-      detectedFormat.extension || (detectedFormat.mimeType === 'image/x-icon' ? '.ico' : '.png')
-    const { assetDir, iconPath } = await getLocalNormalizedIconAssetPath(workspaceDir, normalizedExtension)
+    if (!options.roundedIcon && detectedFormat.mimeType === 'image/x-icon') {
+      const normalizedExtension =
+        detectedFormat.extension || (detectedFormat.mimeType === 'image/x-icon' ? '.ico' : '.png')
+      const { assetDir, iconPath } = await getLocalNormalizedIconAssetPath(workspaceDir, normalizedExtension)
+
+      await mkdir(assetDir, { recursive: true })
+      await writeFile(iconPath, iconBytes)
+      return iconPath
+    }
+
+    const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType, options)
+    const { assetDir, iconPath } = await getLocalConvertedIconAssetPath(workspaceDir)
 
     await mkdir(assetDir, { recursive: true })
-    await writeFile(iconPath, iconBytes)
+    await writeFile(iconPath, pngBytes)
     return iconPath
   }
 
-  const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType, options)
-  const { assetDir, iconPath } = await getLocalConvertedIconAssetPath(workspaceDir)
+  if (osType === MACOS) {
+    const iconBytes = await readFile(localIconPath)
+    const detectedFormat = detectImageFormat(iconBytes, localIconPath)
 
-  await mkdir(assetDir, { recursive: true })
-  await writeFile(iconPath, pngBytes)
-  return iconPath
+    if (detectedFormat.mimeType === 'image/icns') {
+      return localIconPath
+    }
+
+    const pngBytes = await convertImageBytesToPng(iconBytes, detectedFormat.mimeType, options)
+    const { assetDir, iconPath } = await getLocalConvertedIconAssetPath(workspaceDir)
+
+    await mkdir(assetDir, { recursive: true })
+    await writeFile(iconPath, pngBytes)
+    return iconPath
+  }
+
+  return localIconPath
 }
 
 const resolveProjectIconPath = async (projectInfo, workspaceDir, osType) => {
   const roundedIconRadius = Number(projectInfo.packageConfig?.roundedIconRadius ?? 22)
-  const squareIcon = osType === WINDOWS
-  const roundedIcon = osType === WINDOWS && Number.isFinite(roundedIconRadius) && roundedIconRadius > 0
+  const squareIcon = osType === WINDOWS || osType === MACOS
+  const roundedIcon = squareIcon && Number.isFinite(roundedIconRadius) && roundedIconRadius > 0
+  const macInset = osType === MACOS
   const localIconPath = normalizeOptionalPath(projectInfo.packageConfig?.projectIcon)
   if (localIconPath) {
     return normalizeLocalProjectIconPath(workspaceDir, localIconPath, osType, {
       squareIcon,
       roundedIcon,
-      roundedIconRadius
+      roundedIconRadius,
+      macInset
     })
   }
 
   return downloadFetchedIcon(workspaceDir, projectInfo.packageConfig?.fetchedIcon, osType, {
     squareIcon,
     roundedIcon,
-    roundedIconRadius
+    roundedIconRadius,
+    macInset
   })
 }
 

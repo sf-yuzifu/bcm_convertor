@@ -117,7 +117,7 @@ const getProjectIconExtensions = (osType) => {
   }
 
   if (osType === 'macos') {
-    return ['icns']
+    return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'icns']
   }
 
   return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'ico', 'icns']

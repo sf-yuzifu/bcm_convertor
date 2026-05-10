@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
+import { spawnSync } from 'node:child_process'
 
 const RESULT_MARKER = '__BCM_BUILDER_RESULT__='
 const PROGRESS_MARKER = '__BCM_BUILDER_PROGRESS__='
@@ -271,6 +272,55 @@ const createGeneratedIconOutputPath = (context) => {
   return join(context.outputDir, '.builder-icons', `${artifactBaseName}.ico`)
 }
 
+const createGeneratedIcnsOutputPath = (context) => {
+  const artifactBaseName = String(context.artifactBaseName || 'app-icon')
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+    .trim()
+  return join(context.outputDir, '.builder-icons', `${artifactBaseName}.icns`)
+}
+
+const convertPngToIcns = (pngPath, outputPath) => {
+  const iconsetDir = outputPath.replace(/\.icns$/, '.iconset')
+
+  if (existsSync(iconsetDir)) {
+    rmSync(iconsetDir, { recursive: true, force: true })
+  }
+  mkdirSync(iconsetDir, { recursive: true })
+
+  const sizes = [
+    { size: 16, name: 'icon_16x16.png' },
+    { size: 32, name: 'icon_16x16@2x.png' },
+    { size: 32, name: 'icon_32x32.png' },
+    { size: 64, name: 'icon_32x32@2x.png' },
+    { size: 128, name: 'icon_128x128.png' },
+    { size: 256, name: 'icon_128x128@2x.png' },
+    { size: 256, name: 'icon_256x256.png' },
+    { size: 512, name: 'icon_256x256@2x.png' },
+    { size: 512, name: 'icon_512x512.png' },
+    { size: 1024, name: 'icon_512x512@2x.png' }
+  ]
+
+  for (const { size, name } of sizes) {
+    const sipsResult = spawnSync('sips', ['-z', String(size), String(size), pngPath, '--out', join(iconsetDir, name)], {
+      stdio: 'pipe'
+    })
+
+    if (sipsResult.status !== 0) {
+      throw new Error(`sips 生成 ${name} 失败: ${sipsResult.stderr?.toString()}`)
+    }
+  }
+
+  const iconutilResult = spawnSync('iconutil', ['-c', 'icns', iconsetDir, '-o', outputPath], { stdio: 'pipe' })
+
+  rmSync(iconsetDir, { recursive: true, force: true })
+
+  if (iconutilResult.status !== 0) {
+    throw new Error(`iconutil 生成 icns 失败: ${iconutilResult.stderr?.toString()}`)
+  }
+
+  return outputPath
+}
+
 const resolveBuilderIconPath = async (context, root) => {
   const iconPath = getResolvedIconPath(context)
   if (!iconPath) {
@@ -279,6 +329,7 @@ const resolveBuilderIconPath = async (context, root) => {
   }
 
   const extension = extname(iconPath).toLowerCase()
+
   if (context.platform === 'windows' && extension === '.png') {
     const toolchainRequire = getRequire(root)
     const pngToIco = toolchainRequire('png-to-ico')
@@ -290,6 +341,19 @@ const resolveBuilderIconPath = async (context, root) => {
     emitLog(`图标转换: ${iconPath} -> ${outputPath}`)
     const iconBuffer = await pngToIco(iconPath)
     writeFileSync(outputPath, iconBuffer)
+    emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 70 })
+    emitLog(`图标转换完成: ${outputPath}`)
+    return outputPath
+  }
+
+  if (context.platform === 'macos' && extension !== '.icns') {
+    const outputPath = createGeneratedIcnsOutputPath(context)
+
+    mkdirSync(dirname(outputPath), { recursive: true })
+    emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 45 })
+    emitLog(`检测到 macOS 非 ICNS 图标，开始转换为 ICNS`)
+    emitLog(`图标转换: ${iconPath} -> ${outputPath}`)
+    convertPngToIcns(iconPath, outputPath)
     emitProgress({ stage: 'prepare', message: '正在处理应用图标', percent: 70 })
     emitLog(`图标转换完成: ${outputPath}`)
     return outputPath
@@ -311,8 +375,8 @@ const validateIconExtension = (iconPath, platform) => {
     throw new Error('Windows 打包仅支持使用 .ico 或 .png 作为自定义图标')
   }
 
-  if (platform === 'macos' && extension !== '.icns') {
-    throw new Error('macOS 打包仅支持使用 .icns 作为自定义图标')
+  if (platform === 'macos' && !['.icns', '.png', '.jpg', '.jpeg', '.webp', '.bmp'].includes(extension)) {
+    throw new Error('macOS 打包仅支持 icns/png/jpg/jpeg/webp/bmp 作为自定义图标')
   }
 
   if (platform === 'linux' && !['.png', '.jpg', '.jpeg', '.webp', '.svg', '.ico', '.icns'].includes(extension)) {
