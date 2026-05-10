@@ -31,6 +31,10 @@ const getPlatformRelease = () => {
   if (process.platform === 'linux' && process.arch === 'x64') {
     return { platform: 'linux', arch: 'x64', ext: '.tar.gz' }
   }
+  if (process.platform === 'darwin') {
+    const arch = process.arch === 'arm64' ? 'aarch64' : 'x64'
+    return { platform: 'mac', arch, ext: '.tar.gz' }
+  }
   throw new Error(`不支持的操作系统: ${process.platform}/${process.arch}`)
 }
 
@@ -129,6 +133,18 @@ const downloadFile = async (url, destPath, label, maxRedirects = 5) => {
   throw new Error(`下载 ${label} 失败，重定向次数超过上限`)
 }
 
+const moveContents = (sourceDir, destDir) => {
+  const entries = readdirSync(sourceDir)
+  for (const entry of entries) {
+    const src = join(sourceDir, entry)
+    const dst = join(destDir, entry)
+    try {
+      rmSync(dst, { recursive: true, force: true })
+    } catch {}
+    renameSync(src, dst)
+  }
+}
+
 const flattenJreDirectory = () => {
   try {
     const entries = readdirSync(jreDir)
@@ -145,16 +161,16 @@ const flattenJreDirectory = () => {
       const nestedPath = join(jreDir, nestedDirs[0])
       const tempPath = join(jreDir, '_temp_jre_')
       renameSync(nestedPath, tempPath)
-      const nestedEntries = readdirSync(tempPath)
-      for (const entry of nestedEntries) {
-        const src = join(tempPath, entry)
-        const dst = join(jreDir, entry)
-        try {
-          rmSync(dst, { recursive: true, force: true })
-        } catch {}
-        renameSync(src, dst)
-      }
+      moveContents(tempPath, jreDir)
       rmSync(tempPath, { recursive: true, force: true })
+    }
+
+    const contentsHomePath = join(jreDir, 'Contents', 'Home')
+    if (existsSync(contentsHomePath) && statSync(contentsHomePath).isDirectory()) {
+      const tempPath = join(jreDir, '_temp_jre_macos_')
+      renameSync(contentsHomePath, tempPath)
+      moveContents(tempPath, jreDir)
+      rmSync(join(jreDir, 'Contents'), { recursive: true, force: true })
     }
   } catch (error) {
     process.stdout.write(`[bcm-android] 展平目录完成或跳过: ${error.message}\n`)
@@ -189,6 +205,19 @@ const ensureJre = async () => {
   if (stats.size < 1024 * 1024) {
     throw new Error(`下载的 JRE 文件大小异常: ${stats.size} 字节`)
   }
+
+  const tempArchivePath = join(androidBuilderDir, '_jre_archive_temp_')
+  try {
+    rmSync(tempArchivePath, { force: true })
+  } catch {}
+  try {
+    renameSync(archivePath, tempArchivePath)
+  } catch {}
+  try {
+    rmSync(jreDir, { recursive: true, force: true })
+  } catch {}
+  mkdirSync(jreDir, { recursive: true })
+  renameSync(tempArchivePath, archivePath)
 
   extractJreArchive(archivePath)
   cleanupJreArchive()
