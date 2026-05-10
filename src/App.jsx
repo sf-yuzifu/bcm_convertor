@@ -15,27 +15,19 @@ export default function App() {
   const [process, setProcess] = useState(0)
   const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
-  const aboutOpenRef = useRef(aboutOpen)
-
   useEffect(() => {
-    aboutOpenRef.current = aboutOpen
-  }, [aboutOpen])
-
-  useEffect(() => {
-    if (!isTauri()) return
+    if (!isTauri() || !aboutOpen) return
 
     const appWindow = getCurrentWebviewWindow()
     const unlisten = appWindow.onCloseRequested((event) => {
-      if (aboutOpenRef.current) {
-        event.preventDefault()
-        setAboutOpen(false)
-      }
+      event.preventDefault()
+      setAboutOpen(false)
     })
 
     return () => {
       unlisten.then((fn) => fn())
     }
-  }, [])
+  }, [aboutOpen])
   const [isFileDragActive, setIsFileDragActive] = useState(false)
   const showSearchChrome = panelStep === 'search' && process !== 2
 
