@@ -52,7 +52,6 @@
         "title": "编程猫格式工厂",
         "width": 640,
         "height": 440,
-        "decorations": false,
         "shadow": true,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay",

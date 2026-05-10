@@ -29,7 +29,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
   return (
     <div className="relative h-10">
       <header
-        className="relative flex h-10 items-center border-b border-[var(--app-color-primary-hover)] bg-[var(--app-color-surface-elevated)] px-3"
+        className={`relative flex h-10 items-center border-b border-[var(--app-color-primary-hover)] bg-[var(--app-color-surface-elevated)] px-3 ${isMac ? 'justify-center' : ''}`}
         data-tauri-drag-region
       >
         <div className="text-lg font-bold text-[var(--app-color-accent)]" data-tauri-drag-region>
@@ -38,27 +38,39 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
       </header>
 
       <div className={`absolute top-[4px] inline-flex w-fit flex-row-reverse right-1 gap-1`}>
-        <Button
-          type="text"
-          className={`${buttonBaseClass} !z-[40] !text-[var(--app-color-accent)]`}
-          aria-label={aboutOpen ? '关闭关于页面' : '关闭'}
-          icon={<CloseOutlined style={{ fontSize: 20 }} />}
-          onClick={handleClose}
-        />
-        <Button
-          type="text"
-          className={`${buttonBaseClass} !z-[10] mx-[3px] !text-[var(--app-color-accent)]`}
-          aria-label="最小化"
-          icon={<LineOutlined style={{ fontSize: 20 }} />}
-          onClick={handleMinimize}
-        />
-        <Button
-          type="text"
-          className={`${buttonBaseClass} !text-[var(--app-color-accent)]`}
-          aria-label="关于"
-          icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
-          onClick={onOpenAbout}
-        />
+        {isMac ? (
+          <Button
+            type="text"
+            className={`${buttonBaseClass} !text-[var(--app-color-accent)]`}
+            aria-label="关于"
+            icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+            onClick={onOpenAbout}
+          />
+        ) : (
+          <>
+            <Button
+              type="text"
+              className={`${buttonBaseClass} !z-[40] !text-[var(--app-color-accent)]`}
+              aria-label={aboutOpen ? '关闭关于页面' : '关闭'}
+              icon={<CloseOutlined style={{ fontSize: 20 }} />}
+              onClick={handleClose}
+            />
+            <Button
+              type="text"
+              className={`${buttonBaseClass} !z-[10] mx-[3px] !text-[var(--app-color-accent)]`}
+              aria-label="最小化"
+              icon={<LineOutlined style={{ fontSize: 20 }} />}
+              onClick={handleMinimize}
+            />
+            <Button
+              type="text"
+              className={`${buttonBaseClass} !text-[var(--app-color-accent)]`}
+              aria-label="关于"
+              icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+              onClick={onOpenAbout}
+            />
+          </>
+        )}
       </div>
     </div>
   )

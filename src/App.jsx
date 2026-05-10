@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntdApp, Layout } from 'antd'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import AboutModal from './components/AboutModal.jsx'
 import MainPanel from './components/MainPanel.jsx'
 import TitleBar from './components/TitleBar.jsx'
 import VersionControls from './components/VersionControls.jsx'
+import { isTauri } from './services/system/runtimeService.js'
 
 const { Content } = Layout
 
@@ -13,6 +15,27 @@ export default function App() {
   const [process, setProcess] = useState(0)
   const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const aboutOpenRef = useRef(aboutOpen)
+
+  useEffect(() => {
+    aboutOpenRef.current = aboutOpen
+  }, [aboutOpen])
+
+  useEffect(() => {
+    if (!isTauri()) return
+
+    const appWindow = getCurrentWebviewWindow()
+    const unlisten = appWindow.onCloseRequested((event) => {
+      if (aboutOpenRef.current) {
+        event.preventDefault()
+        setAboutOpen(false)
+      }
+    })
+
+    return () => {
+      unlisten.then((fn) => fn())
+    }
+  }, [])
   const [isFileDragActive, setIsFileDragActive] = useState(false)
   const showSearchChrome = panelStep === 'search' && process !== 2
 

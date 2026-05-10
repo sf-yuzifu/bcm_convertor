@@ -16,6 +16,8 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .setup(|app| {
             utils::set_window_shadow(app);
+            #[cfg(target_os = "windows")]
+            utils::apply_windows_window_effects(app);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
