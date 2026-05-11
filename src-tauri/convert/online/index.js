@@ -18,6 +18,19 @@ const buildMinimalMenu = () => {
         { role: 'about', label: '关于' },
         { role: 'quit', label: '退出' }
       ]
+    },
+    {
+      label: '编辑',
+      submenu: [
+        { role: 'undo', label: '撤销' },
+        { role: 'redo', label: '重做' },
+        { type: 'separator' },
+        { role: 'cut', label: '剪切' },
+        { role: 'copy', label: '复制' },
+        { role: 'paste', label: '粘贴' },
+        { type: 'separator' },
+        { role: 'selectAll', label: '全选' }
+      ]
     }
   ]
 
