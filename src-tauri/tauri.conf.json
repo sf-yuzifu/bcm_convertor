@@ -17,7 +17,8 @@
       "./builder/scripts/**/*",
       "./builder/android/apktool.jar",
       "./builder/android/apksigner.jar",
-      "./builder/toolchain/**/*"
+      "./builder/toolchain/**/*",
+      "./zh-Hans.lproj/**/*"
     ],
     "icon": ["icons/linux.svg", "icons/mac.icns", "icons/win.ico", "icons/bcm_convertor.png"],
     "copyright": "小鱼yuzifu",
