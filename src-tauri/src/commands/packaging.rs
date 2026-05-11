@@ -1750,6 +1750,15 @@ async fn download_and_extract_jre(app: &AppHandle, dest_dir: &Path) -> Result<()
             .status().map_err(|e| e.to_string())?;
         if !status.success() { return Err("解压 JRE 失败".to_string()); }
 
+        let contents_home = tmp.join("Contents").join("Home");
+        if contents_home.exists() && contents_home.is_dir() {
+            let temp_flatten = parent.join(".jre-flatten");
+            if temp_flatten.exists() { let _ = fs::remove_dir_all(&temp_flatten); }
+            fs::rename(&contents_home, &temp_flatten).map_err(|e| e.to_string())?;
+            let _ = fs::remove_dir_all(&tmp);
+            fs::rename(&temp_flatten, &tmp).map_err(|e| e.to_string())?;
+        }
+
         if dest_dir.exists() { let _ = fs::remove_dir_all(dest_dir); }
         fs::rename(&tmp, dest_dir).map_err(|e| e.to_string())?;
     }
