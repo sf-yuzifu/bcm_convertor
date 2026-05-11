@@ -10,9 +10,11 @@ pub fn set_window_shadow<R: Runtime>(app: &tauri::App<R>) {
 
 pub fn apply_platform_window_effects<R: Runtime>(app: &tauri::App<R>) {
     if let Some(window) = app.get_webview_window("bcm_convertor") {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_os = "windows")]
         {
-            let _ = window.set_decorations(true);
+            use tauri::LogicalSize;
+            let _ = window.set_decorations(false);
+            let _ = window.set_size(LogicalSize::new(640.0, 440.0));
         }
     }
 }
