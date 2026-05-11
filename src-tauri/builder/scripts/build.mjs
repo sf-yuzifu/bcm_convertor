@@ -393,7 +393,14 @@ const createTargetConfig = async (context, root) => {
   }
 
   if (context.platform === 'macos') {
-    return { mac: { target: [context.target], ...(iconPath ? { icon: iconPath } : {}) } }
+    return {
+      mac: {
+        target: [context.target],
+        identity: null,
+        signAndEditExecutable: false,
+        ...(iconPath ? { icon: iconPath } : {})
+      }
+    }
   }
 
   return {
@@ -449,6 +456,12 @@ const applyDebugLogging = () => {
   process.env.DEBUG_COLORS ||= '0'
 }
 
+const applyCodeSigning = (context) => {
+  if (context.platform === 'macos') {
+    process.env.CSC_IDENTITY_AUTO_DISCOVERY = 'false'
+  }
+}
+
 const getCacheRoot = (context) =>
   process.env.BCM_BUILDER_CACHE_ROOT || join(dirname(context.outputDir), '.builder-cache')
 
@@ -467,6 +480,7 @@ const buildApp = async (context) => {
   mkdirSync(cacheRoot, { recursive: true })
   applyDownloadMirrors()
   applyDebugLogging()
+  applyCodeSigning(context)
   process.env.ELECTRON_BUILDER_CACHE = join(cacheRoot, 'electron-builder')
   process.env.ELECTRON_CACHE = join(cacheRoot, 'electron')
   emitProgress({ stage: 'prepare', message: '正在准备打包环境', percent: 30 })
@@ -483,6 +497,7 @@ const buildApp = async (context) => {
   emitLog(`DEBUG_COLORS: ${process.env.DEBUG_COLORS}`)
   emitLog(`builder 缓存: ${process.env.ELECTRON_BUILDER_CACHE}`)
   emitLog(`electron 缓存: ${process.env.ELECTRON_CACHE}`)
+  emitLog(`CSC_IDENTITY_AUTO_DISCOVERY: ${process.env.CSC_IDENTITY_AUTO_DISCOVERY}`)
 
   const config = {
     appId: 'com.bcm-convertor.generated',
