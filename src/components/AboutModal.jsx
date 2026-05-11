@@ -90,9 +90,7 @@ export default function AboutModal({ open }) {
         <img src="/pic_aboutUs.png" alt="" className="absolute top-0 h-[78px] w-[252px]" />
         <p className="z-[8] !mt-1 !mb-1 ml-[10px] text-[18px] font-bold">版本号：v{packageJson.version}</p>
         <a
-          href="https://shequ.codemao.cn/user/438403"
-          target="_blank"
-          rel="noreferrer"
+          href="#"
           className="z-[8] text-[14px] ml-[10px] text-current !underline"
           onClick={(event) => {
             event.preventDefault()
@@ -114,9 +112,7 @@ export default function AboutModal({ open }) {
                 {item.linkUrl && line === item.lines[item.lines.length - 1] ? (
                   <>
                     <a
-                      href={item.linkUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                      href="#"
                       className="text-current"
                       onClick={(event) => {
                         event.preventDefault()
