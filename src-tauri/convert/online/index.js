@@ -5,6 +5,25 @@ const WINDOW_WIDTH = __ONLINE_WINDOW_WIDTH__
 const WINDOW_HEIGHT = __ONLINE_WINDOW_HEIGHT__
 const PLAYER_URL = 'thisisaplacewhichshouldbereplace'
 
+const buildMinimalMenu = () => {
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(null)
+    return
+  }
+
+  const template = [
+    {
+      label: app.name,
+      submenu: [
+        { role: 'about', label: '关于' },
+        { role: 'quit', label: '退出' }
+      ]
+    }
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 let mainWindow = null
 
 const createWindow = () => {
@@ -24,7 +43,7 @@ const createWindow = () => {
     }
   })
 
-  Menu.setApplicationMenu(null)
+  buildMinimalMenu()
 
   mainWindow.loadURL(PLAYER_URL, {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Electron/19.0.7 kitten4-format-factory'
@@ -33,6 +52,11 @@ const createWindow = () => {
   mainWindow.on('page-title-updated', (event) => {
     event.preventDefault()
     mainWindow.setTitle(app.name)
+  })
+
+  mainWindow.on('close', () => {
+    mainWindow = null
+    app.quit()
   })
 
   mainWindow.on('closed', () => {
@@ -53,14 +77,6 @@ app.whenReady().then(() => {
   createWindow()
 })
 
-app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
-
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  app.quit()
 })

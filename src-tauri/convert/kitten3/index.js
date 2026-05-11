@@ -4,6 +4,25 @@ const { app, BrowserWindow, Menu } = require('electron')
 const WINDOW_WIDTH = __KITTEN3_WINDOW_WIDTH__
 const WINDOW_HEIGHT = __KITTEN3_WINDOW_HEIGHT__
 
+const buildMinimalMenu = () => {
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(null)
+    return
+  }
+
+  const template = [
+    {
+      label: app.name,
+      submenu: [
+        { role: 'about', label: '关于' },
+        { role: 'quit', label: '退出' }
+      ]
+    }
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 let mainWindow = null
 
 const createWindow = () => {
@@ -21,7 +40,7 @@ const createWindow = () => {
   })
 
   mainWindow.loadFile(path.join(__dirname, 'player.html'))
-  Menu.setApplicationMenu(null)
+  buildMinimalMenu()
 
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools()
@@ -63,6 +82,11 @@ const createWindow = () => {
     `).catch(err => console.error('[AutoPlay] Error:', err))
   })
 
+  mainWindow.on('close', () => {
+    mainWindow = null
+    app.quit()
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
@@ -79,14 +103,6 @@ const createWindow = () => {
 
 app.on('ready', createWindow)
 
-app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
-
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  app.quit()
 })
