@@ -7,7 +7,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "nsis",
+    "targets": ["deb", "rpm", "appimage", "nsis", "app", "dmg"],
     "resources": [
       "./convert/android/base.apk",
       "./convert/android/shell/app/src/main/assets/online_loader.html",
@@ -25,6 +25,23 @@
     "shortDescription": "编程猫格式工厂",
     "longDescription": "将自己在kitten3/4上的作品快速制作成独立应用程序",
     "category": "DeveloperTool",
+    "macOS": {
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        },
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        }
+      },
+      "minimumSystemVersion": "10.15"
+    },
     "windows": {
       "nsis": {
         "installMode": "currentUser",
@@ -38,7 +55,7 @@
     }
   },
   "productName": "编程猫格式工厂",
-  "mainBinaryName": "编程猫格式工厂",
+  "mainBinaryName": "bcm-convertor",
   "version": "2.5.0",
   "identifier": "moe.yzf.bcm-convertor",
   "plugins": {},
