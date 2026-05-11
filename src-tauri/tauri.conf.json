@@ -71,6 +71,7 @@
         "width": 640,
         "height": 440,
         "shadow": true,
+        "decorations": false,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay",
         "acceptFirstMouse": true,
