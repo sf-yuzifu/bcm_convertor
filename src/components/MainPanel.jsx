@@ -131,7 +131,8 @@ export default function MainPanel({
   onProjectFetched,
   onPackageConfigChange,
   onChooseProjectIcon,
-  onSubmitPackageConfig
+  onSubmitPackageConfig,
+  bcmSelectTrigger
 }) {
   const [workId, setWorkId] = useState('6654365')
   const [isDragActive, setIsDragActive] = useState(false)
@@ -421,6 +422,19 @@ export default function MainPanel({
     setLastOutputDirectory('')
     setLastOutputPath('')
   }, [onPanelStepChange, status, version])
+
+  useEffect(() => {
+    if (!bcmSelectTrigger || !isOfflineKitten3 || process === 1) return
+    const timer = setTimeout(async () => {
+      try {
+        await openPackageConfigPanel()
+      } catch (error) {
+        console.error(error)
+        await showErrorAlert(error)
+      }
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [bcmSelectTrigger])
 
   useEffect(
     () => () => cleanupIconPreview(packageConfig.projectIconPreview, packageConfig.fetchedIconPreview),

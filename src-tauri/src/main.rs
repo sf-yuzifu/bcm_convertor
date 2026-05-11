@@ -18,6 +18,8 @@ fn main() {
             utils::set_window_shadow(app);
             #[cfg(target_os = "windows")]
             utils::apply_windows_window_effects(app);
+            #[cfg(target_os = "macos")]
+            utils::setup_macos_menu(app);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

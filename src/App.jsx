@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntdApp, Layout } from 'antd'
+import { listen } from '@tauri-apps/api/event'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import AboutModal from './components/AboutModal.jsx'
 import MainPanel from './components/MainPanel.jsx'
@@ -15,6 +16,20 @@ export default function App() {
   const [process, setProcess] = useState(0)
   const [panelStep, setPanelStep] = useState('search')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [bcmSelectTrigger, setBcmSelectTrigger] = useState(0)
+  useEffect(() => {
+    if (!isTauri()) return
+    const unlistenAbout = listen('show-about', () => setAboutOpen(true))
+    const unlistenBcm = listen('select-bcm', () => {
+      setVersion('kitten3')
+      setStatus('offline')
+      setBcmSelectTrigger((n) => n + 1)
+    })
+    return () => {
+      unlistenAbout.then((fn) => fn())
+      unlistenBcm.then((fn) => fn())
+    }
+  }, [])
   useEffect(() => {
     if (!isTauri() || !aboutOpen) return
 
@@ -97,6 +112,7 @@ export default function App() {
               onPanelStepChange={setPanelStep}
               onProcessChange={setProcess}
               onFileDragActiveChange={setIsFileDragActive}
+              bcmSelectTrigger={bcmSelectTrigger}
             />
           </div>
         </Content>
