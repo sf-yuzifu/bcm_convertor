@@ -25,10 +25,7 @@ const ABOUT_ITEMS = [
   },
   {
     title: '4.关于安卓APK。',
-    lines: ['答：嗯，不会出了...（试着用用'],
-    linkLabel: 'CoCo编辑器？',
-    linkUrl: 'https://coco.codemao.cn/',
-    suffix: '）'
+    lines: ['答：嗯，不会出了...（划掉）在新版本里，已经支持了。']
   }
 ]
 
