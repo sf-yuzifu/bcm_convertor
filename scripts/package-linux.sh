@@ -7,9 +7,9 @@ TAURI_DIR="$PROJECT_ROOT/src-tauri"
 DESKTOP_FILE="$TAURI_DIR/linux/moe.yzf.bcm-convertor.desktop"
 ICONS_DIR="$TAURI_DIR/linux/icons"
 RESOURCES_DIR="$TAURI_DIR"
-
 PACKAGE_NAME="moe.yzf.bcm-convertor"
 BINARY_NAME="bcm-convertor"
+LIB_DIR="usr/lib/$BINARY_NAME"
 DISPLAY_NAME="编程猫格式工厂"
 DESCRIPTION="将自己在kitten3/4上的作品快速制作成独立应用程序"
 LONG_DESCRIPTION="将自己在kitten3/4上的作品快速制作成独立应用程序"
@@ -107,7 +107,7 @@ install_icons() {
   local target_dir="$1"
 
   if [[ -d "$ICONS_DIR/scalable/apps" ]]; then
-    local scalable_dir="$target_dir/share/icons/hicolor/scalable/apps"
+    local scalable_dir="$target_dir/usr/share/icons/hicolor/scalable/apps"
     mkdir -p "$scalable_dir"
     cp "$ICONS_DIR/scalable/apps/$ICON_NAME.svg" "$scalable_dir/"
   fi
@@ -115,9 +115,39 @@ install_icons() {
   for size in "${ICON_SIZES[@]}"; do
     local png="$ICONS_DIR/${size}x${size}/apps/$ICON_NAME.png"
     if [[ -f "$png" ]]; then
-      local dir="$target_dir/share/icons/hicolor/${size}x${size}/apps"
+      local dir="$target_dir/usr/share/icons/hicolor/${size}x${size}/apps"
       mkdir -p "$dir"
       cp "$png" "$dir/"
+    fi
+  done
+}
+
+install_tauri_resources() {
+  local lib_dir="$1"
+  local resources=(
+    "convert/android/base.apk"
+    "convert/android/shell/app/src/main/assets/online_loader.html"
+    "convert/kitten3"
+    "convert/kitten4"
+    "convert/online"
+    "builder/scripts"
+    "builder/android/apktool.jar"
+    "builder/android/apksigner.jar"
+    "builder/toolchain"
+    "zh-Hans.lproj"
+  )
+
+  for res in "${resources[@]}"; do
+    local src="$RESOURCES_DIR/$res"
+    local dst="$lib_dir/$res"
+    if [[ -d "$src" ]]; then
+      mkdir -p "$dst"
+      cp -r "$src/." "$dst/"
+    elif [[ -f "$src" ]]; then
+      mkdir -p "$(dirname "$dst")"
+      cp "$src" "$dst"
+    else
+      echo "Warning: resource not found: $src"
     fi
   done
 }
@@ -131,16 +161,19 @@ if $BUILD_DEB; then
   rm -rf "$DEB_ROOT"
   mkdir -p "$DEB_ROOT/DEBIAN"
   mkdir -p "$DEB_ROOT/usr/bin"
+  mkdir -p "$DEB_ROOT/$LIB_DIR"
   mkdir -p "$DEB_ROOT/usr/share/applications"
   mkdir -p "$DEB_ROOT/usr/share/doc/$PACKAGE_NAME"
 
-  cp "$BINARY_PATH" "$DEB_ROOT/usr/bin/$BINARY_NAME"
-  chmod 755 "$DEB_ROOT/usr/bin/$BINARY_NAME"
+  cp "$BINARY_PATH" "$DEB_ROOT/$LIB_DIR/$BINARY_NAME"
+  chmod 755 "$DEB_ROOT/$LIB_DIR/$BINARY_NAME"
+  ln -s "/$LIB_DIR/$BINARY_NAME" "$DEB_ROOT/usr/bin/$BINARY_NAME"
 
   cp "$DESKTOP_FILE" "$DEB_ROOT/usr/share/applications/$PACKAGE_NAME.desktop"
   chmod 644 "$DEB_ROOT/usr/share/applications/$PACKAGE_NAME.desktop"
 
   install_icons "$DEB_ROOT"
+  install_tauri_resources "$DEB_ROOT/$LIB_DIR"
 
   INSTALLED_SIZE=$(du -sk "$DEB_ROOT/usr" | cut -f1)
 
@@ -177,6 +210,44 @@ if $BUILD_RPM; then
     rm -rf "$RPM_TOPDIR"
     mkdir -p "$RPM_TOPDIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
+    RESOURCES_INSTALL=""
+    RESOURCES_FILES=""
+    RESOURCES_MKDIRS=""
+
+    install_resources_for_spec() {
+      local resources=(
+        "convert/android/base.apk"
+        "convert/android/shell/app/src/main/assets/online_loader.html"
+        "convert/kitten3"
+        "convert/kitten4"
+        "convert/online"
+        "builder/scripts"
+        "builder/android/apktool.jar"
+        "builder/android/apksigner.jar"
+        "builder/toolchain"
+        "zh-Hans.lproj"
+      )
+
+      for res in "${resources[@]}"; do
+        local src="$RESOURCES_DIR/$res"
+        if [[ -d "$src" ]]; then
+          while IFS= read -r -d '' file; do
+            local rel="${file#"$src"}"
+            local dst_dir="%{buildroot}/$LIB_DIR/$res$(dirname "$rel")"
+            RESOURCES_MKDIRS+="mkdir -p $dst_dir"$'\n'
+            RESOURCES_INSTALL+="install -m 644 $file %{buildroot}/$LIB_DIR/$res$rel"$'\n'
+            RESOURCES_FILES+="/$LIB_DIR/$res$rel"$'\n'
+          done < <(find "$src" -type f -print0)
+        elif [[ -f "$src" ]]; then
+          local dst_dir="%{buildroot}/$(dirname "$LIB_DIR/$res")"
+          RESOURCES_MKDIRS+="mkdir -p $dst_dir"$'\n'
+          RESOURCES_INSTALL+="install -m 644 $src %{buildroot}/$LIB_DIR/$res"$'\n'
+          RESOURCES_FILES+="/$LIB_DIR/$res"$'\n'
+        fi
+      done
+    }
+    install_resources_for_spec
+
     cat > "$RPM_TOPDIR/SPECS/$PACKAGE_NAME.spec" << EOF
 Name:           $PACKAGE_NAME
 Version:        $VERSION
@@ -191,15 +262,17 @@ $LONG_DESCRIPTION
 
 %install
 rm -rf %{buildroot}
+mkdir -p %{buildroot}/$LIB_DIR
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/applications
-mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 mkdir -p %{buildroot}/usr/share/doc/$PACKAGE_NAME
 
-install -m 755 $BINARY_PATH %{buildroot}/usr/bin/$BINARY_NAME
+install -m 755 $BINARY_PATH %{buildroot}/$LIB_DIR/$BINARY_NAME
+ln -s /$LIB_DIR/$BINARY_NAME %{buildroot}/usr/bin/$BINARY_NAME
 install -m 644 $DESKTOP_FILE %{buildroot}/usr/share/applications/$PACKAGE_NAME.desktop
 
 $(if [[ -d "$ICONS_DIR/scalable/apps" ]]; then
+  echo "mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps"
   echo "install -m 644 $ICONS_DIR/scalable/apps/$ICON_NAME.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/$ICON_NAME.svg"
 fi)
 
@@ -211,16 +284,23 @@ $(for size in "${ICON_SIZES[@]}"; do
   fi
 done)
 
+$RESOURCES_MKDIRS
+$RESOURCES_INSTALL
+
 %files
+/$LIB_DIR/$BINARY_NAME
 /usr/bin/$BINARY_NAME
 /usr/share/applications/$PACKAGE_NAME.desktop
-/usr/share/icons/hicolor/scalable/apps/$ICON_NAME.svg
+$(if [[ -d "$ICONS_DIR/scalable/apps" ]]; then
+  echo "/usr/share/icons/hicolor/scalable/apps/$ICON_NAME.svg"
+fi)
 $(for size in "${ICON_SIZES[@]}"; do
   png="$ICONS_DIR/${size}x${size}/apps/$ICON_NAME.png"
   if [[ -f "$png" ]]; then
     echo "/usr/share/icons/hicolor/${size}x${size}/apps/$ICON_NAME.png"
   fi
 done)
+$RESOURCES_FILES
 
 %post
 /usr/bin/update-icon-caches /usr/share/icons/hicolor 2>/dev/null || true
