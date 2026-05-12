@@ -1,0 +1,13 @@
+{
+  "productName": "moe.yzf.bcm-convertor",
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/moe.yzf.bcm-convertor.desktop"
+      },
+      "rpm": {
+        "desktopTemplate": "linux/moe.yzf.bcm-convertor.desktop"
+      }
+    }
+  }
+}
