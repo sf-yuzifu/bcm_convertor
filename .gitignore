@@ -161,3 +161,6 @@ src-tauri/builder/android/jre/
 
 # Android keystores (auto-generated, never commit)
 src-tauri/builder/android/*.keystore
+
+# Generated Linux package icons (PNG auto-generated from SVG)
+src-tauri/linux/icons/*/

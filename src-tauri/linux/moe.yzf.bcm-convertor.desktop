@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Development;
+Comment=将自己在kitten3/4上的作品快速制作成独立应用程序
+Exec=bcm-convertor
+Icon=moe.yzf.bcm-convertor
+Name=编程猫格式工厂
+Terminal=false
+Type=Application

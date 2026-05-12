@@ -13,7 +13,9 @@
     "format": "prettier . --write --ignore-unknown",
     "format:check": "prettier . --check --ignore-unknown",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "icon:linux": "node ./scripts/generate-linux-icons.cjs",
+    "package:linux": "bash ./scripts/package-linux.sh"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

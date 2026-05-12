@@ -1,0 +1,14 @@
+{
+  "bundle": {
+    "targets": ["appimage"],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/moe.yzf.bcm-convertor.desktop",
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libayatana-appindicator3-1"]
+      },
+      "rpm": {
+        "depends": ["webkit2gtk4.1", "gtk3", "libappindicator-gtk3"]
+      }
+    }
+  }
+}
