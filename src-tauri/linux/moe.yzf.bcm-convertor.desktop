@@ -1,6 +1,6 @@
 [Desktop Entry]
 Categories=Development;
-Comment=将自己在kitten3/4上的作品快速制作成独立应用程序
+Comment=一键将 Kitten3/Kitten4/KittenN 作品打包为 Windows/Mac/Linux 桌面应用或 Android APK
 Exec=bcm-convertor
 Icon=moe.yzf.bcm-convertor
 Name=编程猫格式工厂

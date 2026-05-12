@@ -1,7 +1,7 @@
 [package]
 name = "bcm_convertor"
 version = "2.5.0"
-description = "将自己在kitten3/4上的作品快速制作成独立应用程序"
+description = "一键将 Kitten3/Kitten4/KittenN 作品打包为 Windows/Mac/Linux 桌面应用或 Android APK"
 authors = ["小鱼yuzifu"]
 license = "GPL-3.0"
 repository = "https://gitee.com/sf-yuzifu/bcm_convertor.git"
