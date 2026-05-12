@@ -7,7 +7,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm", "appimage", "nsis", "app", "dmg"],
+    "targets": ["appimage", "nsis", "app", "dmg"],
     "resources": [
       "./convert/android/base.apk",
       "./convert/android/shell/app/src/main/assets/online_loader.html",
