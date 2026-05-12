@@ -10,5 +10,23 @@
         "depends": ["webkit2gtk4.1", "gtk3", "libappindicator-gtk3"]
       }
     }
+  },
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": false,
+        "title": "编程猫格式工厂",
+        "width": 640,
+        "height": 440,
+        "shadow": true,
+        "transparent": true,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
+        "acceptFirstMouse": true,
+        "label": "bcm_convertor",
+        "useHttpsScheme": true
+      }
+    ]
   }
 }

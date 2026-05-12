@@ -2,10 +2,8 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuild
 use tauri::{Emitter, Manager, Runtime};
 
 pub fn set_window_shadow<R: Runtime>(app: &tauri::App<R>) {
-    if cfg!(not(target_os = "linux")) {
-        let window = app.get_webview_window("bcm_convertor").unwrap();
-        let _ = window.set_shadow(true);
-    }
+    let window = app.get_webview_window("bcm_convertor").unwrap();
+    let _ = window.set_shadow(true);
 }
 
 pub fn apply_platform_window_effects<R: Runtime>(app: &tauri::App<R>) {
@@ -15,6 +13,22 @@ pub fn apply_platform_window_effects<R: Runtime>(app: &tauri::App<R>) {
             use tauri::LogicalSize;
             let _ = window.set_decorations(false);
             let _ = window.set_size(LogicalSize::new(640.0, 440.0));
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            use gtk::prelude::*;
+            if let Ok(gtk_win) = window.gtk_window() {
+                gtk_win.set_app_paintable(true);
+                if let Some(screen) = GtkWindowExt::screen(&gtk_win) {
+                    if let Some(visual) = screen.rgba_visual() {
+                        gtk_win.set_visual(Some(&visual));
+                    }
+                }
+                if let Some(gdk_win) = gtk_win.window() {
+                    gdk_win.set_shadow_width(8, 8, 8, 8);
+                }
+            }
         }
     }
 }

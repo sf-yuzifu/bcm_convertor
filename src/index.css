@@ -33,7 +33,6 @@
   --app-color-shadow: rgba(95, 53, 24, 0.2);
   color: var(--app-color-text);
   font-family: var(--app-font-family);
-  color-scheme: light;
 }
 
 html,
@@ -44,13 +43,28 @@ body,
   margin: 0;
 }
 
+html {
+  background: transparent !important;
+}
+
 body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  background-color: var(--app-color-surface);
+  background: transparent;
   color: var(--app-color-text);
   font-family: var(--app-font-family);
+}
+
+#app {
+  background: transparent;
+  box-sizing: border-box;
+}
+
+#app .ant-layout {
+  background-color: var(--app-color-surface) !important;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 img {
