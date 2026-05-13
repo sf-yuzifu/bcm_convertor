@@ -455,8 +455,8 @@ export default function MainPanel({
     }
 
     return status === 'offline' && version === 'kitten3'
-      ? '选择 kitten3 作品文件进行转换'
-      : `将 ${version} 作品 ID 输入这里进行转换`
+      ? '选择 Kitten3 作品文件进行转换'
+      : `将 ${version.charAt(0).toUpperCase() + version.slice(1)} 作品 ID 输入这里进行转换`
   }, [builderMessage, isOnlineKittenN, panelStep, process, status, version])
 
   const showInput = !isOfflineKitten3 && panelStep === 'search'
