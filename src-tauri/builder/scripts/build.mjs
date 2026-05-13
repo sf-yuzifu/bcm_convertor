@@ -397,7 +397,7 @@ const createTargetConfig = async (context, root) => {
       mac: {
         target: [context.target],
         identity: null,
-        signAndEditExecutable: false,
+        sign: false,
         ...(iconPath ? { icon: iconPath } : {})
       }
     }
