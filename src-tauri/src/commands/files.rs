@@ -223,11 +223,40 @@ fn reveal_path_in_system(path: &Path) -> Result<(), String> {
 
 #[cfg(target_os = "linux")]
 fn reveal_path_in_system(path: &Path) -> Result<(), String> {
-    Command::new("xdg-open")
-        .arg(path.parent().unwrap_or(path))
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| format!("打开文件管理器失败: {} ({})", path.display(), e))
+    use std::process::Stdio;
+
+    let path_str = path
+        .canonicalize()
+        .unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy()
+        .to_string();
+
+    let file_url = format!("file://{}", path_str);
+
+    let result = Command::new("dbus-send")
+        .args([
+            "--session",
+            "--dest=org.freedesktop.FileManager1",
+            "--type=method_call",
+            "/org/freedesktop/FileManager1",
+            "org.freedesktop.FileManager1.ShowItems",
+            &format!("array:string:{}", file_url),
+            "string:\"\"",
+        ])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+
+    match result {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            Command::new("xdg-open")
+                .arg(path.parent().unwrap_or(path))
+                .spawn()
+                .map(|_| ())
+                .map_err(|e| format!("打开文件管理器失败: {} ({})", path.display(), e))
+        }
+    }
 }
 
 #[tauri::command]
