@@ -1,4 +1,4 @@
-import { desktopDir, homeDir, resourceDir } from '@tauri-apps/api/path'
+import { appLogDir, desktopDir, homeDir, resourceDir } from '@tauri-apps/api/path'
 import { type } from '@tauri-apps/plugin-os'
 
 const TAURI_UNAVAILABLE_ERROR = 'not in tauri'
@@ -17,8 +17,9 @@ export const getEnv = async () => {
       const homeDirPath = await homeDir()
       const resourceDirPath = (await resourceDir()).replace('\\\\?\\\\', '')
       const desktopDirPath = await desktopDir()
+      const appLogDirPath = await appLogDir()
 
-      return { osType, homeDirPath, resourceDirPath, desktopDirPath }
+      return { osType, homeDirPath, resourceDirPath, desktopDirPath, appLogDirPath }
     })()
   }
 

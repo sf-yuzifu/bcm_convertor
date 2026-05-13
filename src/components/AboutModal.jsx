@@ -7,11 +7,12 @@ import { getEnv } from '../services/system/runtimeService.js'
 
 const ABOUT_ITEMS = [
   {
-    title: '1.生成的程序无法运行/找不到文件存放位置。',
+    title: '1.无法转换作品/生成的程序无法运行/找不到文件存放位置。',
     lines: [
-      '答：如果无法打开，则为软件bug。可联系作者。默认情况下文件存放位置Windows/Mac OS在桌面上，而Linux在用户home目录下。'
+      '答：无法转换作品或生成的程序如果无法打开，则为软件bug。可以先找到转换过程中的日志文件，查看是否有异常信息。如果有异常信息但是无法自己解决的，则联系作者。'
     ],
-    pathLabel: '当前文件存放位置:'
+    pathLabel: '当前文件存放位置:',
+    logPathLabel: '当前日志存放位置:'
   },
   {
     title: '2.转换后的应用程序大小远远大于bcm文件大小。',
@@ -31,6 +32,7 @@ const ABOUT_ITEMS = [
 
 export default function AboutModal({ open }) {
   const [savingPath, setSavingPath] = useState('')
+  const [logPath, setLogPath] = useState('')
 
   useEffect(() => {
     let disposed = false
@@ -40,6 +42,7 @@ export default function AboutModal({ open }) {
         const env = await getEnv()
         if (!disposed) {
           setSavingPath(env.desktopDirPath || '')
+          setLogPath(env.appLogDirPath || '')
         }
       } catch (error) {
         console.error(error)
@@ -74,6 +77,27 @@ export default function AboutModal({ open }) {
     }
   }
 
+  const openLogDirectory = async () => {
+    try {
+      await invokeBackendCommand(
+        'open_file',
+        { path: logPath },
+        {
+          code: 'ABOUT_LOG_DIRECTORY_OPEN_FAILED',
+          title: '打开日志目录失败',
+          text: '无法自动打开日志目录，请手动前往日志目录查看',
+          stage: 'postprocess',
+          retryable: true
+        }
+      )
+    } catch (error) {
+      console.error(error)
+      await showErrorAlert(error, {
+        onRetryOpenOutput: openLogDirectory
+      })
+    }
+  }
+
   return (
     <div
       className={`absolute inset-0 z-[35] bg-[var(--app-color-surface-elevated)] text-[13px] text-[var(--app-color-text)] transition-transform duration-500 ${
@@ -98,7 +122,7 @@ export default function AboutModal({ open }) {
         </a>
       </div>
 
-      <div className="px-8">
+      <div className="px-8 top-[-14px] relative">
         <p className="!mb-4 text-[14px] font-bold">关于格式工厂你需要知道：</p>
         {ABOUT_ITEMS.map((item, index) => (
           <div key={item.title} className="!mb-4">
@@ -132,6 +156,18 @@ export default function AboutModal({ open }) {
                   onClick={openOutputDirectory}
                 >
                   {savingPath || '加载中...'}
+                </button>
+              </p>
+            ) : null}
+            {item.logPathLabel ? (
+              <p className="!my-0 ml-3">
+                {item.logPathLabel}
+                <button
+                  type="button"
+                  className="!ml-1 cursor-pointer border-0 bg-transparent p-0 font-bold text-current underline"
+                  onClick={openLogDirectory}
+                >
+                  {logPath || '加载中...'}
                 </button>
               </p>
             ) : null}
