@@ -1,6 +1,6 @@
 {
   "bundle": {
-    "targets": ["appimage"],
+    "targets": [],
     "linux": {
       "deb": {
         "desktopTemplate": "linux/moe.yzf.bcm-convertor.desktop",
