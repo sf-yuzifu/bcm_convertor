@@ -211,17 +211,23 @@ fn reveal_path_in_system(path: &Path) -> Result<(), String> {
         .map_err(|e| format!("打开资源管理器失败: {} ({})", path.display(), e))
 }
 
-#[cfg(not(target_family = "windows"))]
+#[cfg(target_os = "macos")]
 fn reveal_path_in_system(path: &Path) -> Result<(), String> {
-    let target = if path.is_dir() {
-        path.to_path_buf()
-    } else {
-        path.parent()
-            .map(Path::to_path_buf)
-            .unwrap_or_else(|| path.to_path_buf())
-    };
+    Command::new("open")
+        .arg("-R")
+        .arg(path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("在 Finder 中显示失败: {} ({})", path.display(), e))
+}
 
-    open::that(target).map_err(|e| e.to_string())
+#[cfg(target_os = "linux")]
+fn reveal_path_in_system(path: &Path) -> Result<(), String> {
+    Command::new("xdg-open")
+        .arg(path.parent().unwrap_or(path))
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("打开文件管理器失败: {} ({})", path.display(), e))
 }
 
 #[tauri::command]
