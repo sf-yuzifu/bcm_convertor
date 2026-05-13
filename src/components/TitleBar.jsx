@@ -32,7 +32,7 @@ export default function TitleBar({ aboutOpen, onOpenAbout, onCloseAbout }) {
         className={`relative flex h-10 items-center border-b border-[var(--app-color-primary-hover)] bg-[var(--app-color-surface-elevated)] px-3 ${isMac ? 'justify-center' : ''}`}
         data-tauri-drag-region
       >
-        <div className="text-lg font-bold text-[var(--app-color-accent)]" data-tauri-drag-region>
+        <div className="pointer-events-none text-lg font-bold text-[var(--app-color-accent)]" data-tauri-drag-region>
           编程猫格式工厂
         </div>
       </header>
