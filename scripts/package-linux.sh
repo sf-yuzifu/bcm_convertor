@@ -9,7 +9,9 @@ ICONS_DIR="$TAURI_DIR/linux/icons"
 RESOURCES_DIR="$TAURI_DIR"
 PACKAGE_NAME="moe.yzf.bcm-convertor"
 BINARY_NAME="bcm-convertor"
-LIB_DIR="usr/lib/$BINARY_NAME"
+PRODUCT_NAME="编程猫格式工厂"
+LIB_DIR="usr/lib/$PRODUCT_NAME"
+RPM_LIB_DIR="usr/lib/$BINARY_NAME"
 DISPLAY_NAME="编程猫格式工厂"
 DESCRIPTION="一键将 Kitten3/Kitten4/KittenN 作品打包为 Windows/Mac/Linux 桌面应用或 Android APK"
 LONG_DESCRIPTION="一键将 Kitten3/Kitten4/KittenN 作品打包为 Windows/Mac/Linux 桌面应用或 Android APK"
@@ -233,16 +235,16 @@ if $BUILD_RPM; then
         if [[ -d "$src" ]]; then
           while IFS= read -r -d '' file; do
             local rel="${file#"$src"}"
-            local dst_dir="%{buildroot}/$LIB_DIR/$res$(dirname "$rel")"
+            local dst_dir="%{buildroot}/$RPM_LIB_DIR/$res$(dirname "$rel")"
             RESOURCES_MKDIRS+="mkdir -p $dst_dir"$'\n'
-            RESOURCES_INSTALL+="install -m 644 $file %{buildroot}/$LIB_DIR/$res$rel"$'\n'
-            RESOURCES_FILES+="/$LIB_DIR/$res$rel"$'\n'
+            RESOURCES_INSTALL+="install -m 644 $file %{buildroot}/$RPM_LIB_DIR/$res$rel"$'\n'
+            RESOURCES_FILES+="/$RPM_LIB_DIR/$res$rel"$'\n'
           done < <(find "$src" -type f -print0)
         elif [[ -f "$src" ]]; then
-          local dst_dir="%{buildroot}/$(dirname "$LIB_DIR/$res")"
+          local dst_dir="%{buildroot}/$(dirname "$RPM_LIB_DIR/$res")"
           RESOURCES_MKDIRS+="mkdir -p $dst_dir"$'\n'
-          RESOURCES_INSTALL+="install -m 644 $src %{buildroot}/$LIB_DIR/$res"$'\n'
-          RESOURCES_FILES+="/$LIB_DIR/$res"$'\n'
+          RESOURCES_INSTALL+="install -m 644 $src %{buildroot}/$RPM_LIB_DIR/$res"$'\n'
+          RESOURCES_FILES+="/$RPM_LIB_DIR/$res"$'\n'
         fi
       done
     }
@@ -262,13 +264,13 @@ $LONG_DESCRIPTION
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/$LIB_DIR
+mkdir -p %{buildroot}/$RPM_LIB_DIR
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/applications
 mkdir -p %{buildroot}/usr/share/doc/$PACKAGE_NAME
 
-install -m 755 $BINARY_PATH %{buildroot}/$LIB_DIR/$BINARY_NAME
-ln -s /$LIB_DIR/$BINARY_NAME %{buildroot}/usr/bin/$BINARY_NAME
+install -m 755 $BINARY_PATH %{buildroot}/$RPM_LIB_DIR/$BINARY_NAME
+ln -s /$RPM_LIB_DIR/$BINARY_NAME %{buildroot}/usr/bin/$BINARY_NAME
 install -m 644 $DESKTOP_FILE %{buildroot}/usr/share/applications/$PACKAGE_NAME.desktop
 
 $(if [[ -d "$ICONS_DIR/scalable/apps" ]]; then
@@ -288,7 +290,7 @@ $RESOURCES_MKDIRS
 $RESOURCES_INSTALL
 
 %files
-/$LIB_DIR/$BINARY_NAME
+/$RPM_LIB_DIR/$BINARY_NAME
 /usr/bin/$BINARY_NAME
 /usr/share/applications/$PACKAGE_NAME.desktop
 $(if [[ -d "$ICONS_DIR/scalable/apps" ]]; then
@@ -303,10 +305,14 @@ done)
 $RESOURCES_FILES
 
 %post
+# Create symlink for Tauri resource directory compatibility
+ln -sf /$RPM_LIB_DIR /usr/lib/"$PRODUCT_NAME" 2>/dev/null || true
 /usr/bin/update-icon-caches /usr/share/icons/hicolor 2>/dev/null || true
 update-desktop-database /usr/share/applications 2>/dev/null || true
 
 %postun
+# Remove symlink on uninstall
+rm -f /usr/lib/"$PRODUCT_NAME" 2>/dev/null || true
 /usr/bin/update-icon-caches /usr/share/icons/hicolor 2>/dev/null || true
 update-desktop-database /usr/share/applications 2>/dev/null || true
 EOF
